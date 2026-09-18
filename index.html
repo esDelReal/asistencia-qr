@@ -24,6 +24,7 @@
       text-align: center;
       padding: 20px;
       margin: 0;
+      background: #f5f5f5;
     }
 
     h1 {
@@ -34,6 +35,7 @@
       width: 100%;
       max-width: 450px;
       margin: 20px auto;
+      background: white;
     }
 
     button {
@@ -53,6 +55,12 @@
     #resultado {
       margin-top: 20px;
       font-size: 18px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .exito {
@@ -73,6 +81,7 @@
   <h1>Control de Asistencia</h1>
 
   <p>Escanea el código QR del alumno</p>
+
 
   <button
     id="btnCamara"
@@ -95,9 +104,9 @@
 
 <script>
 
-  // =====================================
-  // CONFIGURACIÓN
-  // =====================================
+  /*
+   * URL DEL WEB APP DE GOOGLE APPS SCRIPT
+   */
 
   const URL_APPS_SCRIPT =
     "https://script.google.com/macros/s/AKfycbyNu1yTJOes5zUMtmyLDPm2YpB7cDS7SK-MnGN8DySJB0-1KwFN94O1Vj9N3EosqRM/exec";
@@ -108,9 +117,9 @@
   let procesando = false;
 
 
-  // =====================================
-  // INICIAR CÁMARA
-  // =====================================
+  /*
+   * INICIAR CÁMARA
+   */
 
   function iniciarScanner() {
 
@@ -151,19 +160,23 @@
 
       },
 
+
       function(decodedText) {
 
         procesarQR(decodedText);
 
       },
 
+
       function(errorMessage) {
 
-        // Ignorar errores mientras busca QR
+        // Ignorar errores normales
+        // mientras la cámara busca un QR
 
       }
 
     )
+
 
     .then(function() {
 
@@ -172,7 +185,9 @@
         .innerHTML =
         "Apunta la cámara al código QR";
 
+
     })
+
 
     .catch(function(error) {
 
@@ -182,14 +197,19 @@
         .getElementById("btnCamara")
         .disabled = false;
 
+
       document
         .getElementById("resultado")
         .innerHTML =
+
         "<div class='error'>" +
+
         "<h2>⚠ No se pudo abrir la cámara</h2>" +
+
         "<p>" +
         error +
         "</p>" +
+
         "</div>";
 
     });
@@ -197,9 +217,9 @@
   }
 
 
-  // =====================================
-  // PROCESAR QR
-  // =====================================
+  /*
+   * PROCESAR QR
+   */
 
   function procesarQR(codigo) {
 
@@ -207,19 +227,24 @@
       return;
     }
 
+
     procesando = true;
 
 
     document
       .getElementById("resultado")
       .innerHTML =
+
       "<h2>Procesando...</h2>" +
+
       "<p>QR: <strong>" +
       codigo +
       "</strong></p>";
 
 
-    // Detener cámara mientras procesamos
+    /*
+     * DETENER CÁMARA
+     */
 
     if (scanner) {
 
@@ -230,76 +255,136 @@
     }
 
 
-    // ===================================
-    // ENVIAR A APPS SCRIPT
-    // ===================================
+    /*
+     * CREAR CALLBACK JSONP
+     */
+
+    const callbackName =
+      "__qrCallback_" +
+      Date.now();
+
+
+    /*
+     * FUNCIÓN QUE RECIBIRÁ
+     * LA RESPUESTA DE APPS SCRIPT
+     */
+
+    window[callbackName] =
+      function(resultado) {
+
+        mostrarResultado(resultado);
+
+        limpiarJSONP();
+
+      };
+
+
+    /*
+     * LIMPIAR CALLBACK Y SCRIPT
+     */
+
+    function limpiarJSONP() {
+
+      const script =
+        document.getElementById(callbackName);
+
+
+      if (script) {
+        script.remove();
+      }
+
+
+      try {
+        delete window[callbackName];
+      }
+      catch (e) {
+        window[callbackName] = undefined;
+      }
+
+    }
+
+
+    /*
+     * CREAR URL
+     */
 
     const url =
       URL_APPS_SCRIPT +
+
       "?idQR=" +
-      encodeURIComponent(codigo);
+      encodeURIComponent(codigo) +
+
+      "&callback=" +
+      encodeURIComponent(callbackName);
 
 
-    fetch(url, {
+    /*
+     * CREAR SCRIPT JSONP
+     */
 
-      method: "GET",
+    const script =
+      document.createElement("script");
 
-      cache: "no-store"
 
-    })
+    script.id =
+      callbackName;
 
-    .then(function(response) {
 
-      if (!response.ok) {
+    script.src =
+      url;
 
-        throw new Error(
-          "HTTP " + response.status
-        );
 
-      }
+    /*
+     * ERROR DE CONEXIÓN
+     */
 
-      return response.json();
+    script.onerror =
+      function() {
 
-    })
+        limpiarJSONP();
 
-    .then(function(resultado) {
 
-      mostrarResultado(resultado);
+        document
+          .getElementById("resultado")
+          .innerHTML =
 
-    })
+          "<div class='error'>" +
 
-    .catch(function(error) {
+          "<h2>⚠ Error de conexión</h2>" +
 
-      document
-        .getElementById("resultado")
-        .innerHTML =
-        "<div class='error'>" +
-        "<h2>⚠ Error de conexión</h2>" +
-        "<p>" +
-        error +
-        "</p>" +
-        "</div>";
+          "<p>" +
+          "No fue posible comunicarse con Google Apps Script." +
+          "</p>" +
 
-    })
+          "</div>";
 
-    .finally(function() {
 
-      procesando = false;
+        procesando = false;
 
-      scanner = null;
+        scanner = null;
 
-      document
-        .getElementById("btnCamara")
-        .disabled = false;
 
-    });
+        document
+          .getElementById("btnCamara")
+          .disabled = false;
+
+      };
+
+
+    /*
+     * ENVIAR PETICIÓN
+     */
+
+    document
+      .head
+      .appendChild(script);
 
   }
 
 
-  // =====================================
-  // MOSTRAR RESULTADO
-  // =====================================
+  /*
+   * MOSTRAR RESULTADO
+   */
 
   function mostrarResultado(resultado) {
 
@@ -315,21 +400,32 @@
         "<h2>✓ Asistencia registrada</h2>" +
 
         "<p>" +
+
         "<strong>" +
         resultado.nombre +
         "</strong>" +
+
         "</p>" +
 
-        "<p>Grupo: " +
+        "<p>" +
+
+        "Grupo: " +
         resultado.grupo +
+
         "</p>" +
 
-        "<p>Fecha: " +
+        "<p>" +
+
+        "Fecha: " +
         resultado.fecha +
+
         "</p>" +
 
-        "<p>Hora: " +
+        "<p>" +
+
+        "Hora: " +
         resultado.hora +
+
         "</p>" +
 
         "</div>";
@@ -348,17 +444,25 @@
         "<h2>⚠ Ya registrada</h2>" +
 
         "<p>" +
+
         "<strong>" +
         resultado.nombre +
         "</strong>" +
+
         "</p>" +
 
-        "<p>Grupo: " +
+        "<p>" +
+
+        "Grupo: " +
         resultado.grupo +
+
         "</p>" +
 
-        "<p>Hora registrada: " +
+        "<p>" +
+
+        "Hora registrada: " +
         resultado.hora +
+
         "</p>" +
 
         "</div>";
@@ -383,9 +487,19 @@
     }
 
 
-    // Reiniciar cámara automáticamente
+    /*
+     * PERMITIR OTRO ESCANEO
+     */
 
     setTimeout(function() {
+
+      procesando = false;
+
+      scanner = null;
+
+      document
+        .getElementById("btnCamara")
+        .disabled = false;
 
       iniciarScanner();
 
