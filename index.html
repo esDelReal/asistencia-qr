@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+
+<head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
 
   <title>Control de Asistencia</title>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
 
   <style>
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -33,79 +43,358 @@
       border-radius: 8px;
       background: #1976d2;
       color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #999;
     }
 
     #resultado {
       margin-top: 20px;
       font-size: 18px;
     }
+
+    .exito {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
   <h1>Control de Asistencia</h1>
 
-  <p>Prueba del lector QR</p>
+  <p>Escanea el código QR del alumno</p>
 
-  <button onclick="iniciarScanner()">
+  <button
+    id="btnCamara"
+    onclick="iniciarScanner()">
+
     📷 Iniciar cámara
+
   </button>
+
 
   <div id="reader"></div>
 
+
   <div id="resultado">
-    Presiona el botón para iniciar.
+
+    Presiona "Iniciar cámara"
+
   </div>
 
-  <script>
 
-    let scanner = null;
+<script>
 
-    function iniciarScanner() {
+  // =====================================
+  // CONFIGURACIÓN
+  // =====================================
 
-      document.getElementById("resultado").innerHTML =
-        "Solicitando acceso a la cámara...";
+  const URL_APPS_SCRIPT =
+    "https://script.google.com/macros/s/AKfycbyNu1yTJOes5zUMtmyLDPm2YpB7cDS7SK-MnGN8DySJB0-1KwFN94O1Vj9N3EosqRM/exec";
 
-      scanner = new Html5Qrcode("reader");
 
-      scanner.start(
+  let scanner = null;
 
-        { facingMode: "environment" },
+  let procesando = false;
 
-        {
-          fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
-          }
+
+  // =====================================
+  // INICIAR CÁMARA
+  // =====================================
+
+  function iniciarScanner() {
+
+    if (scanner !== null) {
+      return;
+    }
+
+    document
+      .getElementById("btnCamara")
+      .disabled = true;
+
+
+    document
+      .getElementById("resultado")
+      .innerHTML =
+      "Solicitando acceso a la cámara...";
+
+
+    scanner =
+      new Html5Qrcode("reader");
+
+
+    scanner.start(
+
+      {
+        facingMode: "environment"
+      },
+
+      {
+        fps: 10,
+
+        qrbox: {
+          width: 250,
+          height: 250
         },
 
-        function(decodedText) {
+        aspectRatio: 1.0
 
-          document.getElementById("resultado").innerHTML =
-            "<h2>✓ QR detectado</h2>" +
-            "<p>Código: <strong>" +
-            decodedText +
-            "</strong></p>";
+      },
 
-        },
+      function(decodedText) {
 
-        function(errorMessage) {
-          // Sigue buscando el QR
-        }
+        procesarQR(decodedText);
 
-      ).catch(function(error) {
+      },
 
-        document.getElementById("resultado").innerHTML =
-          "<h2>⚠ No se pudo abrir la cámara</h2>" +
-          "<p>" + error + "</p>";
+      function(errorMessage) {
 
-      });
+        // Ignorar errores mientras busca QR
+
+      }
+
+    )
+
+    .then(function() {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+        "Apunta la cámara al código QR";
+
+    })
+
+    .catch(function(error) {
+
+      scanner = null;
+
+      document
+        .getElementById("btnCamara")
+        .disabled = false;
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+        "<div class='error'>" +
+        "<h2>⚠ No se pudo abrir la cámara</h2>" +
+        "<p>" +
+        error +
+        "</p>" +
+        "</div>";
+
+    });
+
+  }
+
+
+  // =====================================
+  // PROCESAR QR
+  // =====================================
+
+  function procesarQR(codigo) {
+
+    if (procesando) {
+      return;
+    }
+
+    procesando = true;
+
+
+    document
+      .getElementById("resultado")
+      .innerHTML =
+      "<h2>Procesando...</h2>" +
+      "<p>QR: <strong>" +
+      codigo +
+      "</strong></p>";
+
+
+    // Detener cámara mientras procesamos
+
+    if (scanner) {
+
+      scanner
+        .stop()
+        .catch(function() {});
 
     }
 
-  </script>
+
+    // ===================================
+    // ENVIAR A APPS SCRIPT
+    // ===================================
+
+    const url =
+      URL_APPS_SCRIPT +
+      "?idQR=" +
+      encodeURIComponent(codigo);
+
+
+    fetch(url, {
+
+      method: "GET",
+
+      cache: "no-store"
+
+    })
+
+    .then(function(response) {
+
+      if (!response.ok) {
+
+        throw new Error(
+          "HTTP " + response.status
+        );
+
+      }
+
+      return response.json();
+
+    })
+
+    .then(function(resultado) {
+
+      mostrarResultado(resultado);
+
+    })
+
+    .catch(function(error) {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+        "<div class='error'>" +
+        "<h2>⚠ Error de conexión</h2>" +
+        "<p>" +
+        error +
+        "</p>" +
+        "</div>";
+
+    })
+
+    .finally(function() {
+
+      procesando = false;
+
+      scanner = null;
+
+      document
+        .getElementById("btnCamara")
+        .disabled = false;
+
+    });
+
+  }
+
+
+  // =====================================
+  // MOSTRAR RESULTADO
+  // =====================================
+
+  function mostrarResultado(resultado) {
+
+
+    if (resultado.ok) {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+
+        "<div class='exito'>" +
+
+        "<h2>✓ Asistencia registrada</h2>" +
+
+        "<p>" +
+        "<strong>" +
+        resultado.nombre +
+        "</strong>" +
+        "</p>" +
+
+        "<p>Grupo: " +
+        resultado.grupo +
+        "</p>" +
+
+        "<p>Fecha: " +
+        resultado.fecha +
+        "</p>" +
+
+        "<p>Hora: " +
+        resultado.hora +
+        "</p>" +
+
+        "</div>";
+
+    }
+
+
+    else if (resultado.duplicado) {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+
+        "<div class='error'>" +
+
+        "<h2>⚠ Ya registrada</h2>" +
+
+        "<p>" +
+        "<strong>" +
+        resultado.nombre +
+        "</strong>" +
+        "</p>" +
+
+        "<p>Grupo: " +
+        resultado.grupo +
+        "</p>" +
+
+        "<p>Hora registrada: " +
+        resultado.hora +
+        "</p>" +
+
+        "</div>";
+
+    }
+
+
+    else {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+
+        "<div class='error'>" +
+
+        "<h2>⚠ " +
+        resultado.mensaje +
+        "</h2>" +
+
+        "</div>";
+
+    }
+
+
+    // Reiniciar cámara automáticamente
+
+    setTimeout(function() {
+
+      iniciarScanner();
+
+    }, 2500);
+
+  }
+
+</script>
 
 </body>
+
 </html>
