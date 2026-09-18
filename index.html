@@ -13,6 +13,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
 
     h1 {
@@ -59,7 +60,7 @@
 
   <script>
 
-    let scanner;
+    let scanner = null;
 
     function iniciarScanner() {
 
@@ -69,9 +70,9 @@
       scanner = new Html5Qrcode("reader");
 
       scanner.start(
-        {
-          facingMode: "environment"
-        },
+
+        { facingMode: "environment" },
+
         {
           fps: 10,
           qrbox: {
@@ -80,76 +81,25 @@
           }
         },
 
-    function(decodedText) {
+        function(decodedText) {
 
-      document.getElementById("resultado").innerHTML =
-        "QR detectado: " + decodedText;
+          document.getElementById("resultado").innerHTML =
+            "<h2>✓ QR detectado</h2>" +
+            "<p>Código: <strong>" +
+            decodedText +
+            "</strong></p>";
 
-    },
-
-    function(errorMessage) {
-      // Sigue buscando
-    }
-
-  ).catch(function(error) {
-
-    document.getElementById("resultado").innerHTML =
-      "No se pudo abrir la cámara.<br>" + error;
-
-  });
-}
-    
-  .then(response => response.json())
-
-  .then(resultado => {
-
-    if (resultado.ok) {
-
-      document.getElementById("resultado").innerHTML =
-        "<h2>✓ Asistencia registrada</h2>" +
-        "<p><strong>" + resultado.nombre + "</strong></p>" +
-        "<p>Grupo: " + resultado.grupo + "</p>" +
-        "<p>" + resultado.fecha + "</p>" +
-        "<p>" + resultado.hora + "</p>";
-
-    } else if (resultado.duplicado) {
-
-      document.getElementById("resultado").innerHTML =
-        "<h2>⚠ Ya registrada</h2>" +
-        "<p><strong>" + resultado.nombre + "</strong></p>" +
-        "<p>Grupo: " + resultado.grupo + "</p>" +
-        "<p>Hora registrada: " + resultado.hora + "</p>";
-
-    } else {
-
-      document.getElementById("resultado").innerHTML =
-        "<h2>⚠ " + resultado.mensaje + "</h2>";
-
-    }
-
-  })
-
-  .catch(error => {
-
-    document.getElementById("resultado").innerHTML =
-      "<h2>⚠ Error de conexión</h2>" +
-      "<p>" + error + "</p>";
-
-  });
-
-},
+        },
 
         function(errorMessage) {
-
-          // Continúa buscando el QR
-
+          // Sigue buscando el QR
         }
 
       ).catch(function(error) {
 
         document.getElementById("resultado").innerHTML =
-          "<strong>No se pudo abrir la cámara.</strong><br><br>" +
-          error;
+          "<h2>⚠ No se pudo abrir la cámara</h2>" +
+          "<p>" + error + "</p>";
 
       });
 
