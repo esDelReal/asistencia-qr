@@ -82,16 +82,16 @@
 
         function(decodedText) {
 
-  document.getElementById("resultado").innerHTML =
-    "QR detectado: <strong>" + decodedText + "</strong><br>Registrando...";
+       document.getElementById("resultado").innerHTML =
+        "QR detectado: " + decodedText;
 
-  fetch("https://script.google.com/macros/s/AKfycbyNu1yTJOes5zUMtmyLDPm2YpB7cDS7SK-MnGN8DySJB0-1KwFN94O1Vj9N3EosqRM/exec", {
+    },
 
-    method: "POST",
+    function(errorMessage) {
+      // Sigue buscando
+    }
 
-    body: JSON.stringify({
-      idQR: decodedText
-    })
+  ).catch(function(error) {
 
   })
 
