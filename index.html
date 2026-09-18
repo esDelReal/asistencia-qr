@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Control de Asistencia</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 450px;
+      margin: 20px auto;
+    }
+
+    button {
+      padding: 14px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #1976d2;
+      color: white;
+    }
+
+    #resultado {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Control de Asistencia</h1>
+
+  <p>Prueba del lector QR</p>
+
+  <button onclick="iniciarScanner()">
+    📷 Iniciar cámara
+  </button>
+
+  <div id="reader"></div>
+
+  <div id="resultado">
+    Presiona el botón para iniciar.
+  </div>
+
+  <script>
+
+    let scanner;
+
+    function iniciarScanner() {
+
+      document.getElementById("resultado").innerHTML =
+        "Solicitando acceso a la cámara...";
+
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        {
+          facingMode: "environment"
+        },
+        {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+        },
+
+        function(decodedText) {
+
+          document.getElementById("resultado").innerHTML =
+            "QR detectado: <strong>" + decodedText + "</strong>";
+
+        },
+
+        function(errorMessage) {
+
+          // Continúa buscando el QR
+
+        }
+
+      ).catch(function(error) {
+
+        document.getElementById("resultado").innerHTML =
+          "<strong>No se pudo abrir la cámara.</strong><br><br>" +
+          error;
+
+      });
+
+    }
+
+  </script>
+
+</body>
+</html>
