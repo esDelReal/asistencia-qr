@@ -80,9 +80,9 @@
           }
         },
 
-        function(decodedText) {
+    function(decodedText) {
 
-       document.getElementById("resultado").innerHTML =
+      document.getElementById("resultado").innerHTML =
         "QR detectado: " + decodedText;
 
     },
@@ -93,8 +93,12 @@
 
   ).catch(function(error) {
 
-  })
+    document.getElementById("resultado").innerHTML =
+      "No se pudo abrir la cámara.<br>" + error;
 
+  });
+}
+    
   .then(response => response.json())
 
   .then(resultado => {
