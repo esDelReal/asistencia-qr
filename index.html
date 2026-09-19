@@ -105,18 +105,23 @@
 <script>
 
   /*
+   * ==========================================
    * URL DEL WEB APP DE GOOGLE APPS SCRIPT
+   * ==========================================
    */
 
   const URL_APPS_SCRIPT =
-  "https://script.google.com/macros/s/AKfycbw8hMI7K83XIfMN_RUsC0jkLWelxO64ua03tDx9zHcep27uFpCGtIJTeBNvHhbbNCA/exec";
-
+    "https://script.google.com/macros/s/AKfycbw8hMI7K83XIfMN_RUsC0jkLWelxO64ua03tDx9zHcep27uFpCGtIJTeBNvHhbbNCA/exec";
+    
   let scanner = null;
 
   let procesando = false;
 
+
   /*
+   * ==========================================
    * INICIAR CÁMARA
+   * ==========================================
    */
 
   function iniciarScanner() {
@@ -133,7 +138,7 @@
     document
       .getElementById("resultado")
       .innerHTML =
-      "Solicitando acceso a la cámara...";
+        "Solicitando acceso a la cámara...";
 
 
     scanner =
@@ -169,20 +174,18 @@
       function(errorMessage) {
 
         // Ignorar errores normales
-        // mientras la cámara busca un QR
+        // mientras busca un QR
 
       }
 
     )
-
 
     .then(function() {
 
       document
         .getElementById("resultado")
         .innerHTML =
-        "Apunta la cámara al código QR";
-
+          "Apunta la cámara al código QR";
 
     })
 
@@ -200,15 +203,15 @@
         .getElementById("resultado")
         .innerHTML =
 
-        "<div class='error'>" +
+          "<div class='error'>" +
 
-        "<h2>⚠ No se pudo abrir la cámara</h2>" +
+          "<h2>⚠ No se pudo abrir la cámara</h2>" +
 
-        "<p>" +
-        error +
-        "</p>" +
+          "<p>" +
+          error +
+          "</p>" +
 
-        "</div>";
+          "</div>";
 
     });
 
@@ -216,7 +219,9 @@
 
 
   /*
+   * ==========================================
    * PROCESAR QR
+   * ==========================================
    */
 
   function procesarQR(codigo) {
@@ -229,19 +234,25 @@
     procesando = true;
 
 
+    codigo =
+      String(codigo || "").trim();
+
+
     document
       .getElementById("resultado")
       .innerHTML =
 
-      "<h2>Procesando...</h2>" +
+        "<h2>Procesando...</h2>" +
 
-      "<p>QR: <strong>" +
-      codigo +
-      "</strong></p>";
+        "<p>QR: <strong>" +
+        codigo +
+        "</strong></p>";
 
 
     /*
+     * ==========================================
      * DETENER CÁMARA
+     * ==========================================
      */
 
     if (scanner) {
@@ -254,18 +265,15 @@
 
 
     /*
+     * ==========================================
      * CREAR CALLBACK JSONP
+     * ==========================================
      */
 
     const callbackName =
       "__qrCallback_" +
       Date.now();
 
-
-    /*
-     * FUNCIÓN QUE RECIBIRÁ
-     * LA RESPUESTA DE APPS SCRIPT
-     */
 
     window[callbackName] =
       function(resultado) {
@@ -278,7 +286,9 @@
 
 
     /*
-     * LIMPIAR CALLBACK Y SCRIPT
+     * ==========================================
+     * LIMPIAR JSONP
+     * ==========================================
      */
 
     function limpiarJSONP() {
@@ -293,31 +303,36 @@
 
 
       try {
+
         delete window[callbackName];
-      }
-      catch (e) {
+
+      } catch (e) {
+
         window[callbackName] = undefined;
+
       }
 
     }
 
 
     /*
+     * ==========================================
      * CREAR URL
+     * ==========================================
      */
 
     const url =
       URL_APPS_SCRIPT +
-
       "?idQR=" +
       encodeURIComponent(codigo) +
-
       "&callback=" +
       encodeURIComponent(callbackName);
 
 
     /*
+     * ==========================================
      * CREAR SCRIPT JSONP
+     * ==========================================
      */
 
     const script =
@@ -333,7 +348,9 @@
 
 
     /*
+     * ==========================================
      * ERROR DE CONEXIÓN
+     * ==========================================
      */
 
     script.onerror =
@@ -346,15 +363,15 @@
           .getElementById("resultado")
           .innerHTML =
 
-          "<div class='error'>" +
+            "<div class='error'>" +
 
-          "<h2>⚠ Error de conexión</h2>" +
+            "<h2>⚠ Error de conexión</h2>" +
 
-          "<p>" +
-          "No fue posible comunicarse con Google Apps Script." +
-          "</p>" +
+            "<p>" +
+            "No fue posible comunicarse con Google Apps Script." +
+            "</p>" +
 
-          "</div>";
+            "</div>";
 
 
         procesando = false;
@@ -370,7 +387,9 @@
 
 
     /*
+     * ==========================================
      * ENVIAR PETICIÓN
+     * ==========================================
      */
 
     document
@@ -381,7 +400,9 @@
 
 
   /*
+   * ==========================================
    * MOSTRAR RESULTADO
+   * ==========================================
    */
 
   function mostrarResultado(resultado) {
@@ -393,40 +414,40 @@
         .getElementById("resultado")
         .innerHTML =
 
-        "<div class='exito'>" +
+          "<div class='exito'>" +
 
-        "<h2>✓ Asistencia registrada</h2>" +
+          "<h2>✓ Asistencia registrada</h2>" +
 
-        "<p>" +
+          "<p>" +
 
-        "<strong>" +
-        resultado.nombre +
-        "</strong>" +
+          "<strong>" +
+          resultado.nombre +
+          "</strong>" +
 
-        "</p>" +
+          "</p>" +
 
-        "<p>" +
+          "<p>" +
 
-        "Grupo: " +
-        resultado.grupo +
+          "Grupo: " +
+          resultado.grupo +
 
-        "</p>" +
+          "</p>" +
 
-        "<p>" +
+          "<p>" +
 
-        "Fecha: " +
-        resultado.fecha +
+          "Fecha: " +
+          resultado.fecha +
 
-        "</p>" +
+          "</p>" +
 
-        "<p>" +
+          "<p>" +
 
-        "Hora: " +
-        resultado.hora +
+          "Hora: " +
+          resultado.hora +
 
-        "</p>" +
+          "</p>" +
 
-        "</div>";
+          "</div>";
 
     }
 
@@ -437,33 +458,33 @@
         .getElementById("resultado")
         .innerHTML =
 
-        "<div class='error'>" +
+          "<div class='error'>" +
 
-        "<h2>⚠ Ya registrada</h2>" +
+          "<h2>⚠ Ya registrada</h2>" +
 
-        "<p>" +
+          "<p>" +
 
-        "<strong>" +
-        resultado.nombre +
-        "</strong>" +
+          "<strong>" +
+          resultado.nombre +
+          "</strong>" +
 
-        "</p>" +
+          "</p>" +
 
-        "<p>" +
+          "<p>" +
 
-        "Grupo: " +
-        resultado.grupo +
+          "Grupo: " +
+          resultado.grupo +
 
-        "</p>" +
+          "</p>" +
 
-        "<p>" +
+          "<p>" +
 
-        "Hora registrada: " +
-        resultado.hora +
+          "Hora registrada: " +
+          resultado.hora +
 
-        "</p>" +
+          "</p>" +
 
-        "</div>";
+          "</div>";
 
     }
 
@@ -474,19 +495,21 @@
         .getElementById("resultado")
         .innerHTML =
 
-        "<div class='error'>" +
+          "<div class='error'>" +
 
-        "<h2>⚠ " +
-        resultado.mensaje +
-        "</h2>" +
+          "<h2>⚠ " +
+          (resultado.mensaje || "Error") +
+          "</h2>" +
 
-        "</div>";
+          "</div>";
 
     }
 
 
     /*
+     * ==========================================
      * PERMITIR OTRO ESCANEO
+     * ==========================================
      */
 
     setTimeout(function() {
