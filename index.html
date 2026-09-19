@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -8,72 +7,169 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>Control de Asistencia</title>
+
+
+  <!-- =====================================================
+       HTML5 QR CODE
+       ===================================================== -->
 
   <script
     src="https://unpkg.com/html5-qrcode"
     type="text/javascript">
   </script>
 
+
   <style>
 
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-      margin: 0;
-      background: #f5f5f5;
+    * {
+      box-sizing: border-box;
     }
+
+
+    body {
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      margin: 0;
+
+      padding: 20px;
+
+      background: #f5f5f5;
+
+      text-align: center;
+
+    }
+
 
     h1 {
-      font-size: 24px;
+
+      margin-top: 10px;
+
+      margin-bottom: 8px;
+
+      font-size: 26px;
+
     }
+
+
+    .subtitulo {
+
+      margin-top: 0;
+
+      color: #555;
+
+      font-size: 16px;
+
+    }
+
 
     #reader {
+
       width: 100%;
+
       max-width: 450px;
+
       margin: 20px auto;
+
       background: white;
+
+      border-radius: 12px;
+
+      overflow: hidden;
+
     }
+
 
     button {
+
       padding: 14px 25px;
-      font-size: 18px;
+
+      font-size: 17px;
+
       border: none;
+
       border-radius: 8px;
+
       background: #1976d2;
+
       color: white;
+
       cursor: pointer;
+
     }
+
 
     button:disabled {
+
       background: #999;
+
+      cursor: not-allowed;
+
     }
+
 
     #resultado {
-      margin-top: 20px;
-      font-size: 18px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
+
+      width: 100%;
+
       max-width: 450px;
-      margin-left: auto;
-      margin-right: auto;
+
+      margin: 20px auto;
+
+      padding: 20px;
+
+      background: white;
+
+      border-radius: 10px;
+
+      box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.08);
+
+      font-size: 17px;
+
     }
+
 
     .exito {
-      color: green;
+
+      color: #16803c;
+
     }
+
 
     .error {
-      color: red;
+
+      color: #c62828;
+
     }
 
+
     .info {
+
       color: #1976d2;
+
+    }
+
+
+    h2 {
+
+      margin-top: 0;
+
+    }
+
+
+    .dato {
+
+      margin: 8px 0;
+
     }
 
   </style>
@@ -83,9 +179,16 @@
 
 <body>
 
-  <h1>Control de Asistencia</h1>
 
-  <p>Escanea el código QR del alumno</p>
+  <h1>
+    Control de Asistencia
+  </h1>
+
+
+  <p class="subtitulo">
+    Escanea el código QR del alumno
+  </p>
+
 
   <button
     id="btnCamara"
@@ -95,7 +198,9 @@
 
   </button>
 
+
   <div id="reader"></div>
+
 
   <div id="resultado">
 
@@ -104,48 +209,86 @@
   </div>
 
 
+
 <script>
 
 
-// =====================================================
-// GOOGLE APPS SCRIPT
-// =====================================================
+// ==========================================================
+// CONFIGURACIÓN
+// ==========================================================
 
-const URL_APPS_SCRIPT =
-  "https://script.google.com/macros/s/AKfycbz3Yo5EBcimLtmMWWWUs33-kE2uENDS1TWvzecwW2MThoz7YscgNZEhOeHyliy60yE/exec";
+// URL /exec DE GOOGLE APPS SCRIPT
+//
+// REEMPLAZA ESTA URL POR TU URL ACTUAL
+//
+
+const URL_GOOGLE =
+  "https://script.google.com/macros/s/AKfycbxotMqrxSvzT-6wxQfaqSTnKayJcWrSuCSdo0EC_yBzeQ37rs22L4XYhNymtGKslPVh/exec";
 
 
-// =====================================================
+// ==========================================================
 // VARIABLES
-// =====================================================
+// ==========================================================
 
 let scanner = null;
 
 let procesando = false;
 
+let ultimoQR = "";
 
-// =====================================================
-// INICIAR SCANNER
-// =====================================================
+let ultimoEscaneo = 0;
+
+
+// ==========================================================
+// ELEMENTOS
+// ==========================================================
+
+const boton =
+  document.getElementById(
+    "btnCamara"
+  );
+
+
+const resultado =
+  document.getElementById(
+    "resultado"
+  );
+
+
+// ==========================================================
+// INICIAR CÁMARA
+// ==========================================================
 
 function iniciarScanner() {
 
-  if (scanner !== null || procesando) {
+
+  if (
+    scanner !== null ||
+    procesando
+  ) {
+
     return;
+
   }
-
-  const boton =
-    document.getElementById("btnCamara");
-
-  const resultado =
-    document.getElementById("resultado");
 
 
   boton.disabled = true;
 
+
   resultado.innerHTML =
+
     "<div class='info'>" +
-    "Solicitando acceso a la cámara..." +
+
+    "<h2>📷 Cámara activa</h2>" +
+
+    "<p>" +
+
+    "Apunta la cámara al código QR."
+
+    +
+
+    "</p>" +
+
     "</div>";
 
 
@@ -159,17 +302,23 @@ function iniciarScanner() {
       facingMode: "environment"
     },
 
+
     {
+
       fps: 10,
 
       qrbox: {
+
         width: 250,
+
         height: 250
+
       },
 
       aspectRatio: 1.0
 
     },
+
 
     function(decodedText) {
 
@@ -177,29 +326,46 @@ function iniciarScanner() {
 
     },
 
+
     function(errorMessage) {
 
-      // Ignorar errores normales
-      // mientras se busca el QR
+      // No mostramos errores
+      // normales de búsqueda del QR.
 
     }
 
   )
 
+
   .then(function() {
 
+
     resultado.innerHTML =
+
       "<div class='info'>" +
-      "Apunta la cámara al código QR" +
+
+      "<h2>✓ Cámara activa</h2>" +
+
+      "<p>" +
+
+      "Apunta la cámara al código QR."
+
+      +
+
+      "</p>" +
+
       "</div>";
 
   })
 
+
   .catch(function(error) {
+
 
     scanner = null;
 
     boton.disabled = false;
+
 
     resultado.innerHTML =
 
@@ -208,7 +374,11 @@ function iniciarScanner() {
       "<h2>⚠ No se pudo abrir la cámara</h2>" +
 
       "<p>" +
-      error +
+
+      escaparHTML(error)
+
+      +
+
       "</p>" +
 
       "</div>";
@@ -218,160 +388,140 @@ function iniciarScanner() {
 }
 
 
-// =====================================================
+// ==========================================================
 // PROCESAR QR
-// =====================================================
+// ==========================================================
 
 function procesarQR(codigo) {
 
-  if (procesando) {
+
+  // --------------------------------------------------------
+  // EVITAR DOBLE LECTURA
+  // --------------------------------------------------------
+
+  const ahora =
+    Date.now();
+
+
+  if (
+    codigo === ultimoQR &&
+    ahora - ultimoEscaneo < 3000
+  ) {
+
     return;
+
   }
 
+
+  ultimoQR =
+    codigo;
+
+
+  ultimoEscaneo =
+    ahora;
+
+
+  if (procesando) {
+
+    return;
+
+  }
+
+
   procesando = true;
-
-
-  const resultado =
-    document.getElementById("resultado");
 
 
   resultado.innerHTML =
 
     "<div class='info'>" +
 
-    "<h2>Procesando...</h2>" +
+    "<h2>⏳ Procesando...</h2>" +
 
-    "<p>QR detectado</p>" +
+    "<p>" +
+
+    "Consultando información del alumno..."
+
+    +
+
+    "</p>" +
 
     "</div>";
 
 
-  // ===================================================
+  // --------------------------------------------------------
   // DETENER CÁMARA
-  // ===================================================
+  // --------------------------------------------------------
 
-  let detenerCamara = Promise.resolve();
-
-
-  if (scanner) {
-
-    detenerCamara =
-      scanner
-        .stop()
-        .catch(function() {});
-
-  }
+  detenerScanner();
 
 
-  // ===================================================
-  // CREAR CALLBACK JSONP
-  // ===================================================
+  // --------------------------------------------------------
+  // ENVIAR QR A GOOGLE APPS SCRIPT
+  // --------------------------------------------------------
 
-  const callbackName =
-    "__qrCallback_" +
+  const callback =
+    "callback_" +
     Date.now();
 
 
-  window[callbackName] =
-    function(data) {
+  window[callback] =
+    function(respuesta) {
 
-      console.log(
-        "Respuesta Google Apps Script:",
-        data
-      );
+      try {
 
+        mostrarResultado(
+          respuesta
+        );
 
-      mostrarResultado(data);
+      }
 
-      limpiarJSONP();
+      finally {
+
+        try {
+
+          delete window[callback];
+
+        } catch (e) {}
+
+      }
 
     };
 
 
-  // ===================================================
-  // LIMPIAR JSONP
-  // ===================================================
-
-  function limpiarJSONP() {
-
-    const elemento =
-      document.getElementById(callbackName);
-
-    if (elemento) {
-      elemento.remove();
-    }
-
-    try {
-
-      delete window[callbackName];
-
-    }
-
-    catch (e) {
-
-      window[callbackName] =
-        undefined;
-
-    }
-
-  }
-
-
-  // ===================================================
-  // CREAR URL
-  // =====================================================
-
-  const url =
-    URL_APPS_SCRIPT +
-
-    "?idQR=" +
-    encodeURIComponent(codigo) +
-
-    "&callback=" +
-    encodeURIComponent(callbackName);
-
-
-  console.log(
-    "URL enviada:",
-    url
-  );
-
-
-  // ===================================================
-  // CREAR SCRIPT JSONP
-  // ===================================================
-
   const script =
-    document.createElement("script");
-
-
-  script.id =
-    callbackName;
+    document.createElement(
+      "script"
+    );
 
 
   script.src =
-    url;
+    URL_GOOGLE +
+    "?idQR=" +
+    encodeURIComponent(codigo) +
+    "&callback=" +
+    callback;
 
-
-  // ===================================================
-  // ERROR
-  // ===================================================
 
   script.onerror =
     function() {
 
-      limpiarJSONP();
+
+      try {
+
+        delete window[callback];
+
+      } catch (e) {}
+
 
       resultado.innerHTML =
 
         "<div class='error'>" +
 
-        "<h2>⚠ Error de conexión</h2>" +
+        "<h2>⚠ Error de comunicación</h2>" +
 
         "<p>" +
 
-        "No fue posible comunicarse " +
-        "con Google Apps Script."
+        "No fue posible comunicarse con Google Apps Script."
 
         +
 
@@ -380,83 +530,82 @@ function procesarQR(codigo) {
         "</div>";
 
 
-      procesando = false;
-
-      scanner = null;
-
-      document
-        .getElementById("btnCamara")
-        .disabled = false;
+      reiniciarScanner();
 
     };
 
 
-  // ===================================================
-  // INSERTAR SCRIPT
-  // ===================================================
-
-  document.head.appendChild(script);
+  document
+    .body
+    .appendChild(script);
 
 }
 
 
-// =====================================================
+// ==========================================================
 // MOSTRAR RESULTADO
-// =====================================================
+// ==========================================================
 
-function mostrarResultado(resultado) {
-
-  const contenedor =
-    document.getElementById("resultado");
-
-
-  console.log(
-    "Resultado recibido:",
-    resultado
-  );
+function mostrarResultado(
+  respuesta
+) {
 
 
-  // ===================================================
-  // ASISTENCIA NUEVA
-  // ===================================================
+  // --------------------------------------------------------
+  // ÉXITO
+  // --------------------------------------------------------
 
   if (
-    resultado &&
-    resultado.ok === true
+    respuesta &&
+    respuesta.ok === true
   ) {
 
-    contenedor.innerHTML =
+
+    resultado.innerHTML =
 
       "<div class='exito'>" +
 
       "<h2>✓ Asistencia registrada</h2>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "<strong>" +
-      (resultado.nombre || "") +
+
+      escaparHTML(
+        respuesta.nombre
+      ) +
+
       "</strong>" +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "Grupo: " +
-      (resultado.grupo || "") +
+
+      escaparHTML(
+        respuesta.grupo
+      ) +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "Fecha: " +
-      (resultado.fecha || "") +
+
+      escaparHTML(
+        respuesta.fecha
+      ) +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "Hora: " +
-      (resultado.hora || "") +
+
+      escaparHTML(
+        respuesta.hora
+      ) +
 
       "</p>" +
 
@@ -465,47 +614,59 @@ function mostrarResultado(resultado) {
   }
 
 
-  // ===================================================
+  // --------------------------------------------------------
   // DUPLICADO
-  // ===================================================
+  // --------------------------------------------------------
 
   else if (
-    resultado &&
-    resultado.duplicado === true
+    respuesta &&
+    respuesta.duplicado === true
   ) {
 
-    contenedor.innerHTML =
+
+    resultado.innerHTML =
 
       "<div class='error'>" +
 
-      "<h2>⚠ Asistencia ya registrada</h2>" +
+      "<h2>⚠ Ya registrada</h2>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "<strong>" +
-      (resultado.nombre || "") +
+
+      escaparHTML(
+        respuesta.nombre
+      ) +
+
       "</strong>" +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
       "Grupo: " +
-      (resultado.grupo || "") +
+
+      escaparHTML(
+        respuesta.grupo
+      ) +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
-      "Hora del registro: " +
-      (resultado.hora || "") +
+      "Hora registrada: " +
+
+      escaparHTML(
+        respuesta.hora
+      ) +
 
       "</p>" +
 
-      "<p>" +
+      "<p class='dato'>" +
 
-      (resultado.mensaje ||
-      "Este alumno ya registró asistencia hoy") +
+      escaparHTML(
+        respuesta.mensaje
+      ) +
 
       "</p>" +
 
@@ -514,13 +675,14 @@ function mostrarResultado(resultado) {
   }
 
 
-  // ===================================================
-  // ERROR DEL SISTEMA
-  // ===================================================
+  // --------------------------------------------------------
+  // ERROR
+  // --------------------------------------------------------
 
   else {
 
-    contenedor.innerHTML =
+
+    resultado.innerHTML =
 
       "<div class='error'>" +
 
@@ -528,17 +690,19 @@ function mostrarResultado(resultado) {
 
       "<p>" +
 
-      (
-        resultado &&
-        resultado.mensaje
+      escaparHTML(
+
+        respuesta &&
+        respuesta.mensaje
 
           ?
 
-        resultado.mensaje
+        respuesta.mensaje
 
           :
 
         "Respuesta no válida del servidor."
+
       )
 
       +
@@ -550,30 +714,112 @@ function mostrarResultado(resultado) {
   }
 
 
-  // ===================================================
-  // REINICIAR
-  // ===================================================
+  reiniciarScanner();
+
+}
+
+
+// ==========================================================
+// DETENER SCANNER
+// ==========================================================
+
+function detenerScanner() {
+
+
+  if (!scanner) {
+
+    return;
+
+  }
+
+
+  try {
+
+    scanner
+      .stop()
+      .catch(function() {});
+
+  }
+
+  catch (e) {}
+
+}
+
+
+// ==========================================================
+// REINICIAR
+// ==========================================================
+
+function reiniciarScanner() {
+
 
   setTimeout(function() {
+
 
     procesando = false;
 
     scanner = null;
 
-    document
-      .getElementById("btnCamara")
-      .disabled = false;
+    boton.disabled = false;
 
     iniciarScanner();
+
 
   }, 3000);
 
 }
 
 
+// ==========================================================
+// ESCAPAR HTML
+// ==========================================================
+
+function escaparHTML(valor) {
+
+
+  if (
+    valor === null ||
+    valor === undefined
+  ) {
+
+    return "";
+
+  }
+
+
+  return String(valor)
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
 </script>
+
 
 </body>
 
 </html>
-```
