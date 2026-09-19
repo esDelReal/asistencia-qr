@@ -10,11 +10,16 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <meta
+    name="theme-color"
+    content="#0f172a"
+  >
+
   <title>Control de Asistencia</title>
 
 
   <!-- =====================================================
-       HTML5 QR CODE
+       LIBRERÍA QR
        ===================================================== -->
 
   <script
@@ -25,6 +30,10 @@
 
   <style>
 
+    /* =====================================================
+       CONFIGURACIÓN GENERAL
+       ===================================================== */
+
     * {
       box-sizing: border-box;
     }
@@ -32,43 +41,183 @@
 
     body {
 
+      margin: 0;
+
+      min-height: 100vh;
+
       font-family:
         Arial,
         Helvetica,
         sans-serif;
 
-      margin: 0;
+      background:
+        linear-gradient(
+          180deg,
+          #0f172a 0%,
+          #1e293b 38%,
+          #f1f5f9 38%,
+          #f1f5f9 100%
+        );
 
-      padding: 20px;
+      color: #0f172a;
 
-      background: #f5f5f5;
+    }
+
+
+    /* =====================================================
+       CONTENEDOR PRINCIPAL
+       ===================================================== */
+
+    .contenedor {
+
+      width: 100%;
+
+      max-width: 520px;
+
+      margin: 0 auto;
+
+      padding: 24px 16px 35px;
+
+    }
+
+
+    /* =====================================================
+       ENCABEZADO
+       ===================================================== */
+
+    .encabezado {
 
       text-align: center;
 
-    }
+      color: white;
 
-
-    h1 {
-
-      margin-top: 10px;
-
-      margin-bottom: 8px;
-
-      font-size: 26px;
+      padding: 8px 0 24px;
 
     }
 
 
-    .subtitulo {
+    .logo {
 
-      margin-top: 0;
+      width: 64px;
 
-      color: #555;
+      height: 64px;
 
-      font-size: 16px;
+      margin: 0 auto 12px;
+
+      border-radius: 18px;
+
+      background: rgba(255,255,255,0.15);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 32px;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0,0,0,0.15);
 
     }
 
+
+    .encabezado h1 {
+
+      margin: 0;
+
+      font-size: 28px;
+
+      font-weight: 700;
+
+      letter-spacing: -0.5px;
+
+    }
+
+
+    .encabezado p {
+
+      margin: 8px 0 0;
+
+      font-size: 15px;
+
+      opacity: 0.85;
+
+    }
+
+
+    /* =====================================================
+       TARJETA PRINCIPAL
+       ===================================================== */
+
+    .tarjeta {
+
+      background: white;
+
+      border-radius: 20px;
+
+      padding: 18px;
+
+      box-shadow:
+        0 12px 35px
+        rgba(15,23,42,0.18);
+
+    }
+
+
+    /* =====================================================
+       ESTADO
+       ===================================================== */
+
+    .estado {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 8px;
+
+      margin-bottom: 14px;
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+      color: #64748b;
+
+    }
+
+
+    .punto {
+
+      width: 9px;
+
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #94a3b8;
+
+    }
+
+
+    .punto.activo {
+
+      background: #22c55e;
+
+      box-shadow:
+        0 0 0 4px
+        rgba(34,197,94,0.15);
+
+    }
+
+
+    /* =====================================================
+       LECTOR QR
+       ===================================================== */
 
     #reader {
 
@@ -76,99 +225,272 @@
 
       max-width: 450px;
 
-      margin: 20px auto;
-
-      background: white;
-
-      border-radius: 12px;
+      margin: 0 auto;
 
       overflow: hidden;
 
-    }
+      border-radius: 16px;
 
-
-    button {
-
-      padding: 14px 25px;
-
-      font-size: 17px;
-
-      border: none;
-
-      border-radius: 8px;
-
-      background: #1976d2;
-
-      color: white;
-
-      cursor: pointer;
+      background: #0f172a;
 
     }
 
 
-    button:disabled {
+    /* Ocultar algunos elementos de texto
+       generados por html5-qrcode */
 
-      background: #999;
+    #reader__dashboard_section_csr button {
 
-      cursor: not-allowed;
+      border-radius: 8px !important;
 
     }
 
 
-    #resultado {
+    /* =====================================================
+       BOTÓN PRINCIPAL
+       ===================================================== */
+
+    .boton {
 
       width: 100%;
 
-      max-width: 450px;
+      margin-top: 16px;
 
-      margin: 20px auto;
+      padding: 15px 20px;
 
-      padding: 20px;
+      border: none;
 
-      background: white;
+      border-radius: 12px;
 
-      border-radius: 10px;
+      background: #2563eb;
 
-      box-shadow:
-        0 2px 8px
-        rgba(0, 0, 0, 0.08);
+      color: white;
 
       font-size: 17px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.15s,
+        opacity 0.15s;
+
+      box-shadow:
+        0 5px 15px
+        rgba(37,99,235,0.25);
 
     }
 
 
+    .boton:active {
+
+      transform: scale(0.98);
+
+    }
+
+
+    .boton:disabled {
+
+      opacity: 0.55;
+
+      cursor: not-allowed;
+
+      box-shadow: none;
+
+    }
+
+
+    /* =====================================================
+       RESULTADO
+       ===================================================== */
+
+    #resultado {
+
+      margin-top: 16px;
+
+      border-radius: 14px;
+
+      padding: 18px;
+
+      background: #f8fafc;
+
+      text-align: center;
+
+      min-height: 70px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+    }
+
+
+    #resultado h2 {
+
+      margin:
+        0 0 10px;
+
+      font-size: 22px;
+
+    }
+
+
+    #resultado p {
+
+      margin: 7px 0;
+
+      line-height: 1.45;
+
+    }
+
+
+    /* =====================================================
+       ESTADOS
+       ===================================================== */
+
     .exito {
 
-      color: #16803c;
+      width: 100%;
+
+      color: #166534;
 
     }
 
 
     .error {
 
-      color: #c62828;
+      width: 100%;
+
+      color: #b91c1c;
 
     }
 
 
     .info {
 
-      color: #1976d2;
+      width: 100%;
+
+      color: #1d4ed8;
 
     }
 
 
-    h2 {
+    /* =====================================================
+       ICONO DE RESULTADO
+       ===================================================== */
 
-      margin-top: 0;
+    .icono-resultado {
+
+      width: 58px;
+
+      height: 58px;
+
+      margin: 0 auto 12px;
+
+      border-radius: 50%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 30px;
+
+      background: #dcfce7;
 
     }
 
 
-    .dato {
+    .icono-error {
 
-      margin: 8px 0;
+      background: #fee2e2;
+
+    }
+
+
+    /* =====================================================
+       DATOS DEL ALUMNO
+       ===================================================== */
+
+    .nombre {
+
+      font-size: 21px;
+
+      font-weight: 700;
+
+      margin-bottom: 8px;
+
+    }
+
+
+    .grupo {
+
+      display: inline-block;
+
+      padding: 5px 12px;
+
+      border-radius: 20px;
+
+      background: #e0e7ff;
+
+      color: #3730a3;
+
+      font-weight: 700;
+
+      font-size: 14px;
+
+    }
+
+
+    .hora {
+
+      font-size: 15px;
+
+      color: #475569;
+
+      margin-top: 10px;
+
+    }
+
+
+    /* =====================================================
+       PIE
+       ===================================================== */
+
+    .pie {
+
+      text-align: center;
+
+      margin-top: 18px;
+
+      color: #64748b;
+
+      font-size: 12px;
+
+    }
+
+
+    /* =====================================================
+       MÓVIL
+       ===================================================== */
+
+    @media (max-width: 380px) {
+
+      .encabezado h1 {
+
+        font-size: 24px;
+
+      }
+
+      .tarjeta {
+
+        padding: 14px;
+
+      }
 
     }
 
@@ -180,33 +502,107 @@
 <body>
 
 
-  <h1>
-    Control de Asistencia
-  </h1>
+<div class="contenedor">
 
 
-  <p class="subtitulo">
-    Escanea el código QR del alumno
-  </p>
+  <!-- ===================================================
+       ENCABEZADO
+       =================================================== -->
+
+  <header class="encabezado">
+
+    <div class="logo">
+      📋
+    </div>
+
+    <h1>
+      Control de Asistencia
+    </h1>
+
+    <p>
+      Escanea el código QR del alumno
+    </p>
+
+  </header>
 
 
-  <button
-    id="btnCamara"
-    onclick="iniciarScanner()">
 
-    📷 Iniciar cámara
+  <!-- ===================================================
+       TARJETA
+       =================================================== -->
 
-  </button>
-
-
-  <div id="reader"></div>
+  <main class="tarjeta">
 
 
-  <div id="resultado">
+    <!-- ESTADO -->
 
-    Presiona "Iniciar cámara"
+    <div
+      id="estado"
+      class="estado">
+
+      <span
+        id="punto"
+        class="punto">
+      </span>
+
+      <span id="textoEstado">
+        Cámara inactiva
+      </span>
+
+    </div>
+
+
+    <!-- LECTOR -->
+
+    <div id="reader"></div>
+
+
+    <!-- BOTÓN -->
+
+    <button
+      id="btnCamara"
+      class="boton"
+      onclick="iniciarScanner()">
+
+      📷 Iniciar cámara
+
+    </button>
+
+
+    <!-- RESULTADO -->
+
+    <div id="resultado">
+
+      <div class="info">
+
+        <strong>
+          Listo para registrar asistencia
+        </strong>
+
+        <p>
+          Presiona el botón para activar la cámara.
+        </p>
+
+      </div>
+
+    </div>
+
+
+  </main>
+
+
+  <!-- ===================================================
+       PIE
+       =================================================== -->
+
+  <div class="pie">
+
+    Sistema de control de asistencia
 
   </div>
+
+
+</div>
 
 
 
@@ -214,13 +610,8 @@
 
 
 // ==========================================================
-// CONFIGURACIÓN
+// CONFIGURACIÓN GOOGLE APPS SCRIPT
 // ==========================================================
-
-// URL /exec DE GOOGLE APPS SCRIPT
-//
-// REEMPLAZA ESTA URL POR TU URL ACTUAL
-//
 
 const URL_GOOGLE =
   "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
@@ -255,8 +646,49 @@ const resultado =
   );
 
 
+const punto =
+  document.getElementById(
+    "punto"
+  );
+
+
+const textoEstado =
+  document.getElementById(
+    "textoEstado"
+  );
+
+
 // ==========================================================
-// INICIAR CÁMARA
+// ESTADO DE CÁMARA
+// ==========================================================
+
+function cambiarEstado(
+  activo,
+  texto
+) {
+
+  textoEstado.textContent =
+    texto;
+
+  if (activo) {
+
+    punto.classList.add(
+      "activo"
+    );
+
+  } else {
+
+    punto.classList.remove(
+      "activo"
+    );
+
+  }
+
+}
+
+
+// ==========================================================
+// INICIAR SCANNER
 // ==========================================================
 
 function iniciarScanner() {
@@ -275,11 +707,17 @@ function iniciarScanner() {
   boton.disabled = true;
 
 
+  cambiarEstado(
+    false,
+    "Activando cámara..."
+  );
+
+
   resultado.innerHTML =
 
     "<div class='info'>" +
 
-    "<h2>📷 Cámara activa</h2>" +
+    "<strong>📷 Activando cámara</strong>" +
 
     "<p>" +
 
@@ -293,7 +731,9 @@ function iniciarScanner() {
 
 
   scanner =
-    new Html5Qrcode("reader");
+    new Html5Qrcode(
+      "reader"
+    );
 
 
   scanner.start(
@@ -322,15 +762,17 @@ function iniciarScanner() {
 
     function(decodedText) {
 
-      procesarQR(decodedText);
+      procesarQR(
+        decodedText
+      );
 
     },
 
 
     function(errorMessage) {
 
-      // No mostramos errores
-      // normales de búsqueda del QR.
+      // Errores normales
+      // durante la búsqueda.
 
     }
 
@@ -340,15 +782,21 @@ function iniciarScanner() {
   .then(function() {
 
 
+    cambiarEstado(
+      true,
+      "Cámara activa"
+    );
+
+
     resultado.innerHTML =
 
       "<div class='info'>" +
 
-      "<h2>✓ Cámara activa</h2>" +
+      "<strong>✓ Cámara lista</strong>" +
 
       "<p>" +
 
-      "Apunta la cámara al código QR."
+      "Apunta al código QR del alumno."
 
       +
 
@@ -367,11 +815,23 @@ function iniciarScanner() {
     boton.disabled = false;
 
 
+    cambiarEstado(
+      false,
+      "Cámara inactiva"
+    );
+
+
     resultado.innerHTML =
 
       "<div class='error'>" +
 
-      "<h2>⚠ No se pudo abrir la cámara</h2>" +
+      "<div class='icono-resultado icono-error'>" +
+
+      "⚠️" +
+
+      "</div>" +
+
+      "<h2>No se pudo abrir la cámara</h2>" +
 
       "<p>" +
 
@@ -392,16 +852,18 @@ function iniciarScanner() {
 // PROCESAR QR
 // ==========================================================
 
-function procesarQR(codigo) {
+function procesarQR(
+  codigo
+) {
+
+
+  const ahora =
+    Date.now();
 
 
   // --------------------------------------------------------
   // EVITAR DOBLE LECTURA
   // --------------------------------------------------------
-
-  const ahora =
-    Date.now();
-
 
   if (
     codigo === ultimoQR &&
@@ -431,11 +893,17 @@ function procesarQR(codigo) {
   procesando = true;
 
 
+  cambiarEstado(
+    false,
+    "Registrando asistencia..."
+  );
+
+
   resultado.innerHTML =
 
     "<div class='info'>" +
 
-    "<h2>⏳ Procesando...</h2>" +
+    "<strong>⏳ Registrando asistencia</strong>" +
 
     "<p>" +
 
@@ -456,7 +924,7 @@ function procesarQR(codigo) {
 
 
   // --------------------------------------------------------
-  // ENVIAR QR A GOOGLE APPS SCRIPT
+  // JSONP
   // --------------------------------------------------------
 
   const callback =
@@ -497,7 +965,9 @@ function procesarQR(codigo) {
   script.src =
     URL_GOOGLE +
     "?idQR=" +
-    encodeURIComponent(codigo) +
+    encodeURIComponent(
+      codigo
+    ) +
     "&callback=" +
     callback;
 
@@ -517,11 +987,17 @@ function procesarQR(codigo) {
 
         "<div class='error'>" +
 
-        "<h2>⚠ Error de comunicación</h2>" +
+        "<div class='icono-resultado icono-error'>" +
+
+        "⚠️" +
+
+        "</div>" +
+
+        "<h2>Error de conexión</h2>" +
 
         "<p>" +
 
-        "No fue posible comunicarse con Google Apps Script."
+        "No fue posible comunicarse con el servidor."
 
         +
 
@@ -537,7 +1013,9 @@ function procesarQR(codigo) {
 
   document
     .body
-    .appendChild(script);
+    .appendChild(
+      script
+    );
 
 }
 
@@ -551,9 +1029,9 @@ function mostrarResultado(
 ) {
 
 
-  // --------------------------------------------------------
+  // ========================================================
   // ÉXITO
-  // --------------------------------------------------------
+  // ========================================================
 
   if (
     respuesta &&
@@ -565,21 +1043,25 @@ function mostrarResultado(
 
       "<div class='exito'>" +
 
-      "<h2>✓ Asistencia registrada</h2>" +
+      "<div class='icono-resultado'>" +
 
-      "<p class='dato'>" +
+      "✓" +
 
-      "<strong>" +
+      "</div>" +
+
+      "<h2>Asistencia registrada</h2>" +
+
+      "<div class='nombre'>" +
 
       escaparHTML(
         respuesta.nombre
       ) +
 
-      "</strong>" +
+      "</div>" +
 
-      "</p>" +
+      "<div>" +
 
-      "<p class='dato'>" +
+      "<span class='grupo'>" +
 
       "Grupo: " +
 
@@ -587,36 +1069,34 @@ function mostrarResultado(
         respuesta.grupo
       ) +
 
-      "</p>" +
+      "</span>" +
 
-      "<p class='dato'>" +
+      "</div>" +
 
-      "Fecha: " +
+      "<div class='hora'>" +
+
+      "📅 " +
 
       escaparHTML(
         respuesta.fecha
       ) +
 
-      "</p>" +
-
-      "<p class='dato'>" +
-
-      "Hora: " +
+      " &nbsp; • &nbsp; 🕐 " +
 
       escaparHTML(
         respuesta.hora
       ) +
 
-      "</p>" +
+      "</div>" +
 
       "</div>";
 
   }
 
 
-  // --------------------------------------------------------
+  // ========================================================
   // DUPLICADO
-  // --------------------------------------------------------
+  // ========================================================
 
   else if (
     respuesta &&
@@ -628,21 +1108,25 @@ function mostrarResultado(
 
       "<div class='error'>" +
 
-      "<h2>⚠ Ya registrada</h2>" +
+      "<div class='icono-resultado icono-error'>" +
 
-      "<p class='dato'>" +
+      "!" +
 
-      "<strong>" +
+      "</div>" +
+
+      "<h2>Asistencia ya registrada</h2>" +
+
+      "<div class='nombre'>" +
 
       escaparHTML(
         respuesta.nombre
       ) +
 
-      "</strong>" +
+      "</div>" +
 
-      "</p>" +
+      "<div>" +
 
-      "<p class='dato'>" +
+      "<span class='grupo'>" +
 
       "Grupo: " +
 
@@ -650,19 +1134,21 @@ function mostrarResultado(
         respuesta.grupo
       ) +
 
-      "</p>" +
+      "</span>" +
 
-      "<p class='dato'>" +
+      "</div>" +
 
-      "Hora registrada: " +
+      "<div class='hora'>" +
+
+      "🕐 Registrada a las " +
 
       escaparHTML(
         respuesta.hora
       ) +
 
-      "</p>" +
+      "</div>" +
 
-      "<p class='dato'>" +
+      "<p>" +
 
       escaparHTML(
         respuesta.mensaje
@@ -675,9 +1161,9 @@ function mostrarResultado(
   }
 
 
-  // --------------------------------------------------------
+  // ========================================================
   // ERROR
-  // --------------------------------------------------------
+  // ========================================================
 
   else {
 
@@ -686,7 +1172,13 @@ function mostrarResultado(
 
       "<div class='error'>" +
 
-      "<h2>⚠ Error</h2>" +
+      "<div class='icono-resultado icono-error'>" +
+
+      "⚠️" +
+
+      "</div>" +
+
+      "<h2>No se pudo registrar</h2>" +
 
       "<p>" +
 
@@ -737,7 +1229,9 @@ function detenerScanner() {
 
     scanner
       .stop()
-      .catch(function() {});
+      .catch(
+        function() {}
+      );
 
   }
 
@@ -747,7 +1241,7 @@ function detenerScanner() {
 
 
 // ==========================================================
-// REINICIAR
+// REINICIAR SCANNER
 // ==========================================================
 
 function reiniciarScanner() {
@@ -762,6 +1256,13 @@ function reiniciarScanner() {
 
     boton.disabled = false;
 
+
+    cambiarEstado(
+      false,
+      "Preparado para escanear"
+    );
+
+
     iniciarScanner();
 
 
@@ -771,10 +1272,12 @@ function reiniciarScanner() {
 
 
 // ==========================================================
-// ESCAPAR HTML
+// SEGURIDAD HTML
 // ==========================================================
 
-function escaparHTML(valor) {
+function escaparHTML(
+  valor
+) {
 
 
   if (
