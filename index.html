@@ -17,6 +17,7 @@
     type="text/javascript">
   </script>
 
+
   <style>
 
     body {
@@ -27,9 +28,11 @@
       background: #f5f5f5;
     }
 
+
     h1 {
       font-size: 24px;
     }
+
 
     #reader {
       width: 100%;
@@ -37,6 +40,7 @@
       margin: 20px auto;
       background: white;
     }
+
 
     button {
       padding: 14px 25px;
@@ -48,9 +52,11 @@
       cursor: pointer;
     }
 
+
     button:disabled {
       background: #999;
     }
+
 
     #resultado {
       margin-top: 20px;
@@ -63,9 +69,11 @@
       margin-right: auto;
     }
 
+
     .exito {
       color: green;
     }
+
 
     .error {
       color: red;
@@ -104,12 +112,13 @@
 
 <script>
 
-  /*
-   * URL DEL WEB APP DE GOOGLE APPS SCRIPT
-   */
+
+  // ==========================================
+  // URL GOOGLE APPS SCRIPT
+  // ==========================================
 
   const URL_APPS_SCRIPT =
-    "https://script.google.com/macros/s/AKfycbwsaiE2Tq87Vz6HXab4QUf1lCDbXRLIJCb5OiW-G7NO2hZV-qmfG_6roEMRuey8ONo/exec";
+    "https://script.google.com/macros/s/AKfycbw8hMI7K83XIfMN_RUsC0jkLWelxO64ua03tDx9zHcep27uFpCGtIJTeBNvHhbbNCA/exec";
 
 
   let scanner = null;
@@ -117,15 +126,16 @@
   let procesando = false;
 
 
-  /*
-   * INICIAR CÁMARA
-   */
+  // ==========================================
+  // INICIAR SCANNER
+  // ==========================================
 
   function iniciarScanner() {
 
     if (scanner !== null) {
       return;
     }
+
 
     document
       .getElementById("btnCamara")
@@ -149,6 +159,7 @@
       },
 
       {
+
         fps: 10,
 
         qrbox: {
@@ -170,8 +181,8 @@
 
       function(errorMessage) {
 
-        // Ignorar errores normales
-        // mientras la cámara busca un QR
+        // Ignorar errores mientras
+        // busca el código QR
 
       }
 
@@ -184,7 +195,6 @@
         .getElementById("resultado")
         .innerHTML =
         "Apunta la cámara al código QR";
-
 
     })
 
@@ -217,9 +227,9 @@
   }
 
 
-  /*
-   * PROCESAR QR
-   */
+  // ==========================================
+  // PROCESAR QR
+  // ==========================================
 
   function procesarQR(codigo) {
 
@@ -242,9 +252,9 @@
       "</strong></p>";
 
 
-    /*
-     * DETENER CÁMARA
-     */
+    // ========================================
+    // DETENER CÁMARA
+    // ========================================
 
     if (scanner) {
 
@@ -255,19 +265,14 @@
     }
 
 
-    /*
-     * CREAR CALLBACK JSONP
-     */
+    // ========================================
+    // CREAR CALLBACK JSONP
+    // ========================================
 
     const callbackName =
       "__qrCallback_" +
       Date.now();
 
-
-    /*
-     * FUNCIÓN QUE RECIBIRÁ
-     * LA RESPUESTA DE APPS SCRIPT
-     */
 
     window[callbackName] =
       function(resultado) {
@@ -279,9 +284,9 @@
       };
 
 
-    /*
-     * LIMPIAR CALLBACK Y SCRIPT
-     */
+    // ========================================
+    // LIMPIAR JSONP
+    // ========================================
 
     function limpiarJSONP() {
 
@@ -295,18 +300,24 @@
 
 
       try {
+
         delete window[callbackName];
+
       }
+
       catch (e) {
-        window[callbackName] = undefined;
+
+        window[callbackName] =
+          undefined;
+
       }
 
     }
 
 
-    /*
-     * CREAR URL
-     */
+    // ========================================
+    // CREAR URL
+    // ========================================
 
     const url =
       URL_APPS_SCRIPT +
@@ -318,9 +329,9 @@
       encodeURIComponent(callbackName);
 
 
-    /*
-     * CREAR SCRIPT JSONP
-     */
+    // ========================================
+    // CREAR SCRIPT
+    // ========================================
 
     const script =
       document.createElement("script");
@@ -334,9 +345,9 @@
       url;
 
 
-    /*
-     * ERROR DE CONEXIÓN
-     */
+    // ========================================
+    // ERROR DE CONEXIÓN
+    // ========================================
 
     script.onerror =
       function() {
@@ -353,7 +364,10 @@
           "<h2>⚠ Error de conexión</h2>" +
 
           "<p>" +
-          "No fue posible comunicarse con Google Apps Script." +
+
+          "No fue posible comunicarse " +
+          "con Google Apps Script." +
+
           "</p>" +
 
           "</div>";
@@ -371,9 +385,9 @@
       };
 
 
-    /*
-     * ENVIAR PETICIÓN
-     */
+    // ========================================
+    // ENVIAR PETICIÓN
+    // ========================================
 
     document
       .head
@@ -382,12 +396,16 @@
   }
 
 
-  /*
-   * MOSTRAR RESULTADO
-   */
+  // ==========================================
+  // MOSTRAR RESULTADO
+  // ==========================================
 
   function mostrarResultado(resultado) {
 
+
+    // ========================================
+    // ASISTENCIA REGISTRADA
+    // ========================================
 
     if (resultado.ok) {
 
@@ -433,6 +451,10 @@
     }
 
 
+    // ========================================
+    // DUPLICADO
+    // ========================================
+
     else if (resultado.duplicado) {
 
       document
@@ -470,6 +492,10 @@
     }
 
 
+    // ========================================
+    // OTRO ERROR
+    // ========================================
+
     else {
 
       document
@@ -487,9 +513,9 @@
     }
 
 
-    /*
-     * PERMITIR OTRO ESCANEO
-     */
+    // ========================================
+    // REINICIAR ESCÁNER
+    // ========================================
 
     setTimeout(function() {
 
