@@ -13,6 +13,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
 
     h1 {
@@ -59,55 +60,46 @@
 
   <script>
 
-    let scanner;
+    let scanner = null;
 
-function iniciarScanner() {
-
-  document.getElementById("resultado").innerHTML =
-    "Solicitando acceso a la cámara...";
-
-  scanner = new Html5Qrcode("reader");
-
-  scanner.start(
-    { facingMode: "environment" },
-    {
-      fps: 10,
-      qrbox: {
-        width: 250,
-        height: 250
-      }
-    },
-
-    function(decodedText) {
+    function iniciarScanner() {
 
       document.getElementById("resultado").innerHTML =
-        "QR detectado: " + decodedText;
+        "Solicitando acceso a la cámara...";
 
-    },
+      scanner = new Html5Qrcode("reader");
 
-    function(errorMessage) {
-      // Sigue buscando
-    }
+      scanner.start(
 
-  ).catch(function(error) {
+        { facingMode: "environment" },
 
-    document.getElementById("resultado").innerHTML =
-      "No se pudo abrir la cámara.<br>" + error;
+        {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+        },
 
-  });
-}
+        function(decodedText) {
+
+          document.getElementById("resultado").innerHTML =
+            "<h2>✓ QR detectado</h2>" +
+            "<p>Código: <strong>" +
+            decodedText +
+            "</strong></p>";
+
+        },
 
         function(errorMessage) {
-
-          // Continúa buscando el QR
-
+          // Sigue buscando el QR
         }
 
       ).catch(function(error) {
 
         document.getElementById("resultado").innerHTML =
-          "<strong>No se pudo abrir la cámara.</strong><br><br>" +
-          error;
+          "<h2>⚠ No se pudo abrir la cámara</h2>" +
+          "<p>" + error + "</p>";
 
       });
 
