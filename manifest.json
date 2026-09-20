@@ -1,6 +1,6 @@
 {
-  "name": "Control de Asistencia",
-  "short_name": "Asistencia",
+  "name": "Control de Asistencia QR",
+  "short_name": "Asistencia QR",
   "description": "Sistema de control de asistencia mediante códigos QR",
   "start_url": "./",
   "display": "standalone",
