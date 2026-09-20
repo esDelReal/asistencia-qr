@@ -15,24 +15,44 @@
     content="#0f172a"
   >
 
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="Asistencia"
+  >
+
   <title>Control de Asistencia</title>
 
 
   <!-- =====================================================
-       LIBRERÍA QR
+       MANIFEST
+       ===================================================== -->
+
+  <link
+    rel="manifest"
+    href="./manifest.json"
+  >
+
+
+  <!-- =====================================================
+       LIBRERÍA QR LOCAL
        ===================================================== -->
 
   <script
-    src="https://unpkg.com/html5-qrcode"
-    type="text/javascript">
+    src="./lib/html5-qrcode.min.js">
   </script>
 
 
   <style>
-
-    /* =====================================================
-       CONFIGURACIÓN GENERAL
-       ===================================================== */
 
     * {
       box-sizing: border-box;
@@ -64,10 +84,6 @@
     }
 
 
-    /* =====================================================
-       CONTENEDOR PRINCIPAL
-       ===================================================== */
-
     .contenedor {
 
       width: 100%;
@@ -81,17 +97,13 @@
     }
 
 
-    /* =====================================================
-       ENCABEZADO
-       ===================================================== */
-
     .encabezado {
 
       text-align: center;
 
       color: white;
 
-      padding: 8px 0 24px;
+      padding: 8px 0 20px;
 
     }
 
@@ -106,7 +118,8 @@
 
       border-radius: 18px;
 
-      background: rgba(255,255,255,0.15);
+      background:
+        rgba(255,255,255,0.15);
 
       display: flex;
 
@@ -115,10 +128,6 @@
       justify-content: center;
 
       font-size: 32px;
-
-      box-shadow:
-        0 8px 25px
-        rgba(0,0,0,0.15);
 
     }
 
@@ -129,10 +138,6 @@
 
       font-size: 28px;
 
-      font-weight: 700;
-
-      letter-spacing: -0.5px;
-
     }
 
 
@@ -142,13 +147,52 @@
 
       font-size: 15px;
 
-      opacity: 0.85;
+      opacity: .85;
 
     }
 
 
     /* =====================================================
-       TARJETA PRINCIPAL
+       ESTADO DE CONEXIÓN
+       ===================================================== */
+
+    .conexion {
+
+      margin: 0 auto 14px;
+
+      padding: 10px 14px;
+
+      border-radius: 10px;
+
+      text-align: center;
+
+      font-size: 14px;
+
+      font-weight: bold;
+
+    }
+
+
+    .online {
+
+      background: #dcfce7;
+
+      color: #166534;
+
+    }
+
+
+    .offline {
+
+      background: #fef3c7;
+
+      color: #92400e;
+
+    }
+
+
+    /* =====================================================
+       TARJETA
        ===================================================== */
 
     .tarjeta {
@@ -161,14 +205,10 @@
 
       box-shadow:
         0 12px 35px
-        rgba(15,23,42,0.18);
+        rgba(15,23,42,.18);
 
     }
 
-
-    /* =====================================================
-       ESTADO
-       ===================================================== */
 
     .estado {
 
@@ -184,7 +224,7 @@
 
       font-size: 14px;
 
-      font-weight: 600;
+      font-weight: bold;
 
       color: #64748b;
 
@@ -210,14 +250,10 @@
 
       box-shadow:
         0 0 0 4px
-        rgba(34,197,94,0.15);
+        rgba(34,197,94,.15);
 
     }
 
-
-    /* =====================================================
-       LECTOR QR
-       ===================================================== */
 
     #reader {
 
@@ -235,20 +271,6 @@
 
     }
 
-
-    /* Ocultar algunos elementos de texto
-       generados por html5-qrcode */
-
-    #reader__dashboard_section_csr button {
-
-      border-radius: 8px !important;
-
-    }
-
-
-    /* =====================================================
-       BOTÓN PRINCIPAL
-       ===================================================== */
 
     .boton {
 
@@ -268,42 +290,26 @@
 
       font-size: 17px;
 
-      font-weight: 700;
+      font-weight: bold;
 
       cursor: pointer;
-
-      transition:
-        transform 0.15s,
-        opacity 0.15s;
-
-      box-shadow:
-        0 5px 15px
-        rgba(37,99,235,0.25);
-
-    }
-
-
-    .boton:active {
-
-      transform: scale(0.98);
 
     }
 
 
     .boton:disabled {
 
-      opacity: 0.55;
-
-      cursor: not-allowed;
-
-      box-shadow: none;
+      opacity: .55;
 
     }
 
 
-    /* =====================================================
-       RESULTADO
-       ===================================================== */
+    .boton-secundario {
+
+      background: #475569;
+
+    }
+
 
     #resultado {
 
@@ -317,7 +323,7 @@
 
       text-align: center;
 
-      min-height: 70px;
+      min-height: 80px;
 
       display: flex;
 
@@ -330,8 +336,7 @@
 
     #resultado h2 {
 
-      margin:
-        0 0 10px;
+      margin: 0 0 10px;
 
       font-size: 22px;
 
@@ -346,10 +351,6 @@
 
     }
 
-
-    /* =====================================================
-       ESTADOS
-       ===================================================== */
 
     .exito {
 
@@ -378,11 +379,7 @@
     }
 
 
-    /* =====================================================
-       ICONO DE RESULTADO
-       ===================================================== */
-
-    .icono-resultado {
+    .icono {
 
       width: 58px;
 
@@ -412,15 +409,11 @@
     }
 
 
-    /* =====================================================
-       DATOS DEL ALUMNO
-       ===================================================== */
-
     .nombre {
 
       font-size: 21px;
 
-      font-weight: 700;
+      font-weight: bold;
 
       margin-bottom: 8px;
 
@@ -439,7 +432,7 @@
 
       color: #3730a3;
 
-      font-weight: 700;
+      font-weight: bold;
 
       font-size: 14px;
 
@@ -457,9 +450,35 @@
     }
 
 
-    /* =====================================================
-       PIE
-       ===================================================== */
+    .contador {
+
+      margin-top: 15px;
+
+      padding: 12px;
+
+      border-radius: 10px;
+
+      background: #f1f5f9;
+
+      text-align: center;
+
+      color: #475569;
+
+      font-size: 14px;
+
+    }
+
+
+    .sincronizacion {
+
+      margin-top: 10px;
+
+      font-size: 13px;
+
+      color: #64748b;
+
+    }
+
 
     .pie {
 
@@ -470,27 +489,6 @@
       color: #64748b;
 
       font-size: 12px;
-
-    }
-
-
-    /* =====================================================
-       MÓVIL
-       ===================================================== */
-
-    @media (max-width: 380px) {
-
-      .encabezado h1 {
-
-        font-size: 24px;
-
-      }
-
-      .tarjeta {
-
-        padding: 14px;
-
-      }
 
     }
 
@@ -520,11 +518,23 @@
     </h1>
 
     <p>
-      Escanea el código QR del alumno
+      Registro mediante código QR
     </p>
 
   </header>
 
+
+  <!-- ===================================================
+       CONEXIÓN
+       =================================================== -->
+
+  <div
+    id="conexion"
+    class="conexion offline">
+
+    📵 Modo offline
+
+  </div>
 
 
   <!-- ===================================================
@@ -533,8 +543,6 @@
 
   <main class="tarjeta">
 
-
-    <!-- ESTADO -->
 
     <div
       id="estado"
@@ -552,12 +560,8 @@
     </div>
 
 
-    <!-- LECTOR -->
-
     <div id="reader"></div>
 
-
-    <!-- BOTÓN -->
 
     <button
       id="btnCamara"
@@ -569,8 +573,6 @@
     </button>
 
 
-    <!-- RESULTADO -->
-
     <div id="resultado">
 
       <div class="info">
@@ -580,7 +582,7 @@
         </strong>
 
         <p>
-          Presiona el botón para activar la cámara.
+          Activa la cámara y escanea el QR.
         </p>
 
       </div>
@@ -588,12 +590,36 @@
     </div>
 
 
+    <div
+      id="contador"
+      class="contador">
+
+      Asistencias pendientes: 0
+
+    </div>
+
+
+    <button
+      id="btnSync"
+      class="boton boton-secundario"
+      onclick="sincronizar()">
+
+      ☁️ Sincronizar
+
+    </button>
+
+
+    <div
+      id="sincronizacion"
+      class="sincronizacion">
+
+      Última sincronización: nunca
+
+    </div>
+
+
   </main>
 
-
-  <!-- ===================================================
-       PIE
-       =================================================== -->
 
   <div class="pie">
 
@@ -610,7 +636,7 @@
 
 
 // ==========================================================
-// CONFIGURACIÓN GOOGLE APPS SCRIPT
+// CONFIGURACIÓN
 // ==========================================================
 
 const URL_GOOGLE =
@@ -631,6 +657,18 @@ let ultimoEscaneo = 0;
 
 
 // ==========================================================
+// BASE LOCAL
+// ==========================================================
+
+const DB_NAME =
+  "AsistenciaOfflineDB";
+
+const DB_VERSION = 1;
+
+let db = null;
+
+
+// ==========================================================
 // ELEMENTOS
 // ==========================================================
 
@@ -639,56 +677,572 @@ const boton =
     "btnCamara"
   );
 
-
 const resultado =
   document.getElementById(
     "resultado"
   );
-
 
 const punto =
   document.getElementById(
     "punto"
   );
 
-
 const textoEstado =
   document.getElementById(
     "textoEstado"
   );
 
+const contador =
+  document.getElementById(
+    "contador"
+  );
+
+const conexion =
+  document.getElementById(
+    "conexion"
+  );
+
 
 // ==========================================================
-// ESTADO DE CÁMARA
+// SERVICE WORKER
 // ==========================================================
 
-function cambiarEstado(
-  activo,
-  texto
+if (
+  "serviceWorker" in navigator
 ) {
 
-  textoEstado.textContent =
-    texto;
+  window.addEventListener(
+    "load",
+    function() {
 
-  if (activo) {
+      navigator.serviceWorker
+        .register(
+          "./service-worker.js"
+        )
+        .catch(function(error) {
 
-    punto.classList.add(
-      "activo"
-    );
+          console.error(
+            "Error Service Worker:",
+            error
+          );
+
+        });
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// INDEXEDDB
+// ==========================================================
+
+function abrirDB() {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const request =
+        indexedDB.open(
+          DB_NAME,
+          DB_VERSION
+        );
+
+
+      request.onupgradeneeded =
+        function(event) {
+
+          const database =
+            event.target.result;
+
+
+          if (
+            !database.objectStoreNames.contains(
+              "alumnos"
+            )
+          ) {
+
+            database.createObjectStore(
+              "alumnos",
+              {
+                keyPath: "idQR"
+              }
+            );
+
+          }
+
+
+          if (
+            !database.objectStoreNames.contains(
+              "asistencias"
+            )
+          ) {
+
+            const store =
+              database.createObjectStore(
+                "asistencias",
+                {
+                  keyPath: "id"
+                }
+              );
+
+
+            store.createIndex(
+              "idQR",
+              "idQR",
+              {
+                unique: false
+              }
+            );
+
+
+            store.createIndex(
+              "fecha",
+              "fecha",
+              {
+                unique: false
+              }
+            );
+
+          }
+
+        };
+
+
+      request.onsuccess =
+        function(event) {
+
+          db =
+            event.target.result;
+
+          resolve(db);
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// OBTENER ALUMNO LOCAL
+// ==========================================================
+
+function obtenerAlumno(
+  idQR
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "alumnos",
+          "readonly"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "alumnos"
+        );
+
+
+      const request =
+        store.get(idQR);
+
+
+      request.onsuccess =
+        function() {
+
+          resolve(
+            request.result || null
+          );
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// GUARDAR ALUMNO
+// ==========================================================
+
+function guardarAlumno(
+  alumno
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "alumnos",
+          "readwrite"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "alumnos"
+        );
+
+
+      const request =
+        store.put(alumno);
+
+
+      request.onsuccess =
+        function() {
+
+          resolve();
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// OBTENER FECHA LOCAL
+// ==========================================================
+
+function obtenerFecha() {
+
+  return new Intl.DateTimeFormat(
+    "es-MX",
+    {
+      timeZone:
+        "America/Mexico_City",
+
+      day: "2-digit",
+
+      month: "2-digit",
+
+      year: "numeric"
+    }
+  ).format(
+    new Date()
+  );
+
+}
+
+
+// ==========================================================
+// OBTENER HORA LOCAL
+// ==========================================================
+
+function obtenerHora() {
+
+  return new Intl.DateTimeFormat(
+    "es-MX",
+    {
+      timeZone:
+        "America/Mexico_City",
+
+      hour: "2-digit",
+
+      minute: "2-digit",
+
+      second: "2-digit",
+
+      hour12: false
+    }
+  ).format(
+    new Date()
+  );
+
+}
+
+
+// ==========================================================
+// CREAR ID LOCAL
+// ==========================================================
+
+function crearIdAsistencia(
+  idQR,
+  fecha
+) {
+
+  return (
+    idQR +
+    "_" +
+    fecha
+  );
+
+}
+
+
+// ==========================================================
+// VERIFICAR ASISTENCIA LOCAL
+// ==========================================================
+
+function obtenerAsistencia(
+  id
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "asistencias",
+          "readonly"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "asistencias"
+        );
+
+
+      const request =
+        store.get(id);
+
+
+      request.onsuccess =
+        function() {
+
+          resolve(
+            request.result || null
+          );
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// GUARDAR ASISTENCIA LOCAL
+// ==========================================================
+
+function guardarAsistencia(
+  asistencia
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "asistencias",
+          "readwrite"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "asistencias"
+        );
+
+
+      const request =
+        store.put(asistencia);
+
+
+      request.onsuccess =
+        function() {
+
+          resolve();
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// OBTENER PENDIENTES
+// ==========================================================
+
+function obtenerPendientes() {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "asistencias",
+          "readonly"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "asistencias"
+        );
+
+
+      const request =
+        store.getAll();
+
+
+      request.onsuccess =
+        function() {
+
+          resolve(
+            request.result.filter(
+              function(item) {
+
+                return !item.sincronizado;
+
+              }
+            )
+          );
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// CONTADOR
+// ==========================================================
+
+async function actualizarContador() {
+
+  if (!db) {
+    return;
+  }
+
+
+  const pendientes =
+    await obtenerPendientes();
+
+
+  contador.textContent =
+    "Asistencias pendientes: " +
+    pendientes.length;
+
+}
+
+
+// ==========================================================
+// ESTADO INTERNET
+// ==========================================================
+
+function actualizarConexion() {
+
+  if (navigator.onLine) {
+
+    conexion.textContent =
+      "🌐 Con conexión";
+
+    conexion.className =
+      "conexion online";
 
   } else {
 
-    punto.classList.remove(
-      "activo"
-    );
+    conexion.textContent =
+      "📵 Modo offline";
+
+    conexion.className =
+      "conexion offline";
 
   }
 
 }
 
 
+window.addEventListener(
+  "online",
+  function() {
+
+    actualizarConexion();
+
+    sincronizar();
+
+  }
+);
+
+
+window.addEventListener(
+  "offline",
+  actualizarConexion
+);
+
+
+actualizarConexion();
+
+
 // ==========================================================
-// INICIAR SCANNER
+// INICIAR CÁMARA
 // ==========================================================
 
 function iniciarScanner() {
@@ -707,10 +1261,8 @@ function iniciarScanner() {
   boton.disabled = true;
 
 
-  cambiarEstado(
-    false,
-    "Activando cámara..."
-  );
+  textoEstado.textContent =
+    "Activando cámara...";
 
 
   resultado.innerHTML =
@@ -739,9 +1291,9 @@ function iniciarScanner() {
   scanner.start(
 
     {
-      facingMode: "environment"
+      facingMode:
+        "environment"
     },
-
 
     {
 
@@ -759,7 +1311,6 @@ function iniciarScanner() {
 
     },
 
-
     function(decodedText) {
 
       procesarQR(
@@ -768,11 +1319,9 @@ function iniciarScanner() {
 
     },
 
+    function() {
 
-    function(errorMessage) {
-
-      // Errores normales
-      // durante la búsqueda.
+      // Ignorar errores normales.
 
     }
 
@@ -781,11 +1330,12 @@ function iniciarScanner() {
 
   .then(function() {
 
-
-    cambiarEstado(
-      true,
-      "Cámara activa"
+    punto.classList.add(
+      "activo"
     );
+
+    textoEstado.textContent =
+      "Cámara activa";
 
 
     resultado.innerHTML =
@@ -809,27 +1359,16 @@ function iniciarScanner() {
 
   .catch(function(error) {
 
-
     scanner = null;
 
     boton.disabled = false;
-
-
-    cambiarEstado(
-      false,
-      "Cámara inactiva"
-    );
 
 
     resultado.innerHTML =
 
       "<div class='error'>" +
 
-      "<div class='icono-resultado icono-error'>" +
-
-      "⚠️" +
-
-      "</div>" +
+      "<div class='icono icono-error'>⚠️</div>" +
 
       "<h2>No se pudo abrir la cámara</h2>" +
 
@@ -849,10 +1388,10 @@ function iniciarScanner() {
 
 
 // ==========================================================
-// PROCESAR QR
+// PROCESAR QR OFFLINE
 // ==========================================================
 
-function procesarQR(
+async function procesarQR(
   codigo
 ) {
 
@@ -860,10 +1399,6 @@ function procesarQR(
   const ahora =
     Date.now();
 
-
-  // --------------------------------------------------------
-  // EVITAR DOBLE LECTURA
-  // --------------------------------------------------------
 
   if (
     codigo === ultimoQR &&
@@ -893,315 +1428,134 @@ function procesarQR(
   procesando = true;
 
 
-  cambiarEstado(
-    false,
-    "Registrando asistencia..."
-  );
-
-
-  resultado.innerHTML =
-
-    "<div class='info'>" +
-
-    "<strong>⏳ Registrando asistencia</strong>" +
-
-    "<p>" +
-
-    "Consultando información del alumno..."
-
-    +
-
-    "</p>" +
-
-    "</div>";
-
-
-  // --------------------------------------------------------
-  // DETENER CÁMARA
-  // --------------------------------------------------------
-
   detenerScanner();
 
 
-  // --------------------------------------------------------
-  // JSONP
-  // --------------------------------------------------------
+  try {
 
-  const callback =
-    "callback_" +
-    Date.now();
-
-
-  window[callback] =
-    function(respuesta) {
-
-      try {
-
-        mostrarResultado(
-          respuesta
-        );
-
-      }
-
-      finally {
-
-        try {
-
-          delete window[callback];
-
-        } catch (e) {}
-
-      }
-
-    };
+    const alumno =
+      await obtenerAlumno(
+        codigo
+      );
 
 
-  const script =
-    document.createElement(
-      "script"
-    );
+    // ======================================================
+    // ALUMNO NO EXISTE LOCALMENTE
+    // ======================================================
 
+    if (!alumno) {
 
-  script.src =
-    URL_GOOGLE +
-    "?idQR=" +
-    encodeURIComponent(
-      codigo
-    ) +
-    "&callback=" +
-    callback;
+      mostrarError(
 
+        "Código no disponible",
 
-  script.onerror =
-    function() {
+        "Este alumno no está descargado en el dispositivo."
 
-
-      try {
-
-        delete window[callback];
-
-      } catch (e) {}
-
-
-      resultado.innerHTML =
-
-        "<div class='error'>" +
-
-        "<div class='icono-resultado icono-error'>" +
-
-        "⚠️" +
-
-        "</div>" +
-
-        "<h2>Error de conexión</h2>" +
-
-        "<p>" +
-
-        "No fue posible comunicarse con el servidor."
-
-        +
-
-        "</p>" +
-
-        "</div>";
-
+      );
 
       reiniciarScanner();
 
+      return;
+
+    }
+
+
+    // ======================================================
+    // FECHA Y HORA
+    // ======================================================
+
+    const fecha =
+      obtenerFecha();
+
+
+    const hora =
+      obtenerHora();
+
+
+    const id =
+      crearIdAsistencia(
+        alumno.idQR,
+        fecha
+      );
+
+
+    // ======================================================
+    // DUPLICADO LOCAL
+    // ======================================================
+
+    const existente =
+      await obtenerAsistencia(
+        id
+      );
+
+
+    if (existente) {
+
+      mostrarDuplicado(
+        existente
+      );
+
+      reiniciarScanner();
+
+      return;
+
+    }
+
+
+    // ======================================================
+    // GUARDAR LOCALMENTE
+    // ======================================================
+
+    const asistencia = {
+
+      id: id,
+
+      idQR:
+        alumno.idQR,
+
+      nombre:
+        alumno.nombre,
+
+      grupo:
+        alumno.grupo,
+
+      fecha:
+        fecha,
+
+      hora:
+        hora,
+
+      sincronizado:
+        false
+
     };
 
 
-  document
-    .body
-    .appendChild(
-      script
+    await guardarAsistencia(
+      asistencia
     );
 
-}
+
+    // ======================================================
+    // MOSTRAR ÉXITO
+    // ======================================================
+
+    mostrarExito(
+      asistencia
+    );
 
 
-// ==========================================================
-// MOSTRAR RESULTADO
-// ==========================================================
+    actualizarContador();
 
-function mostrarResultado(
-  respuesta
-) {
-
-
-  // ========================================================
-  // ÉXITO
-  // ========================================================
-
-  if (
-    respuesta &&
-    respuesta.ok === true
-  ) {
-
-
-    resultado.innerHTML =
-
-      "<div class='exito'>" +
-
-      "<div class='icono-resultado'>" +
-
-      "✓" +
-
-      "</div>" +
-
-      "<h2>Asistencia registrada</h2>" +
-
-      "<div class='nombre'>" +
-
-      escaparHTML(
-        respuesta.nombre
-      ) +
-
-      "</div>" +
-
-      "<div>" +
-
-      "<span class='grupo'>" +
-
-      "Grupo: " +
-
-      escaparHTML(
-        respuesta.grupo
-      ) +
-
-      "</span>" +
-
-      "</div>" +
-
-      "<div class='hora'>" +
-
-      "📅 " +
-
-      escaparHTML(
-        respuesta.fecha
-      ) +
-
-      " &nbsp; • &nbsp; 🕐 " +
-
-      escaparHTML(
-        respuesta.hora
-      ) +
-
-      "</div>" +
-
-      "</div>";
 
   }
 
+  catch (error) {
 
-  // ========================================================
-  // DUPLICADO
-  // ========================================================
-
-  else if (
-    respuesta &&
-    respuesta.duplicado === true
-  ) {
-
-
-    resultado.innerHTML =
-
-      "<div class='error'>" +
-
-      "<div class='icono-resultado icono-error'>" +
-
-      "!" +
-
-      "</div>" +
-
-      "<h2>Asistencia ya registrada</h2>" +
-
-      "<div class='nombre'>" +
-
-      escaparHTML(
-        respuesta.nombre
-      ) +
-
-      "</div>" +
-
-      "<div>" +
-
-      "<span class='grupo'>" +
-
-      "Grupo: " +
-
-      escaparHTML(
-        respuesta.grupo
-      ) +
-
-      "</span>" +
-
-      "</div>" +
-
-      "<div class='hora'>" +
-
-      "🕐 Registrada a las " +
-
-      escaparHTML(
-        respuesta.hora
-      ) +
-
-      "</div>" +
-
-      "<p>" +
-
-      escaparHTML(
-        respuesta.mensaje
-      ) +
-
-      "</p>" +
-
-      "</div>";
-
-  }
-
-
-  // ========================================================
-  // ERROR
-  // ========================================================
-
-  else {
-
-
-    resultado.innerHTML =
-
-      "<div class='error'>" +
-
-      "<div class='icono-resultado icono-error'>" +
-
-      "⚠️" +
-
-      "</div>" +
-
-      "<h2>No se pudo registrar</h2>" +
-
-      "<p>" +
-
-      escaparHTML(
-
-        respuesta &&
-        respuesta.mensaje
-
-          ?
-
-        respuesta.mensaje
-
-          :
-
-        "Respuesta no válida del servidor."
-
-      )
-
-      +
-
-      "</p>" +
-
-      "</div>";
+    mostrarError(
+      "Error local",
+      error.message
+    );
 
   }
 
@@ -1212,16 +1566,157 @@ function mostrarResultado(
 
 
 // ==========================================================
+// ÉXITO
+// ==========================================================
+
+function mostrarExito(
+  asistencia
+) {
+
+  resultado.innerHTML =
+
+    "<div class='exito'>" +
+
+    "<div class='icono'>✓</div>" +
+
+    "<h2>Asistencia registrada</h2>" +
+
+    "<div class='nombre'>" +
+
+    escaparHTML(
+      asistencia.nombre
+    ) +
+
+    "</div>" +
+
+    "<span class='grupo'>" +
+
+    "Grupo: " +
+
+    escaparHTML(
+      asistencia.grupo
+    ) +
+
+    "</span>" +
+
+    "<div class='hora'>" +
+
+    "📅 " +
+
+    escaparHTML(
+      asistencia.fecha
+    ) +
+
+    " &nbsp; • &nbsp; 🕐 " +
+
+    escaparHTML(
+      asistencia.hora
+    ) +
+
+    "</div>" +
+
+    "<p>" +
+
+    "✓ Guardada en el dispositivo"
+
+    +
+
+    "</p>" +
+
+    "</div>";
+
+}
+
+
+// ==========================================================
+// DUPLICADO
+// ==========================================================
+
+function mostrarDuplicado(
+  asistencia
+) {
+
+  resultado.innerHTML =
+
+    "<div class='error'>" +
+
+    "<div class='icono icono-error'>!</div>" +
+
+    "<h2>Asistencia ya registrada</h2>" +
+
+    "<div class='nombre'>" +
+
+    escaparHTML(
+      asistencia.nombre
+    ) +
+
+    "</div>" +
+
+    "<span class='grupo'>" +
+
+    "Grupo: " +
+
+    escaparHTML(
+      asistencia.grupo
+    ) +
+
+    "</span>" +
+
+    "<div class='hora'>" +
+
+    "🕐 Registrada a las " +
+
+    escaparHTML(
+      asistencia.hora
+    ) +
+
+    "</div>" +
+
+    "</div>";
+
+}
+
+
+// ==========================================================
+// ERROR
+// ==========================================================
+
+function mostrarError(
+  titulo,
+  mensaje
+) {
+
+  resultado.innerHTML =
+
+    "<div class='error'>" +
+
+    "<div class='icono icono-error'>⚠️</div>" +
+
+    "<h2>" +
+
+    escaparHTML(titulo) +
+
+    "</h2>" +
+
+    "<p>" +
+
+    escaparHTML(mensaje) +
+
+    "</p>" +
+
+    "</div>";
+
+}
+
+
+// ==========================================================
 // DETENER SCANNER
 // ==========================================================
 
 function detenerScanner() {
 
-
   if (!scanner) {
-
     return;
-
   }
 
 
@@ -1241,44 +1736,505 @@ function detenerScanner() {
 
 
 // ==========================================================
-// REINICIAR SCANNER
+// REINICIAR
 // ==========================================================
 
 function reiniciarScanner() {
 
+  setTimeout(
+    function() {
 
-  setTimeout(function() {
+      procesando = false;
 
+      scanner = null;
 
-    procesando = false;
+      boton.disabled = false;
 
-    scanner = null;
+      punto.classList.remove(
+        "activo"
+      );
 
-    boton.disabled = false;
-
-
-    cambiarEstado(
-      false,
-      "Preparado para escanear"
-    );
-
-
-    iniciarScanner();
+      textoEstado.textContent =
+        "Preparado para escanear";
 
 
-  }, 3000);
+      iniciarScanner();
+
+    },
+    2500
+  );
 
 }
 
 
 // ==========================================================
-// SEGURIDAD HTML
+// SINCRONIZAR
+// ==========================================================
+
+async function sincronizar() {
+
+
+  if (!navigator.onLine) {
+
+    mostrarError(
+      "Sin conexión",
+      "Las asistencias permanecen guardadas en este dispositivo."
+    );
+
+    return;
+
+  }
+
+
+  const pendientes =
+    await obtenerPendientes();
+
+
+  if (
+    pendientes.length === 0
+  ) {
+
+    alert(
+      "No hay asistencias pendientes."
+    );
+
+    return;
+
+  }
+
+
+  resultado.innerHTML =
+
+    "<div class='info'>" +
+
+    "<strong>☁️ Sincronizando...</strong>" +
+
+    "<p>" +
+
+    "Enviando " +
+
+    pendientes.length +
+
+    " asistencia(s)."
+
+    +
+
+    "</p>" +
+
+    "</div>";
+
+
+  let enviadas = 0;
+
+
+  for (
+    const asistencia
+    of pendientes
+  ) {
+
+    try {
+
+      const respuesta =
+        await enviarAsistencia(
+          asistencia
+        );
+
+
+      if (
+        respuesta &&
+        (
+          respuesta.ok === true ||
+          respuesta.duplicado === true
+        )
+      ) {
+
+        await marcarSincronizada(
+          asistencia.id
+        );
+
+        enviadas++;
+
+      }
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Error sincronizando:",
+        error
+      );
+
+    }
+
+  }
+
+
+  await actualizarContador();
+
+
+  document.getElementById(
+    "sincronizacion"
+  ).textContent =
+
+    "Última sincronización: " +
+
+    new Date().toLocaleTimeString(
+      "es-MX"
+    );
+
+
+  resultado.innerHTML =
+
+    "<div class='exito'>" +
+
+    "<div class='icono'>✓</div>" +
+
+    "<h2>Sincronización completa</h2>" +
+
+    "<p>" +
+
+    enviadas +
+
+    " asistencia(s) enviada(s) a Google."
+
+    +
+
+    "</p>" +
+
+    "</div>";
+
+
+  setTimeout(
+    iniciarScanner,
+    2500
+  );
+
+}
+
+
+// ==========================================================
+// ENVIAR UNA ASISTENCIA
+// ==========================================================
+
+function enviarAsistencia(
+  asistencia
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const callback =
+        "sync_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .substring(2);
+
+
+      window[callback] =
+        function(respuesta) {
+
+          try {
+
+            resolve(
+              respuesta
+            );
+
+          }
+
+          finally {
+
+            delete window[
+              callback
+            ];
+
+          }
+
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        URL_GOOGLE +
+
+        "?action=registrar" +
+
+        "&idQR=" +
+        encodeURIComponent(
+          asistencia.idQR
+        ) +
+
+        "&nombre=" +
+        encodeURIComponent(
+          asistencia.nombre
+        ) +
+
+        "&grupo=" +
+        encodeURIComponent(
+          asistencia.grupo
+        ) +
+
+        "&fecha=" +
+        encodeURIComponent(
+          asistencia.fecha
+        ) +
+
+        "&hora=" +
+        encodeURIComponent(
+          asistencia.hora
+        ) +
+
+        "&callback=" +
+        callback;
+
+
+      script.onerror =
+        function() {
+
+          delete window[
+            callback
+          ];
+
+          reject(
+            new Error(
+              "No se pudo conectar con Google."
+            )
+          );
+
+        };
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// MARCAR COMO SINCRONIZADA
+// ==========================================================
+
+function marcarSincronizada(
+  id
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const transaction =
+        db.transaction(
+          "asistencias",
+          "readwrite"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "asistencias"
+        );
+
+
+      const request =
+        store.get(id);
+
+
+      request.onsuccess =
+        function() {
+
+          const registro =
+            request.result;
+
+
+          if (!registro) {
+
+            resolve();
+
+            return;
+
+          }
+
+
+          registro.sincronizado =
+            true;
+
+
+          store.put(
+            registro
+          );
+
+
+          resolve();
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// CARGAR ALUMNOS DESDE GOOGLE
+// ==========================================================
+
+function descargarAlumnos() {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      if (!navigator.onLine) {
+
+        reject(
+          new Error(
+            "No hay conexión a Internet."
+          )
+        );
+
+        return;
+
+      }
+
+
+      const callback =
+        "alumnos_" +
+        Date.now();
+
+
+      window[callback] =
+        async function(respuesta) {
+
+          try {
+
+            if (
+              !respuesta ||
+              !respuesta.ok
+            ) {
+
+              reject(
+                new Error(
+                  respuesta &&
+                  respuesta.mensaje
+                    ?
+
+                  respuesta.mensaje
+
+                    :
+
+                  "No fue posible descargar alumnos."
+                )
+              );
+
+              return;
+
+            }
+
+
+            for (
+              const alumno
+              of respuesta.alumnos
+            ) {
+
+              await guardarAlumno(
+                alumno
+              );
+
+            }
+
+
+            resolve(
+              respuesta.alumnos.length
+            );
+
+          }
+
+          catch (error) {
+
+            reject(
+              error
+            );
+
+          }
+
+          finally {
+
+            delete window[
+              callback
+            ];
+
+          }
+
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        URL_GOOGLE +
+
+        "?action=alumnos" +
+
+        "&callback=" +
+        callback;
+
+
+      script.onerror =
+        function() {
+
+          delete window[
+            callback
+          ];
+
+          reject(
+            new Error(
+              "No se pudo descargar la lista de alumnos."
+            )
+          );
+
+        };
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// ESCAPAR HTML
 // ==========================================================
 
 function escaparHTML(
   valor
 ) {
-
 
   if (
     valor === null ||
@@ -1320,8 +2276,35 @@ function escaparHTML(
 }
 
 
-</script>
+// ==========================================================
+// INICIALIZACIÓN
+// ==========================================================
 
+async function iniciarAplicacion() {
+
+  try {
+
+    await abrirDB();
+
+    await actualizarContador();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Error inicializando:",
+      error
+    );
+
+  }
+
+}
+
+
+iniciarAplicacion();
+
+</script>
 
 </body>
 
