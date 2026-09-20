@@ -1250,7 +1250,10 @@
                   alumno.nombre,
 
                 grupo:
-                  alumno.grupo
+                  alumno.grupo 
+
+                activo:
+                  alumno.activo
 
               });
 
@@ -1842,6 +1845,27 @@
         );
 
         return;
+
+        if (
+  String(alumno.activo)
+    .trim()
+    .toLowerCase() !== "sí" &&
+  String(alumno.activo)
+    .trim()
+    .toLowerCase() !== "si"
+) {
+
+  mostrarResultado(
+    "🚫",
+    "Alumno inactivo",
+    alumno.nombre +
+    " · " +
+    alumno.grupo +
+    "\nNo tiene autorización para registrar asistencia.",
+    "error"
+  );
+
+  return;
 
       }
 
