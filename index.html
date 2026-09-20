@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
   <meta
@@ -13,649 +15,911 @@
     content="#0f172a"
   >
 
-  <title> Ludwing Van Beethoven </title>
+  <title>Control de Asistencia</title>
 
-  <!-- Lector QR -->
+
+  <!-- ==========================================
+       LECTOR QR
+       ========================================== -->
+
   <script
     src="https://unpkg.com/html5-qrcode"
     type="text/javascript">
   </script>
 
+
   <style>
 
-   ```css
-/* =====================================================
-   DISEÑO RESPONSIVO
-   Se adapta a celular, tablet y PC
-   ===================================================== */
+    /* ==========================================
+       RESET
+       ========================================== */
 
-* {
-  box-sizing: border-box;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-html {
-  width: 100%;
-  min-height: 100%;
-}
 
-body {
-  margin: 0;
-  min-height: 100vh;
+    html {
+      width: 100%;
+      min-height: 100%;
+    }
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
 
-  background:
-    linear-gradient(
-      145deg,
-      #0f172a 0%,
-      #172554 50%,
-      #0f766e 100%
-    );
+    body {
 
-  color: #0f172a;
+      margin: 0;
 
-  padding:
-    clamp(10px, 2vw, 28px);
-}
+      width: 100%;
 
+      min-height: 100vh;
 
-/* =====================================================
-   CONTENEDOR PRINCIPAL
-   ===================================================== */
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
 
-.app {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-}
+      background:
+        linear-gradient(
+          145deg,
+          #0f172a 0%,
+          #172554 50%,
+          #0f766e 100%
+        );
 
+      color: #0f172a;
 
-/* =====================================================
-   ENCABEZADO
-   ===================================================== */
+      padding:
+        clamp(8px, 2vw, 28px);
 
-.header {
-  color: white;
-  margin-bottom: clamp(12px, 2vw, 20px);
-}
+    }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 
-  gap: 14px;
-}
+    /* ==========================================
+       CONTENEDOR
+       ========================================== */
 
-.title {
-  margin: 0;
+    .app {
 
-  font-size:
-    clamp(21px, 3vw, 30px);
+      width: 100%;
 
-  font-weight: 750;
+      max-width: 820px;
 
-  letter-spacing: -0.5px;
+      margin: 0 auto;
 
-  line-height: 1.15;
-}
+    }
 
-.subtitle {
-  margin:
-    5px 0 0;
 
-  color: #cbd5e1;
+    /* ==========================================
+       ENCABEZADO
+       ========================================== */
 
-  font-size:
-    clamp(12px, 1.7vw, 14px);
-}
+    .header {
 
+      color: white;
 
-/* =====================================================
-   ESTADO DE CONEXIÓN
-   ===================================================== */
+      margin-bottom:
+        clamp(10px, 2vw, 18px);
 
-.connection {
-  display: flex;
+    }
 
-  align-items: center;
 
-  gap: 6px;
+    .header-row {
 
-  padding:
-    7px 11px;
+      display: flex;
 
-  border-radius: 20px;
+      align-items: center;
 
-  background:
-    rgba(255,255,255,0.12);
+      justify-content: space-between;
 
-  border:
-    1px solid
-    rgba(255,255,255,0.15);
+      gap: 15px;
 
-  color: white;
+    }
 
-  font-size: 11px;
 
-  white-space: nowrap;
+    .title {
 
-  flex-shrink: 0;
-}
+      margin: 0;
 
-.connection-dot {
-  width: 8px;
-  height: 8px;
+      font-size:
+        clamp(21px, 4vw, 30px);
 
-  border-radius: 50%;
+      font-weight: 750;
 
-  background: #22c55e;
-}
+      line-height: 1.15;
 
-.connection.offline .connection-dot {
-  background: #f59e0b;
-}
+      letter-spacing: -0.5px;
 
+    }
 
-/* =====================================================
-   TARJETA PRINCIPAL
-   ===================================================== */
 
-.card {
-  width: 100%;
+    .subtitle {
 
-  background:
-    rgba(255,255,255,0.98);
+      margin:
+        5px 0 0;
 
-  border-radius:
-    clamp(16px, 3vw, 24px);
+      color: #cbd5e1;
 
-  padding:
-    clamp(13px, 3vw, 24px);
+      font-size:
+        clamp(11px, 1.8vw, 14px);
 
-  box-shadow:
-    0 18px 40px
-    rgba(0,0,0,0.25);
-}
+    }
 
 
-/* =====================================================
-   ESTADÍSTICAS
-   ===================================================== */
+    /* ==========================================
+       ESTADO DE CONEXIÓN
+       ========================================== */
 
-.stats {
-  display: grid;
+    .connection {
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+      display: flex;
 
-  gap:
-    clamp(8px, 2vw, 12px);
+      align-items: center;
 
-  margin-bottom:
-    clamp(12px, 2vw, 18px);
-}
+      gap: 6px;
 
-.stat {
-  min-width: 0;
+      padding:
+        7px 11px;
 
-  background: #f8fafc;
+      border-radius: 20px;
 
-  border:
-    1px solid
-    #e2e8f0;
+      background:
+        rgba(255,255,255,0.12);
 
-  border-radius: 13px;
+      border:
+        1px solid
+        rgba(255,255,255,0.15);
 
-  padding:
-    clamp(9px, 2vw, 13px);
-}
+      color: white;
 
-.stat-label {
-  font-size:
-    clamp(9px, 1.5vw, 11px);
+      font-size:
+        clamp(10px, 1.5vw, 12px);
 
-  color: #64748b;
+      white-space: nowrap;
 
-  margin-bottom: 3px;
-}
+      flex-shrink: 0;
 
-.stat-value {
-  font-size:
-    clamp(18px, 3vw, 23px);
+    }
 
-  font-weight: 750;
 
-  color: #0f172a;
-}
+    .connection-dot {
 
+      width: 8px;
 
-/* =====================================================
-   CABECERA DE CÁMARA
-   ===================================================== */
+      height: 8px;
 
-.camera-header {
-  display: flex;
+      border-radius: 50%;
 
-  justify-content: space-between;
+      background: #22c55e;
 
-  align-items: center;
+      flex-shrink: 0;
 
-  gap: 10px;
+    }
 
-  margin-bottom: 8px;
-}
 
-.camera-title {
-  font-size:
-    clamp(13px, 2vw, 15px);
+    .connection.offline
+    .connection-dot {
 
-  font-weight: 700;
+      background: #f59e0b;
 
-  color: #1e293b;
-}
+    }
 
-.camera-status {
-  font-size:
-    clamp(10px, 1.5vw, 12px);
 
-  color: #64748b;
+    /* ==========================================
+       TARJETA
+       ========================================== */
 
-  text-align: right;
-}
+    .card {
 
+      width: 100%;
 
-/* =====================================================
-   CÁMARA
-   ===================================================== */
+      background:
+        rgba(255,255,255,0.98);
 
-.camera-wrapper {
-  width: 100%;
+      border-radius:
+        clamp(16px, 3vw, 24px);
 
-  /*
-    La cámara crece según el dispositivo,
-    pero nunca se vuelve excesivamente grande.
-  */
+      padding:
+        clamp(12px, 3vw, 26px);
 
-  max-width:
-    clamp(290px, 70vw, 460px);
+      box-shadow:
+        0 18px 40px
+        rgba(0,0,0,0.25);
 
-  margin: 0 auto;
+    }
 
-  padding: 4px;
 
-  background: #020617;
+    /* ==========================================
+       ESTADÍSTICAS
+       ========================================== */
 
-  border-radius:
-    clamp(15px, 3vw, 20px);
+    .stats {
 
-  box-shadow:
-    0 8px 22px
-    rgba(15,23,42,0.20);
+      display: grid;
 
-  overflow: hidden;
-}
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-#reader {
-  width: 100%;
-}
+      gap:
+        clamp(7px, 2vw, 12px);
 
-#reader video {
-  width: 100% !important;
+      margin-bottom:
+        clamp(11px, 2vw, 18px);
 
-  height: auto !important;
+    }
 
-  min-height: 0 !important;
 
-  border-radius: 14px !important;
+    .stat {
 
-  object-fit: cover !important;
-}
+      min-width: 0;
 
-#reader__scan_region {
-  background: #020617 !important;
-}
+      background: #f8fafc;
 
-#reader__dashboard {
-  background: #020617 !important;
+      border:
+        1px solid
+        #e2e8f0;
 
-  padding: 5px !important;
-}
+      border-radius: 13px;
 
-#reader__dashboard_section_swaplink {
-  color: white !important;
-}
+      padding:
+        clamp(9px, 2vw, 14px);
 
+    }
 
-/* =====================================================
-   RESULTADO
-   ===================================================== */
 
-.result {
-  width: 100%;
+    .stat-label {
 
-  margin-top:
-    clamp(10px, 2vw, 14px);
+      font-size:
+        clamp(9px, 1.5vw, 11px);
 
-  padding:
-    clamp(10px, 2vw, 14px);
+      color: #64748b;
 
-  min-height:
-    clamp(64px, 10vw, 76px);
+      margin-bottom: 3px;
 
-  display: flex;
+    }
 
-  align-items: center;
 
-  justify-content: center;
+    .stat-value {
 
-  text-align: center;
+      font-size:
+        clamp(18px, 3vw, 24px);
 
-  border-radius: 14px;
+      font-weight: 750;
 
-  background: #f8fafc;
+      color: #0f172a;
 
-  border:
-    1px solid
-    #e2e8f0;
-}
+    }
 
-.result-icon {
-  font-size:
-    clamp(20px, 3vw, 24px);
 
-  margin-bottom: 2px;
-}
+    /* ==========================================
+       CABECERA DEL ESCÁNER
+       ========================================== */
 
-.result-title {
-  font-size:
-    clamp(13px, 2vw, 15px);
+    .camera-header {
 
-  font-weight: 750;
+      display: flex;
 
-  color: #334155;
+      align-items: center;
 
-  overflow-wrap: anywhere;
-}
+      justify-content: space-between;
 
-.result-detail {
-  margin-top: 3px;
+      gap: 10px;
 
-  font-size:
-    clamp(11px, 1.7vw, 13px);
+      margin-bottom: 8px;
 
-  color: #64748b;
+    }
 
-  white-space: pre-line;
 
-  overflow-wrap: anywhere;
-}
+    .camera-title {
 
-.result.success {
-  background: #ecfdf5;
+      font-size:
+        clamp(13px, 2vw, 16px);
 
-  border-color: #a7f3d0;
-}
+      font-weight: 700;
 
-.result.success .result-title {
-  color: #047857;
-}
+      color: #1e293b;
 
-.result.error {
-  background: #fef2f2;
+    }
 
-  border-color: #fecaca;
-}
 
-.result.error .result-title {
-  color: #b91c1c;
-}
+    .camera-status {
 
-.result.offline {
-  background: #fffbeb;
+      font-size:
+        clamp(10px, 1.5vw, 12px);
 
-  border-color: #fde68a;
-}
+      color: #64748b;
 
-.result.offline .result-title {
-  color: #92400e;
-}
+      text-align: right;
 
+    }
 
-/* =====================================================
-   BOTÓN
-   ===================================================== */
 
-.sync-button {
-  width: 100%;
+    /* ==========================================
+       CÁMARA RESPONSIVA
+       ========================================== */
 
-  margin-top:
-    clamp(9px, 2vw, 12px);
+    .camera-wrapper {
 
-  min-height: 44px;
+      width: 100%;
 
-  padding:
-    10px 14px;
+      /*
+        La cámara se adapta al ancho disponible.
+        Nunca supera 460px.
+      */
 
-  border: 0;
+      max-width:
+        min(460px, 78vw);
 
-  border-radius: 11px;
+      margin:
+        0 auto;
 
-  background: #0f172a;
+      padding: 4px;
 
-  color: white;
+      background: #020617;
 
-  font-size:
-    clamp(11px, 1.7vw, 13px);
+      border-radius:
+        clamp(15px, 3vw, 20px);
 
-  font-weight: 650;
+      box-shadow:
+        0 8px 22px
+        rgba(15,23,42,0.20);
 
-  cursor: pointer;
+      overflow: hidden;
 
-  transition:
-    opacity 0.2s ease,
-    transform 0.1s ease;
-}
+    }
 
-.sync-button:active {
-  transform: scale(0.99);
-}
 
-.sync-button:disabled {
-  opacity: 0.45;
+    #reader {
 
-  cursor: default;
-}
+      width: 100%;
 
+    }
 
-/* =====================================================
-   PIE
-   ===================================================== */
 
-.footer {
-  text-align: center;
+    #reader video {
 
-  margin-top:
-    clamp(9px, 2vw, 13px);
+      width: 100% !important;
 
-  color: #94a3b8;
+      height: auto !important;
 
-  font-size:
-    clamp(9px, 1.4vw, 11px);
-}
+      max-width: 100% !important;
 
+      border-radius: 14px !important;
 
-/* =====================================================
-   CELULARES PEQUEÑOS
-   320px - 380px
-   ===================================================== */
+      object-fit: cover !important;
 
-@media (max-width: 380px) {
+    }
 
-  body {
-    padding: 8px;
-  }
 
-  .header-row {
-    align-items: flex-start;
-  }
+    #reader__scan_region {
 
-  .title {
-    font-size: 20px;
-  }
+      background: #020617 !important;
 
-  .subtitle {
-    font-size: 11px;
-  }
+    }
 
-  .connection {
-    padding:
-      6px 8px;
 
-    font-size: 10px;
-  }
+    #reader__dashboard {
 
-  .card {
-    padding: 11px;
-  }
+      background: #020617 !important;
 
-  .camera-wrapper {
-    max-width: 300px;
-  }
+      padding: 5px !important;
 
-}
+    }
 
 
-/* =====================================================
-   TABLETS
-   600px+
-   ===================================================== */
+    #reader__dashboard_section_swaplink {
 
-@media (min-width: 600px) {
+      color: white !important;
 
-  .card {
-    padding: 22px;
-  }
+    }
 
-  .camera-wrapper {
-    max-width: 400px;
-  }
 
-}
+    /* ==========================================
+       RESULTADO
+       ========================================== */
 
+    .result {
 
-/* =====================================================
-   LAPTOP / PC
-   900px+
-   ===================================================== */
+      width: 100%;
 
-@media (min-width: 900px) {
+      margin-top:
+        clamp(10px, 2vw, 14px);
 
-  .app {
-    max-width: 820px;
-  }
+      padding:
+        clamp(10px, 2vw, 15px);
 
-  .card {
-    padding: 26px;
-  }
+      min-height:
+        clamp(64px, 10vw, 78px);
 
-  .camera-wrapper {
-    max-width: 440px;
-  }
+      display: flex;
 
-}
+      align-items: center;
 
+      justify-content: center;
 
-/* =====================================================
-   PANTALLA HORIZONTAL EN CELULAR / TABLET
-   ===================================================== */
+      text-align: center;
 
-@media (
-  max-height: 600px
-) and (
-  orientation: landscape
-) {
+      border-radius: 14px;
 
-  body {
-    padding: 8px 14px;
-  }
+      background: #f8fafc;
 
-  .header {
-    margin-bottom: 8px;
-  }
+      border:
+        1px solid
+        #e2e8f0;
 
-  .title {
-    font-size: 20px;
-  }
+    }
 
-  .subtitle {
-    display: none;
-  }
 
-  .card {
-    padding: 10px 14px;
-  }
+    .result-icon {
 
-  .stats {
-    margin-bottom: 8px;
-  }
+      font-size:
+        clamp(20px, 3vw, 25px);
 
-  .camera-wrapper {
-    max-width: 300px;
-  }
+      margin-bottom: 2px;
 
-  .result {
-    margin-top: 8px;
-    min-height: 55px;
-    padding: 8px;
-  }
+    }
 
-  .footer {
-    display: none;
-  }
 
-}
+    .result-title {
 
+      font-size:
+        clamp(13px, 2vw, 16px);
 
-/* =====================================================
-   DISPOSITIVOS CON PANTALLA TÁCTIL
-   ===================================================== */
+      font-weight: 750;
 
-@media (pointer: coarse) {
+      color: #334155;
 
-  .sync-button {
-    min-height: 46px;
-  }
+      overflow-wrap: anywhere;
 
-}
+    }
 
 
-/* =====================================================
-   REDUCIR ANIMACIONES SI EL USUARIO LO SOLICITA
-   ===================================================== */
+    .result-detail {
 
-@media (prefers-reduced-motion: reduce) {
+      margin-top: 3px;
 
-  .sync-button {
-    transition: none;
-  }
+      font-size:
+        clamp(11px, 1.7vw, 13px);
 
-}
+      color: #64748b;
+
+      white-space: pre-line;
+
+      overflow-wrap: anywhere;
+
+    }
+
+
+    .result.success {
+
+      background: #ecfdf5;
+
+      border-color: #a7f3d0;
+
+    }
+
+
+    .result.success .result-title {
+
+      color: #047857;
+
+    }
+
+
+    .result.error {
+
+      background: #fef2f2;
+
+      border-color: #fecaca;
+
+    }
+
+
+    .result.error .result-title {
+
+      color: #b91c1c;
+
+    }
+
+
+    .result.offline {
+
+      background: #fffbeb;
+
+      border-color: #fde68a;
+
+    }
+
+
+    .result.offline .result-title {
+
+      color: #92400e;
+
+    }
+
+
+    /* ==========================================
+       BOTÓN
+       ========================================== */
+
+    .sync-button {
+
+      width: 100%;
+
+      min-height: 44px;
+
+      margin-top:
+        clamp(9px, 2vw, 12px);
+
+      padding:
+        10px 14px;
+
+      border: 0;
+
+      border-radius: 11px;
+
+      background: #0f172a;
+
+      color: white;
+
+      font-size:
+        clamp(11px, 1.7vw, 13px);
+
+      font-weight: 650;
+
+      cursor: pointer;
+
+    }
+
+
+    .sync-button:disabled {
+
+      opacity: 0.45;
+
+      cursor: default;
+
+    }
+
+
+    /* ==========================================
+       PIE
+       ========================================== */
+
+    .footer {
+
+      text-align: center;
+
+      margin-top:
+        clamp(9px, 2vw, 13px);
+
+      color: #94a3b8;
+
+      font-size:
+        clamp(9px, 1.4vw, 11px);
+
+    }
+
+
+    /* ==========================================
+       CELULARES PEQUEÑOS
+       ========================================== */
+
+    @media (max-width: 380px) {
+
+      body {
+
+        padding: 8px;
+
+      }
+
+
+      .header-row {
+
+        gap: 8px;
+
+        align-items: flex-start;
+
+      }
+
+
+      .title {
+
+        font-size: 20px;
+
+      }
+
+
+      .subtitle {
+
+        font-size: 11px;
+
+      }
+
+
+      .connection {
+
+        padding:
+          6px 8px;
+
+        font-size: 10px;
+
+      }
+
+
+      .card {
+
+        padding: 11px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 300px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       CELULARES MEDIANOS
+       ========================================== */
+
+    @media (
+      min-width: 381px
+    ) and (
+      max-width: 599px
+    ) {
+
+      .camera-wrapper {
+
+        max-width: 340px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       TABLETS
+       ========================================== */
+
+    @media (min-width: 600px) {
+
+      .camera-wrapper {
+
+        max-width: 400px;
+
+      }
+
+      .card {
+
+        padding: 22px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       LAPTOP
+       ========================================== */
+
+    @media (min-width: 900px) {
+
+      .app {
+
+        max-width: 820px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 440px;
+
+      }
+
+
+      .card {
+
+        padding: 26px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       MONITORES GRANDES
+       ========================================== */
+
+    @media (min-width: 1200px) {
+
+      .app {
+
+        max-width: 850px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 460px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       CELULAR / TABLET HORIZONTAL
+       ========================================== */
+
+    @media (
+      max-height: 600px
+    ) and (
+      orientation: landscape
+    ) {
+
+      body {
+
+        padding:
+          8px 14px;
+
+      }
+
+
+      .header {
+
+        margin-bottom: 7px;
+
+      }
+
+
+      .title {
+
+        font-size: 20px;
+
+      }
+
+
+      .subtitle {
+
+        display: none;
+
+      }
+
+
+      .card {
+
+        padding:
+          10px 14px;
+
+      }
+
+
+      .stats {
+
+        margin-bottom: 7px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 300px;
+
+      }
+
+
+      .result {
+
+        margin-top: 7px;
+
+        min-height: 54px;
+
+        padding: 7px;
+
+      }
+
+
+      .footer {
+
+        display: none;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       PANTALLAS MUY PEQUEÑAS
+       ========================================== */
+
+    @media (max-width: 320px) {
+
+      body {
+
+        padding: 5px;
+
+      }
+
+
+      .title {
+
+        font-size: 18px;
+
+      }
+
+
+      .connection {
+
+        font-size: 9px;
+
+        padding:
+          5px 7px;
+
+      }
+
+
+      .card {
+
+        padding: 9px;
+
+        border-radius: 15px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 285px;
+
+      }
+
+
+      .result {
+
+        padding: 8px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       DISPOSITIVOS TÁCTILES
+       ========================================== */
+
+    @media (pointer: coarse) {
+
+      .sync-button {
+
+        min-height: 46px;
+
+      }
+
+    }
+
+
   </style>
+
 </head>
 
 
 <body>
 
+
   <main class="app">
 
-    <!-- ENCABEZADO -->
+
+    <!-- ========================================
+         ENCABEZADO
+         ======================================== -->
 
     <header class="header">
 
@@ -664,21 +928,24 @@ body {
         <div>
 
           <h1 class="title">
-            "Ludwing Van Beethoven"
+            Control de Asistencia
           </h1>
 
           <p class="subtitle">
-            Control de Asistencia 
+            Escanea el código QR del alumno
           </p>
 
         </div>
+
 
         <div
           id="connectionStatus"
           class="connection"
         >
 
-          <span class="connection-dot"></span>
+          <span
+            class="connection-dot">
+          </span>
 
           <span id="connectionText">
             Conectado
@@ -691,7 +958,9 @@ body {
     </header>
 
 
-    <!-- TARJETA PRINCIPAL -->
+    <!-- ========================================
+         TARJETA PRINCIPAL
+         ======================================== -->
 
     <section class="card">
 
@@ -700,10 +969,11 @@ body {
 
       <div class="stats">
 
+
         <div class="stat">
 
           <div class="stat-label">
-            Alumnos
+            Alumnos disponibles
           </div>
 
           <div
@@ -731,10 +1001,13 @@ body {
 
         </div>
 
+
       </div>
 
 
-      <!-- CÁMARA -->
+      <!-- ======================================
+           ESCÁNER
+           ====================================== -->
 
       <div class="camera-header">
 
@@ -759,7 +1032,9 @@ body {
       </div>
 
 
-      <!-- RESULTADO -->
+      <!-- ======================================
+           RESULTADO
+           ====================================== -->
 
       <div
         id="resultado"
@@ -785,7 +1060,9 @@ body {
       </div>
 
 
-      <!-- SINCRONIZACIÓN -->
+      <!-- ======================================
+           SINCRONIZACIÓN
+           ====================================== -->
 
       <button
         id="syncButton"
@@ -796,6 +1073,7 @@ body {
         Sincronizar pendientes
       </button>
 
+
     </section>
 
 
@@ -803,920 +1081,1291 @@ body {
       Sistema de asistencia QR
     </footer>
 
+
   </main>
 
 
-<script>
+  <script>
 
-/* =====================================================
-   CONFIGURACIÓN
-   ===================================================== */
+    /* =====================================================
+       CONFIGURACIÓN
+       ===================================================== */
 
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
-
-
-/* =====================================================
-   VARIABLES
-   ===================================================== */
-
-let scanner = null;
-
-let procesando = false;
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
 
 
-/* =====================================================
-   BASE DE DATOS LOCAL
-   ===================================================== */
+    /* =====================================================
+       VARIABLES
+       ===================================================== */
 
-const DB_NAME = "AsistenciaQR";
+    let scanner = null;
 
-const DB_VERSION = 1;
-
-let db = null;
+    let procesando = false;
 
 
-function abrirBaseDatos() {
+    /* =====================================================
+       BASE DE DATOS LOCAL
+       ===================================================== */
 
-  return new Promise(function(resolve, reject) {
+    const DB_NAME =
+      "AsistenciaQR";
 
-    const request =
-      indexedDB.open(
-        DB_NAME,
-        DB_VERSION
-      );
+    const DB_VERSION =
+      1;
 
-
-    request.onupgradeneeded =
-      function(event) {
-
-        const database =
-          event.target.result;
+    let db = null;
 
 
-        if (
-          !database.objectStoreNames.contains(
-            "alumnos"
-          )
-        ) {
+    function abrirBaseDatos() {
 
-          database.createObjectStore(
-            "alumnos",
-            {
-              keyPath: "idQR"
-            }
-          );
+      return new Promise(
+        function(resolve, reject) {
 
-        }
-
-
-        if (
-          !database.objectStoreNames.contains(
-            "asistencias"
-          )
-        ) {
-
-          const store =
-            database.createObjectStore(
-              "asistencias",
-              {
-                keyPath: "id",
-                autoIncrement: true
-              }
+          const request =
+            indexedDB.open(
+              DB_NAME,
+              DB_VERSION
             );
 
-          store.createIndex(
-            "estado",
-            "estado",
-            {
-              unique: false
-            }
-          );
 
-        }
+          request.onupgradeneeded =
+            function(event) {
 
-      };
+              const database =
+                event.target.result;
 
 
-    request.onsuccess =
-      function(event) {
+              if (
+                !database.objectStoreNames.contains(
+                  "alumnos"
+                )
+              ) {
 
-        db =
-          event.target.result;
+                database.createObjectStore(
+                  "alumnos",
+                  {
+                    keyPath: "idQR"
+                  }
+                );
 
-        resolve(db);
+              }
 
-      };
 
+              if (
+                !database.objectStoreNames.contains(
+                  "asistencias"
+                )
+              ) {
 
-    request.onerror =
-      function() {
+                const store =
+                  database.createObjectStore(
+                    "asistencias",
+                    {
+                      keyPath: "id",
+                      autoIncrement: true
+                    }
+                  );
 
-        reject(
-          request.error
-        );
 
-      };
+                store.createIndex(
+                  "estado",
+                  "estado",
+                  {
+                    unique: false
+                  }
+                );
 
-  });
+              }
 
-}
+            };
 
 
-/* =====================================================
-   GUARDAR ALUMNOS
-   ===================================================== */
+          request.onsuccess =
+            function(event) {
 
-function guardarAlumnos(alumnos) {
+              db =
+                event.target.result;
 
-  return new Promise(function(resolve, reject) {
+              resolve(db);
 
-    if (!db) {
+            };
 
-      resolve();
 
-      return;
+          request.onerror =
+            function() {
 
-    }
-
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readwrite"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "alumnos"
-      );
-
-
-    alumnos.forEach(function(alumno) {
-
-      store.put({
-
-        idQR: alumno.idQR,
-
-        nombre: alumno.nombre,
-
-        grupo: alumno.grupo
-
-      });
-
-    });
-
-
-    transaction.oncomplete =
-      function() {
-
-        resolve();
-
-      };
-
-
-    transaction.onerror =
-      function() {
-
-        reject(
-          transaction.error
-        );
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   OBTENER ALUMNO LOCAL
-   ===================================================== */
-
-function obtenerAlumnoLocal(idQR) {
-
-  return new Promise(function(resolve, reject) {
-
-    if (!db) {
-
-      resolve(null);
-
-      return;
-
-    }
-
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readonly"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "alumnos"
-      );
-
-
-    const request =
-      store.get(idQR);
-
-
-    request.onsuccess =
-      function() {
-
-        resolve(
-          request.result || null
-        );
-
-      };
-
-
-    request.onerror =
-      function() {
-
-        reject(
-          request.error
-        );
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   CONTAR ALUMNOS
-   ===================================================== */
-
-function actualizarTotalAlumnos() {
-
-  return new Promise(function(resolve) {
-
-    if (!db) {
-
-      resolve();
-
-      return;
-
-    }
-
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readonly"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "alumnos"
-      );
-
-
-    const request =
-      store.count();
-
-
-    request.onsuccess =
-      function() {
-
-        document.getElementById(
-          "totalAlumnos"
-        ).textContent =
-          request.result;
-
-        resolve();
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   GUARDAR ASISTENCIA LOCAL
-   ===================================================== */
-
-function guardarAsistenciaLocal(asistencia) {
-
-  return new Promise(function(resolve, reject) {
-
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readwrite"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "asistencias"
-      );
-
-
-    store.add(asistencia);
-
-
-    transaction.oncomplete =
-      function() {
-
-        resolve();
-
-      };
-
-
-    transaction.onerror =
-      function() {
-
-        reject(
-          transaction.error
-        );
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   OBTENER PENDIENTES
-   ===================================================== */
-
-function obtenerPendientes() {
-
-  return new Promise(function(resolve, reject) {
-
-    if (!db) {
-
-      resolve([]);
-
-      return;
-
-    }
-
-
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readonly"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "asistencias"
-      );
-
-
-    const request =
-      store.getAll();
-
-
-    request.onsuccess =
-      function() {
-
-        const todos =
-          request.result || [];
-
-
-        const pendientes =
-          todos.filter(
-            function(item) {
-
-              return item.estado === "pendiente";
-
-            }
-          );
-
-
-        resolve(pendientes);
-
-      };
-
-
-    request.onerror =
-      function() {
-
-        reject(
-          request.error
-        );
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   ACTUALIZAR CONTADOR
-   ===================================================== */
-
-async function actualizarPendientes() {
-
-  const pendientes =
-    await obtenerPendientes();
-
-
-  document.getElementById(
-    "pendientes"
-  ).textContent =
-    pendientes.length;
-
-
-  document.getElementById(
-    "syncButton"
-  ).disabled =
-    pendientes.length === 0;
-
-}
-
-
-/* =====================================================
-   MOSTRAR RESULTADO
-   ===================================================== */
-
-function mostrarResultado(
-  icono,
-  titulo,
-  detalle,
-  clase
-) {
-
-  const resultado =
-    document.getElementById(
-      "resultado"
-    );
-
-
-  resultado.className =
-    "result " + clase;
-
-
-  resultado.innerHTML =
-
-    '<div>' +
-
-      '<div class="result-icon">' +
-        icono +
-      '</div>' +
-
-      '<div class="result-title">' +
-        titulo +
-      '</div>' +
-
-      '<div class="result-detail">' +
-        detalle +
-      '</div>' +
-
-    '</div>';
-
-}
-
-
-/* =====================================================
-   CONEXIÓN
-   ===================================================== */
-
-function actualizarConexion() {
-
-  const status =
-    document.getElementById(
-      "connectionStatus"
-    );
-
-
-  const texto =
-    document.getElementById(
-      "connectionText"
-    );
-
-
-  if (navigator.onLine) {
-
-    status.classList.remove(
-      "offline"
-    );
-
-
-    texto.textContent =
-      "Conectado";
-
-  } else {
-
-    status.classList.add(
-      "offline"
-    );
-
-
-    texto.textContent =
-      "Sin conexión";
-
-  }
-
-}
-
-
-/* =====================================================
-   CARGAR ALUMNOS DESDE GOOGLE
-   ===================================================== */
-
-async function cargarAlumnos() {
-
-  if (!navigator.onLine) {
-
-    await actualizarTotalAlumnos();
-
-    return;
-
-  }
-
-
-  try {
-
-    const url =
-      API_URL +
-      "?action=alumnos&t=" +
-      Date.now();
-
-
-    const response =
-      await fetch(url);
-
-
-    const data =
-      await response.json();
-
-
-    if (
-      data.ok &&
-      Array.isArray(
-        data.alumnos
-      )
-    ) {
-
-      await guardarAlumnos(
-        data.alumnos
-      );
-
-
-      await actualizarTotalAlumnos();
-
-    }
-
-  }
-  catch(error) {
-
-    console.log(
-      "No se pudieron actualizar alumnos:",
-      error
-    );
-
-
-    await actualizarTotalAlumnos();
-
-  }
-
-}
-
-
-/* =====================================================
-   FECHA LOCAL
-   ===================================================== */
-
-function obtenerFecha() {
-
-  const ahora =
-    new Date();
-
-
-  const dia =
-    String(
-      ahora.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const mes =
-    String(
-      ahora.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const año =
-    ahora.getFullYear();
-
-
-  return (
-    dia +
-    "/" +
-    mes +
-    "/" +
-    año
-  );
-
-}
-
-
-/* =====================================================
-   HORA LOCAL
-   ===================================================== */
-
-function obtenerHora() {
-
-  const ahora =
-    new Date();
-
-
-  return ahora.toLocaleTimeString(
-    "es-MX"
-  );
-
-}
-
-
-/* =====================================================
-   DUPLICADO LOCAL
-   ===================================================== */
-
-function verificarDuplicadoLocal(
-  idQR,
-  fecha
-) {
-
-  return new Promise(function(resolve, reject) {
-
-    if (!db) {
-
-      resolve(false);
-
-      return;
-
-    }
-
-
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readonly"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "asistencias"
-      );
-
-
-    const request =
-      store.getAll();
-
-
-    request.onsuccess =
-      function() {
-
-        const duplicado =
-          request.result.some(
-            function(item) {
-
-              return (
-                item.idQR === idQR &&
-                item.fecha === fecha
+              reject(
+                request.error
               );
 
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       GUARDAR ALUMNOS
+       ===================================================== */
+
+    function guardarAlumnos(alumnos) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve();
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
+
+
+          alumnos.forEach(
+            function(alumno) {
+
+              store.put({
+
+                idQR:
+                  alumno.idQR,
+
+                nombre:
+                  alumno.nombre,
+
+                grupo:
+                  alumno.grupo
+
+              });
+
             }
           );
 
 
-        resolve(
-          duplicado
-        );
+          transaction.oncomplete =
+            function() {
 
-      };
+              resolve();
 
-
-    request.onerror =
-      function() {
-
-        reject(
-          request.error
-        );
-
-      };
-
-  });
-
-}
+            };
 
 
-/* =====================================================
-   REGISTRAR OFFLINE
-   ===================================================== */
+          transaction.onerror =
+            function() {
 
-async function registrarOffline(
-  idQR
-) {
+              reject(
+                transaction.error
+              );
 
-  const alumno =
-    await obtenerAlumnoLocal(
-      idQR
-    );
+            };
 
-
-  if (!alumno) {
-
-    mostrarResultado(
-      "❌",
-      "Código no registrado",
-      "Este alumno todavía no está almacenado en el dispositivo.",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  const fecha =
-    obtenerFecha();
-
-
-  const hora =
-    obtenerHora();
-
-
-  const duplicado =
-    await verificarDuplicadoLocal(
-      idQR,
-      fecha
-    );
-
-
-  if (duplicado) {
-
-    mostrarResultado(
-      "⚠️",
-      "Asistencia duplicada",
-      alumno.nombre +
-      " · " +
-      alumno.grupo +
-      "\nYa fue registrado hoy.",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  await guardarAsistenciaLocal({
-
-    idQR: idQR,
-
-    nombre: alumno.nombre,
-
-    grupo: alumno.grupo,
-
-    fecha: fecha,
-
-    hora: hora,
-
-    estado: "pendiente"
-
-  });
-
-
-  await actualizarPendientes();
-
-
-  mostrarResultado(
-    "📱",
-    "Asistencia guardada",
-    alumno.nombre +
-    " · " +
-    alumno.grupo +
-    "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
-    "offline"
-  );
-
-}
-
-
-/* =====================================================
-   PROCESAR QR
-   ===================================================== */
-
-async function procesarQR(
-  idQR
-) {
-
-  if (procesando) {
-
-    return;
-
-  }
-
-
-  procesando = true;
-
-
-  try {
-
-    /* -------------------------
-       OFFLINE
-       ------------------------- */
-
-    if (!navigator.onLine) {
-
-      await registrarOffline(
-        idQR
+        }
       );
 
-      return;
+    }
+
+
+    /* =====================================================
+       OBTENER ALUMNO LOCAL
+       ===================================================== */
+
+    function obtenerAlumnoLocal(idQR) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve(null);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
+
+
+          const request =
+            store.get(idQR);
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result ||
+                null
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       CONTAR ALUMNOS
+       ===================================================== */
+
+    function actualizarTotalAlumnos() {
+
+      return new Promise(
+        function(resolve) {
+
+          if (!db) {
+
+            resolve();
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
+
+
+          const request =
+            store.count();
+
+
+          request.onsuccess =
+            function() {
+
+              document.getElementById(
+                "totalAlumnos"
+              ).textContent =
+                request.result;
+
+              resolve();
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       GUARDAR ASISTENCIA LOCAL
+       ===================================================== */
+
+    function guardarAsistenciaLocal(
+      asistencia
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          store.add(
+            asistencia
+          );
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       OBTENER PENDIENTES
+       ===================================================== */
+
+    function obtenerPendientes() {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve([]);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              const todos =
+                request.result ||
+                [];
+
+
+              const pendientes =
+                todos.filter(
+                  function(item) {
+
+                    return (
+                      item.estado ===
+                      "pendiente"
+                    );
+
+                  }
+                );
+
+
+              resolve(
+                pendientes
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
 
     }
 
 
-    /* -------------------------
-       ONLINE
-       ------------------------- */
+    /* =====================================================
+       ACTUALIZAR PENDIENTES
+       ===================================================== */
 
-    mostrarResultado(
-      "⏳",
-      "Procesando...",
-      "Consultando servidor",
-      ""
-    );
+    async function actualizarPendientes() {
+
+      const pendientes =
+        await obtenerPendientes();
 
 
-    const url =
-      API_URL +
-      "?idQR=" +
-      encodeURIComponent(
-        idQR
-      ) +
-      "&t=" +
-      Date.now();
+      document.getElementById(
+        "pendientes"
+      ).textContent =
+        pendientes.length;
 
 
-    const response =
-      await fetch(url);
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "Respuesta:",
-      data
-    );
-
-
-    if (data.ok) {
-
-      mostrarResultado(
-        "✓",
-        "Asistencia registrada",
-        data.nombre +
-        " · " +
-        data.grupo +
-        "\n" +
-        data.hora,
-        "success"
-      );
+      document.getElementById(
+        "syncButton"
+      ).disabled =
+        pendientes.length === 0;
 
     }
-    else {
 
-      if (data.duplicado) {
 
-        mostrarResultado(
-          "⚠️",
-          "Asistencia duplicada",
-          data.mensaje,
-          "error"
+    /* =====================================================
+       MOSTRAR RESULTADO
+       ===================================================== */
+
+    function mostrarResultado(
+      icono,
+      titulo,
+      detalle,
+      clase
+    ) {
+
+      const resultado =
+        document.getElementById(
+          "resultado"
         );
+
+
+      resultado.className =
+        "result " + clase;
+
+
+      resultado.innerHTML =
+
+        "<div>" +
+
+          '<div class="result-icon">' +
+            icono +
+          "</div>" +
+
+          '<div class="result-title">' +
+            titulo +
+          "</div>" +
+
+          '<div class="result-detail">' +
+            detalle +
+          "</div>" +
+
+        "</div>";
+
+    }
+
+
+    /* =====================================================
+       CONEXIÓN
+       ===================================================== */
+
+    function actualizarConexion() {
+
+      const status =
+        document.getElementById(
+          "connectionStatus"
+        );
+
+
+      const texto =
+        document.getElementById(
+          "connectionText"
+        );
+
+
+      if (navigator.onLine) {
+
+        status.classList.remove(
+          "offline"
+        );
+
+
+        texto.textContent =
+          "Conectado";
 
       }
       else {
 
+        status.classList.add(
+          "offline"
+        );
+
+
+        texto.textContent =
+          "Sin conexión";
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CARGAR ALUMNOS
+       ===================================================== */
+
+    async function cargarAlumnos() {
+
+      if (!navigator.onLine) {
+
+        await actualizarTotalAlumnos();
+
+        return;
+
+      }
+
+
+      try {
+
+        const url =
+          API_URL +
+          "?action=alumnos&t=" +
+          Date.now();
+
+
+        const response =
+          await fetch(url);
+
+
+        const data =
+          await response.json();
+
+
+        if (
+          data.ok &&
+          Array.isArray(
+            data.alumnos
+          )
+        ) {
+
+          await guardarAlumnos(
+            data.alumnos
+          );
+
+
+          await actualizarTotalAlumnos();
+
+        }
+
+      }
+      catch(error) {
+
+        console.log(
+          "No se pudieron actualizar alumnos:",
+          error
+        );
+
+
+        await actualizarTotalAlumnos();
+
+      }
+
+    }
+
+
+    /* =====================================================
+       FECHA LOCAL
+       ===================================================== */
+
+    function obtenerFecha() {
+
+      const ahora =
+        new Date();
+
+
+      const dia =
+        String(
+          ahora.getDate()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const mes =
+        String(
+          ahora.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const año =
+        ahora.getFullYear();
+
+
+      return (
+        dia +
+        "/" +
+        mes +
+        "/" +
+        año
+      );
+
+    }
+
+
+    /* =====================================================
+       HORA LOCAL
+       ===================================================== */
+
+    function obtenerHora() {
+
+      const ahora =
+        new Date();
+
+
+      return ahora.toLocaleTimeString(
+        "es-MX"
+      );
+
+    }
+
+
+    /* =====================================================
+       DUPLICADO LOCAL
+       ===================================================== */
+
+    function verificarDuplicadoLocal(
+      idQR,
+      fecha
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve(false);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              const duplicado =
+                request.result.some(
+                  function(item) {
+
+                    return (
+                      item.idQR ===
+                        idQR &&
+                      item.fecha ===
+                        fecha
+                    );
+
+                  }
+                );
+
+
+              resolve(
+                duplicado
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       REGISTRAR OFFLINE
+       ===================================================== */
+
+    async function registrarOffline(
+      idQR
+    ) {
+
+      const alumno =
+        await obtenerAlumnoLocal(
+          idQR
+        );
+
+
+      if (!alumno) {
+
         mostrarResultado(
           "❌",
           "Código no registrado",
-          data.mensaje,
+          "Este alumno todavía no está almacenado en el dispositivo.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      const fecha =
+        obtenerFecha();
+
+
+      const hora =
+        obtenerHora();
+
+
+      const duplicado =
+        await verificarDuplicadoLocal(
+          idQR,
+          fecha
+        );
+
+
+      if (duplicado) {
+
+        mostrarResultado(
+          "⚠️",
+          "Asistencia duplicada",
+          alumno.nombre +
+          " · " +
+          alumno.grupo +
+          "\nYa fue registrado hoy.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      await guardarAsistenciaLocal({
+
+        idQR:
+          idQR,
+
+        nombre:
+          alumno.nombre,
+
+        grupo:
+          alumno.grupo,
+
+        fecha:
+          fecha,
+
+        hora:
+          hora,
+
+        estado:
+          "pendiente"
+
+      });
+
+
+      await actualizarPendientes();
+
+
+      mostrarResultado(
+        "📱",
+        "Asistencia guardada",
+        alumno.nombre +
+        " · " +
+        alumno.grupo +
+        "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
+        "offline"
+      );
+
+    }
+
+
+    /* =====================================================
+       PROCESAR QR
+       ===================================================== */
+
+    async function procesarQR(
+      idQR
+    ) {
+
+      if (procesando) {
+
+        return;
+
+      }
+
+
+      procesando = true;
+
+
+      try {
+
+
+        /* OFFLINE */
+
+        if (!navigator.onLine) {
+
+          await registrarOffline(
+            idQR
+          );
+
+          return;
+
+        }
+
+
+        /* ONLINE */
+
+        mostrarResultado(
+          "⏳",
+          "Procesando...",
+          "Consultando servidor",
+          ""
+        );
+
+
+        const url =
+          API_URL +
+          "?idQR=" +
+          encodeURIComponent(
+            idQR
+          ) +
+          "&t=" +
+          Date.now();
+
+
+        const response =
+          await fetch(url);
+
+
+        const data =
+          await response.json();
+
+
+        console.log(
+          "Respuesta:",
+          data
+        );
+
+
+        if (data.ok) {
+
+          mostrarResultado(
+            "✓",
+            "Asistencia registrada",
+            data.nombre +
+            " · " +
+            data.grupo +
+            "\n" +
+            data.hora,
+            "success"
+          );
+
+        }
+        else {
+
+          if (data.duplicado) {
+
+            mostrarResultado(
+              "⚠️",
+              "Asistencia duplicada",
+              data.mensaje,
+              "error"
+            );
+
+          }
+          else {
+
+            mostrarResultado(
+              "❌",
+              "Código no registrado",
+              data.mensaje,
+              "error"
+            );
+
+          }
+
+        }
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error:",
+          error
+        );
+
+
+        if (!navigator.onLine) {
+
+          await registrarOffline(
+            idQR
+          );
+
+        }
+        else {
+
+          mostrarResultado(
+            "❌",
+            "Error de conexión",
+            "No fue posible comunicarse con el servidor.",
+            "error"
+          );
+
+        }
+
+      }
+      finally {
+
+        setTimeout(
+          function() {
+
+            procesando =
+              false;
+
+          },
+          1500
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SINCRONIZAR
+       ===================================================== */
+
+    async function sincronizarPendientes() {
+
+      if (!navigator.onLine) {
+
+        mostrarResultado(
+          "📱",
+          "Sin conexión",
+          "Las asistencias permanecen guardadas en el dispositivo.",
+          "offline"
+        );
+
+        return;
+
+      }
+
+
+      const pendientes =
+        await obtenerPendientes();
+
+
+      if (
+        pendientes.length === 0
+      ) {
+
+        await actualizarPendientes();
+
+        return;
+
+      }
+
+
+      const boton =
+        document.getElementById(
+          "syncButton"
+        );
+
+
+      boton.disabled =
+        true;
+
+
+      boton.textContent =
+        "Sincronizando...";
+
+
+      for (
+        const asistencia of pendientes
+      ) {
+
+        try {
+
+          const url =
+            API_URL +
+            "?action=registrar" +
+            "&idQR=" +
+            encodeURIComponent(
+              asistencia.idQR
+            ) +
+            "&nombre=" +
+            encodeURIComponent(
+              asistencia.nombre
+            ) +
+            "&grupo=" +
+            encodeURIComponent(
+              asistencia.grupo
+            ) +
+            "&fecha=" +
+            encodeURIComponent(
+              asistencia.fecha
+            ) +
+            "&hora=" +
+            encodeURIComponent(
+              asistencia.hora
+            ) +
+            "&t=" +
+            Date.now();
+
+
+          const response =
+            await fetch(url);
+
+
+          const data =
+            await response.json();
+
+
+          if (
+            data.ok ||
+            data.duplicado
+          ) {
+
+            await eliminarAsistencia(
+              asistencia.id
+            );
+
+          }
+
+        }
+        catch(error) {
+
+          console.log(
+            "No se pudo sincronizar:",
+            asistencia
+          );
+
+          break;
+
+        }
+
+      }
+
+
+      await actualizarPendientes();
+
+
+      boton.textContent =
+        "Sincronizar pendientes";
+
+    }
+
+
+    /* =====================================================
+       ELIMINAR ASISTENCIA LOCAL
+       ===================================================== */
+
+    function eliminarAsistencia(
+      id
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          store.delete(id);
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       INICIAR CÁMARA
+       ===================================================== */
+
+    async function iniciarCamara() {
+
+      if (
+        typeof Html5Qrcode ===
+        "undefined"
+      ) {
+
+        mostrarResultado(
+          "❌",
+          "Lector QR no disponible",
+          "No se pudo cargar html5-qrcode.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      scanner =
+        new Html5Qrcode(
+          "reader"
+        );
+
+
+      try {
+
+        await scanner.start(
+
+          {
+            facingMode:
+              "environment"
+          },
+
+          {
+
+            fps: 10,
+
+            qrbox: {
+
+              width: 210,
+
+              height: 210
+
+            },
+
+            aspectRatio: 1.0
+
+          },
+
+          function(decodedText) {
+
+            console.log(
+              "QR:",
+              decodedText
+            );
+
+
+            procesarQR(
+              decodedText
+            );
+
+          },
+
+          function(errorMessage) {
+
+            /*
+              Errores normales durante
+              la búsqueda de QR.
+            */
+
+          }
+
+        );
+
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Cámara activa";
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error de cámara:",
+          error
+        );
+
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Error";
+
+
+        mostrarResultado(
+          "📷",
+          "No se pudo iniciar la cámara",
+          "Revisa el permiso de cámara del navegador.",
           "error"
         );
 
@@ -1724,429 +2373,109 @@ async function procesarQR(
 
     }
 
-  }
-  catch(error) {
 
-    console.error(
-      "Error:",
-      error
+    /* =====================================================
+       EVENTO ONLINE
+       ===================================================== */
+
+    window.addEventListener(
+      "online",
+      async function() {
+
+        actualizarConexion();
+
+        await cargarAlumnos();
+
+        await sincronizarPendientes();
+
+      }
     );
 
 
-    /*
-      Si perdimos Internet durante
-      la consulta, intentamos utilizar
-      la información local.
-    */
+    /* =====================================================
+       EVENTO OFFLINE
+       ===================================================== */
 
-    if (!navigator.onLine) {
-
-      await registrarOffline(
-        idQR
-      );
-
-    }
-    else {
-
-      mostrarResultado(
-        "❌",
-        "Error de conexión",
-        "No fue posible comunicarse con el servidor.",
-        "error"
-      );
-
-    }
-
-  }
-  finally {
-
-    setTimeout(
+    window.addEventListener(
+      "offline",
       function() {
 
-        procesando = false;
+        actualizarConexion();
 
-      },
-      1500
+
+        mostrarResultado(
+          "📱",
+          "Modo sin conexión",
+          "Las nuevas asistencias se guardarán en este dispositivo.",
+          "offline"
+        );
+
+      }
     );
 
-  }
 
-}
+    /* =====================================================
+       BOTÓN
+       ===================================================== */
 
-
-/* =====================================================
-   SINCRONIZAR
-   ===================================================== */
-
-async function sincronizarPendientes() {
-
-  if (!navigator.onLine) {
-
-    mostrarResultado(
-      "📱",
-      "Sin conexión",
-      "Las asistencias permanecen guardadas en el dispositivo.",
-      "offline"
-    );
-
-    return;
-
-  }
-
-
-  const pendientes =
-    await obtenerPendientes();
-
-
-  if (
-    pendientes.length === 0
-  ) {
-
-    await actualizarPendientes();
-
-    return;
-
-  }
-
-
-  const boton =
     document.getElementById(
       "syncButton"
+    ).addEventListener(
+      "click",
+      sincronizarPendientes
     );
 
 
-  boton.disabled = true;
+    /* =====================================================
+       INICIO
+       ===================================================== */
 
-  boton.textContent =
-    "Sincronizando...";
+    async function iniciarAplicacion() {
 
+      try {
 
-  for (
-    const asistencia of pendientes
-  ) {
-
-    try {
-
-      const url =
-        API_URL +
-        "?action=registrar" +
-        "&idQR=" +
-        encodeURIComponent(
-          asistencia.idQR
-        ) +
-        "&nombre=" +
-        encodeURIComponent(
-          asistencia.nombre
-        ) +
-        "&grupo=" +
-        encodeURIComponent(
-          asistencia.grupo
-        ) +
-        "&fecha=" +
-        encodeURIComponent(
-          asistencia.fecha
-        ) +
-        "&hora=" +
-        encodeURIComponent(
-          asistencia.hora
-        ) +
-        "&t=" +
-        Date.now();
+        await abrirBaseDatos();
 
 
-      const response =
-        await fetch(url);
+        actualizarConexion();
 
 
-      const data =
-        await response.json();
+        await cargarAlumnos();
 
 
-      if (
-        data.ok ||
-        data.duplicado
-      ) {
+        await actualizarPendientes();
 
-        await eliminarAsistencia(
-          asistencia.id
+
+        if (navigator.onLine) {
+
+          await sincronizarPendientes();
+
+        }
+
+
+        await iniciarCamara();
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error iniciando aplicación:",
+          error
         );
 
       }
 
     }
-    catch(error) {
-
-      console.log(
-        "No se pudo sincronizar:",
-        asistencia
-      );
-
-      break;
-
-    }
-
-  }
 
 
-  await actualizarPendientes();
-
-
-  boton.textContent =
-    "Sincronizar pendientes";
-
-}
-
-
-/* =====================================================
-   ELIMINAR ASISTENCIA LOCAL
-   ===================================================== */
-
-function eliminarAsistencia(
-  id
-) {
-
-  return new Promise(function(resolve, reject) {
-
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readwrite"
-      );
-
-
-    const store =
-      transaction.objectStore(
-        "asistencias"
-      );
-
-
-    store.delete(id);
-
-
-    transaction.oncomplete =
-      function() {
-
-        resolve();
-
-      };
-
-
-    transaction.onerror =
-      function() {
-
-        reject(
-          transaction.error
-        );
-
-      };
-
-  });
-
-}
-
-
-/* =====================================================
-   INICIAR CÁMARA
-   ===================================================== */
-
-async function iniciarCamara() {
-
-  if (
-    typeof Html5Qrcode ===
-    "undefined"
-  ) {
-
-    mostrarResultado(
-      "❌",
-      "Lector QR no disponible",
-      "No se pudo cargar html5-qrcode.",
-      "error"
+    window.addEventListener(
+      "load",
+      iniciarAplicacion
     );
 
-    return;
+  </script>
 
-  }
-
-
-  scanner =
-    new Html5Qrcode(
-      "reader"
-    );
-
-
-  try {
-
-    await scanner.start(
-
-      {
-        facingMode: "environment"
-      },
-
-      {
-        fps: 10,
-
-        qrbox: {
-          width: 210,
-          height: 210
-        },
-
-        aspectRatio: 1.0
-      },
-
-      function(decodedText) {
-
-        console.log(
-          "QR:",
-          decodedText
-        );
-
-
-        procesarQR(
-          decodedText
-        );
-
-      },
-
-      function(errorMessage) {
-
-        /*
-          Los errores normales durante
-          la búsqueda de un QR se ignoran.
-        */
-
-      }
-
-    );
-
-
-    document.getElementById(
-      "cameraStatus"
-    ).textContent =
-      "Cámara activa";
-
-  }
-  catch(error) {
-
-    console.error(
-      "Error de cámara:",
-      error
-    );
-
-
-    document.getElementById(
-      "cameraStatus"
-    ).textContent =
-      "Error";
-
-
-    mostrarResultado(
-      "📷",
-      "No se pudo iniciar la cámara",
-      "Revisa el permiso de cámara del navegador.",
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   EVENTOS ONLINE / OFFLINE
-   ===================================================== */
-
-window.addEventListener(
-  "online",
-  async function() {
-
-    actualizarConexion();
-
-    await cargarAlumnos();
-
-    await sincronizarPendientes();
-
-  }
-);
-
-
-window.addEventListener(
-  "offline",
-  function() {
-
-    actualizarConexion();
-
-
-    mostrarResultado(
-      "📱",
-      "Modo sin conexión",
-      "Las nuevas asistencias se guardarán en este dispositivo.",
-      "offline"
-    );
-
-  }
-);
-
-
-/* =====================================================
-   BOTÓN
-   ===================================================== */
-
-document.getElementById(
-  "syncButton"
-).addEventListener(
-  "click",
-  sincronizarPendientes
-);
-
-
-/* =====================================================
-   INICIO
-   ===================================================== */
-
-async function iniciarAplicacion() {
-
-  try {
-
-    await abrirBaseDatos();
-
-
-    actualizarConexion();
-
-
-    await cargarAlumnos();
-
-
-    await actualizarPendientes();
-
-
-    if (navigator.onLine) {
-
-      await sincronizarPendientes();
-
-    }
-
-
-    await iniciarCamara();
-
-  }
-  catch(error) {
-
-    console.error(
-      "Error iniciando aplicación:",
-      error
-    );
-
-  }
-
-}
-
-
-window.addEventListener(
-  "load",
-  iniciarAplicacion
-);
-
-</script>
 
 </body>
+
 </html>
