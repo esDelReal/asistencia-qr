@@ -1702,60 +1702,42 @@
        FECHA LOCAL
        ===================================================== */
 
-    function obtenerFecha() {
+   function obtenerFecha() {
 
-      const ahora =
-        new Date();
+  const ahora = new Date();
 
+  const dia =
+    String(ahora.getDate()).padStart(2, "0");
 
-      const dia =
-        String(
-          ahora.getDate()
-        ).padStart(
-          2,
-          "0"
-        );
+  const mes =
+    String(ahora.getMonth() + 1).padStart(2, "0");
 
+  const año =
+    ahora.getFullYear();
 
-      const mes =
-        String(
-          ahora.getMonth() + 1
-        ).padStart(
-          2,
-          "0"
-        );
-
-
-      const año =
-        ahora.getFullYear();
-
-
-      return (
-        dia +
-        "/" +
-        mes +
-        "/" +
-        año
-      );
-
-    }
+  return dia + "/" + mes + "/" + año;
+}
 
 
     /* =====================================================
        HORA LOCAL
        ===================================================== */
 
-    function obtenerHora() {
+   function obtenerHora() {
 
-      const ahora =
-        new Date();
+  const ahora = new Date();
 
+  const horas =
+    String(ahora.getHours()).padStart(2, "0");
 
-      return ahora.toLocaleTimeString(
-        "es-MX"
-      );
+  const minutos =
+    String(ahora.getMinutes()).padStart(2, "0");
 
-    }
+  const segundos =
+    String(ahora.getSeconds()).padStart(2, "0");
+
+  return horas + ":" + minutos + ":" + segundos;
+}
 
 
     /* =====================================================
