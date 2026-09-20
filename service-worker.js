@@ -1,27 +1,30 @@
-const CACHE_NAME = "asistencia-v1";
+const CACHE_NAME = "asistencia-qr-v1";
 
 const ARCHIVOS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./service-worker.js",
-  "./lib/html5-qrcode.min.js"
+  "https://unpkg.com/html5-qrcode"
 ];
-
-
-// ==========================================================
-// INSTALACIÓN
-// ==========================================================
 
 self.addEventListener("install", event => {
 
   event.waitUntil(
 
     caches.open(CACHE_NAME)
-
       .then(cache => {
 
-        return cache.addAll(ARCHIVOS);
+        return cache.addAll(
+          ARCHIVOS
+        );
+
+      })
+      .catch(error => {
+
+        console.log(
+          "Error guardando archivos:",
+          error
+        );
 
       })
 
@@ -31,10 +34,6 @@ self.addEventListener("install", event => {
 
 });
 
-
-// ==========================================================
-// ACTIVACIÓN
-// ==========================================================
 
 self.addEventListener("activate", event => {
 
@@ -46,8 +45,12 @@ self.addEventListener("activate", event => {
         return Promise.all(
 
           keys
-            .filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
+            .filter(
+              key => key !== CACHE_NAME
+            )
+            .map(
+              key => caches.delete(key)
+            )
 
         );
 
@@ -60,25 +63,11 @@ self.addEventListener("activate", event => {
 });
 
 
-// ==========================================================
-// PETICIONES
-// ==========================================================
-
 self.addEventListener("fetch", event => {
-
-  const request = event.request;
-
-
-  // Solo GET
-  if (request.method !== "GET") {
-    return;
-  }
-
 
   event.respondWith(
 
-    caches.match(request)
-
+    caches.match(event.request)
       .then(cachedResponse => {
 
         if (cachedResponse) {
@@ -87,18 +76,48 @@ self.addEventListener("fetch", event => {
 
         }
 
-
-        return fetch(request)
-
+        return fetch(event.request)
           .then(response => {
+
+            /*
+              Guardamos únicamente respuestas
+              válidas.
+            */
+
+            if (
+              response &&
+              response.status === 200 &&
+              response.type !== "opaque"
+            ) {
+
+              const responseClone =
+                response.clone();
+
+              caches.open(CACHE_NAME)
+                .then(cache => {
+
+                  cache.put(
+                    event.request,
+                    responseClone
+                  );
+
+                });
+
+            }
 
             return response;
 
           })
-
           .catch(() => {
 
-            return caches.match("./index.html");
+            /*
+              Si no hay Internet y no existe
+              en caché, devolvemos la página.
+            */
+
+            return caches.match(
+              "./index.html"
+            );
 
           });
 
