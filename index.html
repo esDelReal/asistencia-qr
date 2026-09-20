@@ -34,6 +34,77 @@
        RESET
        ========================================== */
 
+    .resumen-asistencia {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.tarjeta-resumen {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.titulo-resumen {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.numero-resumen {
+  font-size: 28px;
+  font-weight: bold;
+  color: #222;
+}
+
+.barra-asistencia {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.barra-superior {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.barra-fondo {
+  width: 100%;
+  height: 10px;
+  background: #e5e5e5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.barra-progreso {
+  height: 100%;
+  width: 0%;
+  background: #22c55e;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+@media (max-width: 500px) {
+  .resumen-asistencia {
+    gap: 6px;
+  }
+
+  .numero-resumen {
+    font-size: 24px;
+  }
+
+  .titulo-resumen {
+    font-size: 12px;
+  }
+}
     * {
       box-sizing: border-box;
     }
@@ -1027,6 +1098,36 @@
 
       <div class="camera-wrapper">
 
+        <!-- RESUMEN DE ASISTENCIA -->
+<div class="resumen-asistencia">
+
+  <div class="tarjeta-resumen">
+    <div class="titulo-resumen">Total activos</div>
+    <div id="totalActivos" class="numero-resumen">0</div>
+  </div>
+
+  <div class="tarjeta-resumen">
+    <div class="titulo-resumen">Han ingresado</div>
+    <div id="hanIngresado" class="numero-resumen">0</div>
+  </div>
+
+  <div class="tarjeta-resumen">
+    <div class="titulo-resumen">Faltan</div>
+    <div id="faltanIngresar" class="numero-resumen">0</div>
+  </div>
+
+</div>
+
+<div class="barra-asistencia">
+  <div class="barra-superior">
+    <span>Asistencia de hoy</span>
+    <strong id="porcentajeAsistencia">0%</strong>
+  </div>
+
+  <div class="barra-fondo">
+    <div id="barraProgreso" class="barra-progreso"></div>
+  </div>
+</div>        
         <div id="reader"></div>
 
       </div>
@@ -1087,6 +1188,107 @@
 
   <script>
 
+    async function actualizarResumenAsistencia() {
+
+  try {
+
+    // Obtener alumnos almacenados localmente
+    const alumnos = await obtenerTodosLosAlumnos();
+
+    // Solo alumnos activos
+    const activos = alumnos.filter(alumno => {
+
+      const estado = String(alumno.activo || "")
+        .trim()
+        .toLowerCase();
+
+      return estado === "sí" || estado === "si";
+    });
+
+    const totalActivos = activos.length;
+
+    // Fecha actual
+    const fechaHoy = obtenerFecha();
+
+    // Obtener asistencias locales
+    const asistencias = await obtenerTodasLasAsistencias();
+
+    // Alumnos que ya tienen asistencia hoy
+    const asistieronHoy = asistencias.filter(asistencia => {
+
+      return asistencia.fecha === fechaHoy &&
+             asistencia.estado !== "rechazado";
+
+    });
+
+    // Evitar contar dos veces el mismo QR
+    const idsUnicos = new Set(
+      asistieronHoy.map(asistencia => asistencia.idQR)
+    );
+
+    const hanIngresado = idsUnicos.size;
+
+    // Calcular faltantes
+    const faltan = Math.max(
+      totalActivos - hanIngresado,
+      0
+    );
+
+    // Porcentaje
+    const porcentaje = totalActivos > 0
+      ? Math.round((hanIngresado / totalActivos) * 100)
+      : 0;
+
+    async function obtenerTodasLasAsistencias() {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction(["asistencias"], "readonly");
+
+    const store =
+      transaction.objectStore("asistencias");
+
+    const request =
+      store.getAll();
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+
+  });
+
+}
+    
+    // Actualizar pantalla
+    document.getElementById("totalActivos").textContent =
+      totalActivos;
+
+    document.getElementById("hanIngresado").textContent =
+      hanIngresado;
+
+    document.getElementById("faltanIngresar").textContent =
+      faltan;
+
+    document.getElementById("porcentajeAsistencia").textContent =
+      porcentaje + "%";
+
+    document.getElementById("barraProgreso").style.width =
+      porcentaje + "%";
+
+  } catch (error) {
+
+    console.error(
+      "Error actualizando resumen:",
+      error
+    );
+
+  }
+}
     /* =====================================================
        CONFIGURACIÓN
        ===================================================== */
