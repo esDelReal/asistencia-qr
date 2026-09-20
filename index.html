@@ -1213,76 +1213,67 @@
 
     function guardarAlumnos(alumnos) {
 
-      return new Promise(
-        function(resolve, reject) {
+  return new Promise(
+    function(resolve, reject) {
 
-          if (!db) {
+      if (!db) {
+        resolve();
+        return;
+      }
 
-            resolve();
+      const transaction =
+        db.transaction(
+          "alumnos",
+          "readwrite"
+        );
 
-            return;
+      const store =
+        transaction.objectStore(
+          "alumnos"
+        );
 
-          }
+      alumnos.forEach(
+        function(alumno) {
 
+          store.put({
 
-          const transaction =
-            db.transaction(
-              "alumnos",
-              "readwrite"
-            );
+            idQR:
+              alumno.idQR,
 
+            nombre:
+              alumno.nombre,
 
-          const store =
-            transaction.objectStore(
-              "alumnos"
-            );
+            grupo:
+              alumno.grupo,
 
+            activo:
+              alumno.activo
 
-          alumnos.forEach(
-            function(alumno) {
-
-              store.put({
-
-                idQR:
-                  alumno.idQR,
-
-                nombre:
-                  alumno.nombre,
-
-                grupo:
-                  alumno.grupo 
-
-                activo:
-                  alumno.activo
-
-              });
-
-            }
-          );
-
-
-          transaction.oncomplete =
-            function() {
-
-              resolve();
-
-            };
-
-
-          transaction.onerror =
-            function() {
-
-              reject(
-                transaction.error
-              );
-
-            };
+          });
 
         }
       );
 
-    }
+      transaction.oncomplete =
+        function() {
 
+          resolve();
+
+        };
+
+      transaction.onerror =
+        function() {
+
+          reject(
+            transaction.error
+          );
+
+        };
+
+    }
+  );
+
+}
 
     /* =====================================================
        OBTENER ALUMNO LOCAL
@@ -1825,121 +1816,147 @@
        REGISTRAR OFFLINE
        ===================================================== */
 
-    async function registrarOffline(
-      idQR
-    ) {
-
-      const alumno =
-        await obtenerAlumnoLocal(
-          idQR
-        );
-
-
-      if (!alumno) {
-
-        mostrarResultado(
-          "❌",
-          "Código no registrado",
-          "Este alumno todavía no está almacenado en el dispositivo.",
-          "error"
-        );
-
-        return;
-
-        if (
-  String(alumno.activo)
-    .trim()
-    .toLowerCase() !== "sí" &&
-  String(alumno.activo)
-    .trim()
-    .toLowerCase() !== "si"
+   async function registrarOffline(
+  idQR
 ) {
 
+  const alumno =
+    await obtenerAlumnoLocal(
+      idQR
+    );
+
+
+  // ========================================================
+  // ALUMNO NO ENCONTRADO
+  // ========================================================
+
+  if (!alumno) {
+
+    mostrarResultado(
+      "❌",
+      "Código no registrado",
+      "Este alumno todavía no está almacenado en el dispositivo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  // ========================================================
+  // VALIDAR ALUMNO ACTIVO
+  // ========================================================
+
+  const activo =
+    String(
+      alumno.activo || ""
+    )
+    .trim()
+    .toLowerCase();
+
+
+  if (
+    activo !== "sí" &&
+    activo !== "si"
+  ) {
+
+    mostrarResultado(
+      "🚫",
+      "Alumno inactivo",
+      alumno.nombre +
+      " · " +
+      alumno.grupo +
+      "\nNo tiene autorización para registrar asistencia.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  // ========================================================
+  // FECHA Y HORA
+  // ========================================================
+
+  const fecha =
+    obtenerFecha();
+
+
+  const hora =
+    obtenerHora();
+
+
+  // ========================================================
+  // DUPLICADO LOCAL
+  // ========================================================
+
+  const duplicado =
+    await verificarDuplicadoLocal(
+      idQR,
+      fecha
+    );
+
+
+  if (duplicado) {
+
+    mostrarResultado(
+      "⚠️",
+      "Asistencia duplicada",
+      alumno.nombre +
+      " · " +
+      alumno.grupo +
+      "\nYa fue registrado hoy.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  // ========================================================
+  // GUARDAR ASISTENCIA
+  // ========================================================
+
+  await guardarAsistenciaLocal({
+
+    idQR:
+      idQR,
+
+    nombre:
+      alumno.nombre,
+
+    grupo:
+      alumno.grupo,
+
+    fecha:
+      fecha,
+
+    hora:
+      hora,
+
+    estado:
+      "pendiente"
+
+  });
+
+
+  await actualizarPendientes();
+
+
   mostrarResultado(
-    "🚫",
-    "Alumno inactivo",
+    "📱",
+    "Asistencia guardada",
     alumno.nombre +
     " · " +
     alumno.grupo +
-    "\nNo tiene autorización para registrar asistencia.",
-    "error"
+    "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
+    "offline"
   );
 
-  return;
-
-      }
-
-
-      const fecha =
-        obtenerFecha();
-
-
-      const hora =
-        obtenerHora();
-
-
-      const duplicado =
-        await verificarDuplicadoLocal(
-          idQR,
-          fecha
-        );
-
-
-      if (duplicado) {
-
-        mostrarResultado(
-          "⚠️",
-          "Asistencia duplicada",
-          alumno.nombre +
-          " · " +
-          alumno.grupo +
-          "\nYa fue registrado hoy.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      await guardarAsistenciaLocal({
-
-        idQR:
-          idQR,
-
-        nombre:
-          alumno.nombre,
-
-        grupo:
-          alumno.grupo,
-
-        fecha:
-          fecha,
-
-        hora:
-          hora,
-
-        estado:
-          "pendiente"
-
-      });
-
-
-      await actualizarPendientes();
-
-
-      mostrarResultado(
-        "📱",
-        "Asistencia guardada",
-        alumno.nombre +
-        " · " +
-        alumno.grupo +
-        "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
-        "offline"
-      );
-
-    }
-
+}
 
     /* =====================================================
        PROCESAR QR
