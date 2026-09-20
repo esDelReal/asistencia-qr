@@ -1,2311 +1,266 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <meta
-    name="theme-color"
-    content="#0f172a"
-  >
-
-  <meta
-    name="apple-mobile-web-app-capable"
-    content="yes"
-  >
-
-  <meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="black-translucent"
-  >
-
-  <meta
-    name="apple-mobile-web-app-title"
-    content="Asistencia"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Asistencia</title>
 
-
-  <!-- =====================================================
-       MANIFEST
-       ===================================================== -->
-
-  <link
-    rel="manifest"
-    href="./manifest.json"
-  >
-
-
-  <!-- =====================================================
-       LIBRERÍA QR LOCAL
-       ===================================================== -->
-
   <script
-    src="./lib/html5-qrcode.min.js">
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
   </script>
 
-
   <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-
     body {
-
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
       margin: 0;
-
-      min-height: 100vh;
-
-      font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-      background:
-        linear-gradient(
-          180deg,
-          #0f172a 0%,
-          #1e293b 38%,
-          #f1f5f9 38%,
-          #f1f5f9 100%
-        );
-
-      color: #0f172a;
-
-    }
-
-
-    .contenedor {
-
-      width: 100%;
-
-      max-width: 520px;
-
-      margin: 0 auto;
-
-      padding: 24px 16px 35px;
-
-    }
-
-
-    .encabezado {
-
+      padding: 20px;
       text-align: center;
-
-      color: white;
-
-      padding: 8px 0 20px;
-
     }
 
-
-    .logo {
-
-      width: 64px;
-
-      height: 64px;
-
-      margin: 0 auto 12px;
-
-      border-radius: 18px;
-
-      background:
-        rgba(255,255,255,0.15);
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      font-size: 32px;
-
+    h1 {
+      color: #1f2937;
+      margin-bottom: 10px;
     }
-
-
-    .encabezado h1 {
-
-      margin: 0;
-
-      font-size: 28px;
-
-    }
-
-
-    .encabezado p {
-
-      margin: 8px 0 0;
-
-      font-size: 15px;
-
-      opacity: .85;
-
-    }
-
-
-    /* =====================================================
-       ESTADO DE CONEXIÓN
-       ===================================================== */
-
-    .conexion {
-
-      margin: 0 auto 14px;
-
-      padding: 10px 14px;
-
-      border-radius: 10px;
-
-      text-align: center;
-
-      font-size: 14px;
-
-      font-weight: bold;
-
-    }
-
-
-    .online {
-
-      background: #dcfce7;
-
-      color: #166534;
-
-    }
-
-
-    .offline {
-
-      background: #fef3c7;
-
-      color: #92400e;
-
-    }
-
-
-    /* =====================================================
-       TARJETA
-       ===================================================== */
-
-    .tarjeta {
-
-      background: white;
-
-      border-radius: 20px;
-
-      padding: 18px;
-
-      box-shadow:
-        0 12px 35px
-        rgba(15,23,42,.18);
-
-    }
-
-
-    .estado {
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      gap: 8px;
-
-      margin-bottom: 14px;
-
-      font-size: 14px;
-
-      font-weight: bold;
-
-      color: #64748b;
-
-    }
-
-
-    .punto {
-
-      width: 9px;
-
-      height: 9px;
-
-      border-radius: 50%;
-
-      background: #94a3b8;
-
-    }
-
-
-    .punto.activo {
-
-      background: #22c55e;
-
-      box-shadow:
-        0 0 0 4px
-        rgba(34,197,94,.15);
-
-    }
-
 
     #reader {
-
       width: 100%;
-
-      max-width: 450px;
-
-      margin: 0 auto;
-
-      overflow: hidden;
-
-      border-radius: 16px;
-
-      background: #0f172a;
-
-    }
-
-
-    .boton {
-
-      width: 100%;
-
-      margin-top: 16px;
-
-      padding: 15px 20px;
-
-      border: none;
-
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      padding: 10px;
       border-radius: 12px;
-
-      background: #2563eb;
-
-      color: white;
-
-      font-size: 17px;
-
-      font-weight: bold;
-
-      cursor: pointer;
-
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
-
-    .boton:disabled {
-
-      opacity: .55;
-
-    }
-
-
-    .boton-secundario {
-
-      background: #475569;
-
-    }
-
 
     #resultado {
-
-      margin-top: 16px;
-
-      border-radius: 14px;
-
-      padding: 18px;
-
-      background: #f8fafc;
-
-      text-align: center;
-
-      min-height: 80px;
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 15px;
+      border-radius: 10px;
+      background: white;
+      min-height: 40px;
     }
-
-
-    #resultado h2 {
-
-      margin: 0 0 10px;
-
-      font-size: 22px;
-
-    }
-
-
-    #resultado p {
-
-      margin: 7px 0;
-
-      line-height: 1.45;
-
-    }
-
 
     .exito {
-
-      width: 100%;
-
       color: #166534;
-
+      background: #dcfce7;
     }
-
 
     .error {
-
-      width: 100%;
-
-      color: #b91c1c;
-
+      color: #991b1b;
+      background: #fee2e2;
     }
-
 
     .info {
-
-      width: 100%;
-
-      color: #1d4ed8;
-
+      color: #1e40af;
+      background: #dbeafe;
     }
 
-
-    .icono {
-
-      width: 58px;
-
-      height: 58px;
-
-      margin: 0 auto 12px;
-
-      border-radius: 50%;
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      font-size: 30px;
-
-      background: #dcfce7;
-
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
     }
 
-
-    .icono-error {
-
-      background: #fee2e2;
-
+    button:hover {
+      background: #1d4ed8;
     }
-
-
-    .nombre {
-
-      font-size: 21px;
-
-      font-weight: bold;
-
-      margin-bottom: 8px;
-
-    }
-
-
-    .grupo {
-
-      display: inline-block;
-
-      padding: 5px 12px;
-
-      border-radius: 20px;
-
-      background: #e0e7ff;
-
-      color: #3730a3;
-
-      font-weight: bold;
-
-      font-size: 14px;
-
-    }
-
-
-    .hora {
-
-      font-size: 15px;
-
-      color: #475569;
-
-      margin-top: 10px;
-
-    }
-
-
-    .contador {
-
-      margin-top: 15px;
-
-      padding: 12px;
-
-      border-radius: 10px;
-
-      background: #f1f5f9;
-
-      text-align: center;
-
-      color: #475569;
-
-      font-size: 14px;
-
-    }
-
-
-    .sincronizacion {
-
-      margin-top: 10px;
-
-      font-size: 13px;
-
-      color: #64748b;
-
-    }
-
-
-    .pie {
-
-      text-align: center;
-
-      margin-top: 18px;
-
-      color: #64748b;
-
-      font-size: 12px;
-
-    }
-
   </style>
-
 </head>
-
 
 <body>
 
+  <h1>Control de Asistencia</h1>
 
-<div class="contenedor">
+  <p>Escanea el código QR del alumno</p>
 
+  <div id="reader"></div>
 
-  <!-- ===================================================
-       ENCABEZADO
-       =================================================== -->
-
-  <header class="encabezado">
-
-    <div class="logo">
-      📋
-    </div>
-
-    <h1>
-      Control de Asistencia
-    </h1>
-
-    <p>
-      Registro mediante código QR
-    </p>
-
-  </header>
-
-
-  <!-- ===================================================
-       CONEXIÓN
-       =================================================== -->
-
-  <div
-    id="conexion"
-    class="conexion offline">
-
-    📵 Modo offline
-
+  <div id="resultado" class="info">
+    Esperando código QR...
   </div>
 
+  <script>
 
-  <!-- ===================================================
-       TARJETA
-       =================================================== -->
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
 
-  <main class="tarjeta">
+    let scanner;
+    let procesando = false;
 
+    function mostrarResultado(mensaje, tipo) {
 
-    <div
-      id="estado"
-      class="estado">
+      const resultado = document.getElementById("resultado");
 
-      <span
-        id="punto"
-        class="punto">
-      </span>
+      resultado.textContent = mensaje;
 
-      <span id="textoEstado">
-        Cámara inactiva
-      </span>
+      resultado.className = "";
 
-    </div>
-
-
-    <div id="reader"></div>
-
-
-    <button
-      id="btnCamara"
-      class="boton"
-      onclick="iniciarScanner()">
-
-      📷 Iniciar cámara
-
-    </button>
-
-
-    <div id="resultado">
-
-      <div class="info">
-
-        <strong>
-          Listo para registrar asistencia
-        </strong>
-
-        <p>
-          Activa la cámara y escanea el QR.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div
-      id="contador"
-      class="contador">
-
-      Asistencias pendientes: 0
-
-    </div>
-
-
-    <button
-      id="btnSync"
-      class="boton boton-secundario"
-      onclick="sincronizar()">
-
-      ☁️ Sincronizar
-
-    </button>
-
-
-    <div
-      id="sincronizacion"
-      class="sincronizacion">
-
-      Última sincronización: nunca
-
-    </div>
-
-
-  </main>
-
-
-  <div class="pie">
-
-    Sistema de control de asistencia
-
-  </div>
-
-
-</div>
-
-
-
-<script>
-
-
-// ==========================================================
-// CONFIGURACIÓN
-// ==========================================================
-
-const URL_GOOGLE =
-  "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
-
-
-// ==========================================================
-// VARIABLES
-// ==========================================================
-
-let scanner = null;
-
-let procesando = false;
-
-let ultimoQR = "";
-
-let ultimoEscaneo = 0;
-
-
-// ==========================================================
-// BASE LOCAL
-// ==========================================================
-
-const DB_NAME =
-  "AsistenciaOfflineDB";
-
-const DB_VERSION = 1;
-
-let db = null;
-
-
-// ==========================================================
-// ELEMENTOS
-// ==========================================================
-
-const boton =
-  document.getElementById(
-    "btnCamara"
-  );
-
-const resultado =
-  document.getElementById(
-    "resultado"
-  );
-
-const punto =
-  document.getElementById(
-    "punto"
-  );
-
-const textoEstado =
-  document.getElementById(
-    "textoEstado"
-  );
-
-const contador =
-  document.getElementById(
-    "contador"
-  );
-
-const conexion =
-  document.getElementById(
-    "conexion"
-  );
-
-
-// ==========================================================
-// SERVICE WORKER
-// ==========================================================
-
-if (
-  "serviceWorker" in navigator
-) {
-
-  window.addEventListener(
-    "load",
-    function() {
-
-      navigator.serviceWorker
-        .register(
-          "./service-worker.js"
-        )
-        .catch(function(error) {
-
-          console.error(
-            "Error Service Worker:",
-            error
-          );
-
-        });
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// INDEXEDDB
-// ==========================================================
-
-function abrirDB() {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const request =
-        indexedDB.open(
-          DB_NAME,
-          DB_VERSION
-        );
-
-
-      request.onupgradeneeded =
-        function(event) {
-
-          const database =
-            event.target.result;
-
-
-          if (
-            !database.objectStoreNames.contains(
-              "alumnos"
-            )
-          ) {
-
-            database.createObjectStore(
-              "alumnos",
-              {
-                keyPath: "idQR"
-              }
-            );
-
-          }
-
-
-          if (
-            !database.objectStoreNames.contains(
-              "asistencias"
-            )
-          ) {
-
-            const store =
-              database.createObjectStore(
-                "asistencias",
-                {
-                  keyPath: "id"
-                }
-              );
-
-
-            store.createIndex(
-              "idQR",
-              "idQR",
-              {
-                unique: false
-              }
-            );
-
-
-            store.createIndex(
-              "fecha",
-              "fecha",
-              {
-                unique: false
-              }
-            );
-
-          }
-
-        };
-
-
-      request.onsuccess =
-        function(event) {
-
-          db =
-            event.target.result;
-
-          resolve(db);
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// OBTENER ALUMNO LOCAL
-// ==========================================================
-
-function obtenerAlumno(
-  idQR
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "alumnos",
-          "readonly"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "alumnos"
-        );
-
-
-      const request =
-        store.get(idQR);
-
-
-      request.onsuccess =
-        function() {
-
-          resolve(
-            request.result || null
-          );
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// GUARDAR ALUMNO
-// ==========================================================
-
-function guardarAlumno(
-  alumno
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "alumnos",
-          "readwrite"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "alumnos"
-        );
-
-
-      const request =
-        store.put(alumno);
-
-
-      request.onsuccess =
-        function() {
-
-          resolve();
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// OBTENER FECHA LOCAL
-// ==========================================================
-
-function obtenerFecha() {
-
-  return new Intl.DateTimeFormat(
-    "es-MX",
-    {
-      timeZone:
-        "America/Mexico_City",
-
-      day: "2-digit",
-
-      month: "2-digit",
-
-      year: "numeric"
-    }
-  ).format(
-    new Date()
-  );
-
-}
-
-
-// ==========================================================
-// OBTENER HORA LOCAL
-// ==========================================================
-
-function obtenerHora() {
-
-  return new Intl.DateTimeFormat(
-    "es-MX",
-    {
-      timeZone:
-        "America/Mexico_City",
-
-      hour: "2-digit",
-
-      minute: "2-digit",
-
-      second: "2-digit",
-
-      hour12: false
-    }
-  ).format(
-    new Date()
-  );
-
-}
-
-
-// ==========================================================
-// CREAR ID LOCAL
-// ==========================================================
-
-function crearIdAsistencia(
-  idQR,
-  fecha
-) {
-
-  return (
-    idQR +
-    "_" +
-    fecha
-  );
-
-}
-
-
-// ==========================================================
-// VERIFICAR ASISTENCIA LOCAL
-// ==========================================================
-
-function obtenerAsistencia(
-  id
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "asistencias",
-          "readonly"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "asistencias"
-        );
-
-
-      const request =
-        store.get(id);
-
-
-      request.onsuccess =
-        function() {
-
-          resolve(
-            request.result || null
-          );
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// GUARDAR ASISTENCIA LOCAL
-// ==========================================================
-
-function guardarAsistencia(
-  asistencia
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "asistencias",
-          "readwrite"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "asistencias"
-        );
-
-
-      const request =
-        store.put(asistencia);
-
-
-      request.onsuccess =
-        function() {
-
-          resolve();
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// OBTENER PENDIENTES
-// ==========================================================
-
-function obtenerPendientes() {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "asistencias",
-          "readonly"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "asistencias"
-        );
-
-
-      const request =
-        store.getAll();
-
-
-      request.onsuccess =
-        function() {
-
-          resolve(
-            request.result.filter(
-              function(item) {
-
-                return !item.sincronizado;
-
-              }
-            )
-          );
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// CONTADOR
-// ==========================================================
-
-async function actualizarContador() {
-
-  if (!db) {
-    return;
-  }
-
-
-  const pendientes =
-    await obtenerPendientes();
-
-
-  contador.textContent =
-    "Asistencias pendientes: " +
-    pendientes.length;
-
-}
-
-
-// ==========================================================
-// ESTADO INTERNET
-// ==========================================================
-
-function actualizarConexion() {
-
-  if (navigator.onLine) {
-
-    conexion.textContent =
-      "🌐 Con conexión";
-
-    conexion.className =
-      "conexion online";
-
-  } else {
-
-    conexion.textContent =
-      "📵 Modo offline";
-
-    conexion.className =
-      "conexion offline";
-
-  }
-
-}
-
-
-window.addEventListener(
-  "online",
-  function() {
-
-    actualizarConexion();
-
-    sincronizar();
-
-  }
-);
-
-
-window.addEventListener(
-  "offline",
-  actualizarConexion
-);
-
-
-actualizarConexion();
-
-
-// ==========================================================
-// INICIAR CÁMARA
-// ==========================================================
-
-function iniciarScanner() {
-
-
-  if (
-    scanner !== null ||
-    procesando
-  ) {
-
-    return;
-
-  }
-
-
-  boton.disabled = true;
-
-
-  textoEstado.textContent =
-    "Activando cámara...";
-
-
-  resultado.innerHTML =
-
-    "<div class='info'>" +
-
-    "<strong>📷 Activando cámara</strong>" +
-
-    "<p>" +
-
-    "Apunta la cámara al código QR."
-
-    +
-
-    "</p>" +
-
-    "</div>";
-
-
-  scanner =
-    new Html5Qrcode(
-      "reader"
-    );
-
-
-  scanner.start(
-
-    {
-      facingMode:
-        "environment"
-    },
-
-    {
-
-      fps: 10,
-
-      qrbox: {
-
-        width: 250,
-
-        height: 250
-
-      },
-
-      aspectRatio: 1.0
-
-    },
-
-    function(decodedText) {
-
-      procesarQR(
-        decodedText
-      );
-
-    },
-
-    function() {
-
-      // Ignorar errores normales.
-
-    }
-
-  )
-
-
-  .then(function() {
-
-    punto.classList.add(
-      "activo"
-    );
-
-    textoEstado.textContent =
-      "Cámara activa";
-
-
-    resultado.innerHTML =
-
-      "<div class='info'>" +
-
-      "<strong>✓ Cámara lista</strong>" +
-
-      "<p>" +
-
-      "Apunta al código QR del alumno."
-
-      +
-
-      "</p>" +
-
-      "</div>";
-
-  })
-
-
-  .catch(function(error) {
-
-    scanner = null;
-
-    boton.disabled = false;
-
-
-    resultado.innerHTML =
-
-      "<div class='error'>" +
-
-      "<div class='icono icono-error'>⚠️</div>" +
-
-      "<h2>No se pudo abrir la cámara</h2>" +
-
-      "<p>" +
-
-      escaparHTML(error)
-
-      +
-
-      "</p>" +
-
-      "</div>";
-
-  });
-
-}
-
-
-// ==========================================================
-// PROCESAR QR OFFLINE
-// ==========================================================
-
-async function procesarQR(
-  codigo
-) {
-
-
-  const ahora =
-    Date.now();
-
-
-  if (
-    codigo === ultimoQR &&
-    ahora - ultimoEscaneo < 3000
-  ) {
-
-    return;
-
-  }
-
-
-  ultimoQR =
-    codigo;
-
-
-  ultimoEscaneo =
-    ahora;
-
-
-  if (procesando) {
-
-    return;
-
-  }
-
-
-  procesando = true;
-
-
-  detenerScanner();
-
-
-  try {
-
-    const alumno =
-      await obtenerAlumno(
-        codigo
-      );
-
-
-    // ======================================================
-    // ALUMNO NO EXISTE LOCALMENTE
-    // ======================================================
-
-    if (!alumno) {
-
-      mostrarError(
-
-        "Código no disponible",
-
-        "Este alumno no está descargado en el dispositivo."
-
-      );
-
-      reiniciarScanner();
-
-      return;
-
-    }
-
-
-    // ======================================================
-    // FECHA Y HORA
-    // ======================================================
-
-    const fecha =
-      obtenerFecha();
-
-
-    const hora =
-      obtenerHora();
-
-
-    const id =
-      crearIdAsistencia(
-        alumno.idQR,
-        fecha
-      );
-
-
-    // ======================================================
-    // DUPLICADO LOCAL
-    // ======================================================
-
-    const existente =
-      await obtenerAsistencia(
-        id
-      );
-
-
-    if (existente) {
-
-      mostrarDuplicado(
-        existente
-      );
-
-      reiniciarScanner();
-
-      return;
-
-    }
-
-
-    // ======================================================
-    // GUARDAR LOCALMENTE
-    // ======================================================
-
-    const asistencia = {
-
-      id: id,
-
-      idQR:
-        alumno.idQR,
-
-      nombre:
-        alumno.nombre,
-
-      grupo:
-        alumno.grupo,
-
-      fecha:
-        fecha,
-
-      hora:
-        hora,
-
-      sincronizado:
-        false
-
-    };
-
-
-    await guardarAsistencia(
-      asistencia
-    );
-
-
-    // ======================================================
-    // MOSTRAR ÉXITO
-    // ======================================================
-
-    mostrarExito(
-      asistencia
-    );
-
-
-    actualizarContador();
-
-
-  }
-
-  catch (error) {
-
-    mostrarError(
-      "Error local",
-      error.message
-    );
-
-  }
-
-
-  reiniciarScanner();
-
-}
-
-
-// ==========================================================
-// ÉXITO
-// ==========================================================
-
-function mostrarExito(
-  asistencia
-) {
-
-  resultado.innerHTML =
-
-    "<div class='exito'>" +
-
-    "<div class='icono'>✓</div>" +
-
-    "<h2>Asistencia registrada</h2>" +
-
-    "<div class='nombre'>" +
-
-    escaparHTML(
-      asistencia.nombre
-    ) +
-
-    "</div>" +
-
-    "<span class='grupo'>" +
-
-    "Grupo: " +
-
-    escaparHTML(
-      asistencia.grupo
-    ) +
-
-    "</span>" +
-
-    "<div class='hora'>" +
-
-    "📅 " +
-
-    escaparHTML(
-      asistencia.fecha
-    ) +
-
-    " &nbsp; • &nbsp; 🕐 " +
-
-    escaparHTML(
-      asistencia.hora
-    ) +
-
-    "</div>" +
-
-    "<p>" +
-
-    "✓ Guardada en el dispositivo"
-
-    +
-
-    "</p>" +
-
-    "</div>";
-
-}
-
-
-// ==========================================================
-// DUPLICADO
-// ==========================================================
-
-function mostrarDuplicado(
-  asistencia
-) {
-
-  resultado.innerHTML =
-
-    "<div class='error'>" +
-
-    "<div class='icono icono-error'>!</div>" +
-
-    "<h2>Asistencia ya registrada</h2>" +
-
-    "<div class='nombre'>" +
-
-    escaparHTML(
-      asistencia.nombre
-    ) +
-
-    "</div>" +
-
-    "<span class='grupo'>" +
-
-    "Grupo: " +
-
-    escaparHTML(
-      asistencia.grupo
-    ) +
-
-    "</span>" +
-
-    "<div class='hora'>" +
-
-    "🕐 Registrada a las " +
-
-    escaparHTML(
-      asistencia.hora
-    ) +
-
-    "</div>" +
-
-    "</div>";
-
-}
-
-
-// ==========================================================
-// ERROR
-// ==========================================================
-
-function mostrarError(
-  titulo,
-  mensaje
-) {
-
-  resultado.innerHTML =
-
-    "<div class='error'>" +
-
-    "<div class='icono icono-error'>⚠️</div>" +
-
-    "<h2>" +
-
-    escaparHTML(titulo) +
-
-    "</h2>" +
-
-    "<p>" +
-
-    escaparHTML(mensaje) +
-
-    "</p>" +
-
-    "</div>";
-
-}
-
-
-// ==========================================================
-// DETENER SCANNER
-// ==========================================================
-
-function detenerScanner() {
-
-  if (!scanner) {
-    return;
-  }
-
-
-  try {
-
-    scanner
-      .stop()
-      .catch(
-        function() {}
-      );
-
-  }
-
-  catch (e) {}
-
-}
-
-
-// ==========================================================
-// REINICIAR
-// ==========================================================
-
-function reiniciarScanner() {
-
-  setTimeout(
-    function() {
-
-      procesando = false;
-
-      scanner = null;
-
-      boton.disabled = false;
-
-      punto.classList.remove(
-        "activo"
-      );
-
-      textoEstado.textContent =
-        "Preparado para escanear";
-
-
-      iniciarScanner();
-
-    },
-    2500
-  );
-
-}
-
-
-// ==========================================================
-// SINCRONIZAR
-// ==========================================================
-
-async function sincronizar() {
-
-
-  if (!navigator.onLine) {
-
-    mostrarError(
-      "Sin conexión",
-      "Las asistencias permanecen guardadas en este dispositivo."
-    );
-
-    return;
-
-  }
-
-
-  const pendientes =
-    await obtenerPendientes();
-
-
-  if (
-    pendientes.length === 0
-  ) {
-
-    alert(
-      "No hay asistencias pendientes."
-    );
-
-    return;
-
-  }
-
-
-  resultado.innerHTML =
-
-    "<div class='info'>" +
-
-    "<strong>☁️ Sincronizando...</strong>" +
-
-    "<p>" +
-
-    "Enviando " +
-
-    pendientes.length +
-
-    " asistencia(s)."
-
-    +
-
-    "</p>" +
-
-    "</div>";
-
-
-  let enviadas = 0;
-
-
-  for (
-    const asistencia
-    of pendientes
-  ) {
-
-    try {
-
-      const respuesta =
-        await enviarAsistencia(
-          asistencia
-        );
-
-
-      if (
-        respuesta &&
-        (
-          respuesta.ok === true ||
-          respuesta.duplicado === true
-        )
-      ) {
-
-        await marcarSincronizada(
-          asistencia.id
-        );
-
-        enviadas++;
-
+      if (tipo === "exito") {
+        resultado.classList.add("exito");
       }
 
+      if (tipo === "error") {
+        resultado.classList.add("error");
+      }
+
+      if (tipo === "info") {
+        resultado.classList.add("info");
+      }
     }
 
-    catch (error) {
+    function procesarQR(idQR) {
 
-      console.error(
-        "Error sincronizando:",
-        error
-      );
-
-    }
-
-  }
-
-
-  await actualizarContador();
-
-
-  document.getElementById(
-    "sincronizacion"
-  ).textContent =
-
-    "Última sincronización: " +
-
-    new Date().toLocaleTimeString(
-      "es-MX"
-    );
-
-
-  resultado.innerHTML =
-
-    "<div class='exito'>" +
-
-    "<div class='icono'>✓</div>" +
-
-    "<h2>Sincronización completa</h2>" +
-
-    "<p>" +
-
-    enviadas +
-
-    " asistencia(s) enviada(s) a Google."
-
-    +
-
-    "</p>" +
-
-    "</div>";
-
-
-  setTimeout(
-    iniciarScanner,
-    2500
-  );
-
-}
-
-
-// ==========================================================
-// ENVIAR UNA ASISTENCIA
-// ==========================================================
-
-function enviarAsistencia(
-  asistencia
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const callback =
-        "sync_" +
-        Date.now() +
-        "_" +
-        Math.random()
-          .toString(36)
-          .substring(2);
-
-
-      window[callback] =
-        function(respuesta) {
-
-          try {
-
-            resolve(
-              respuesta
-            );
-
-          }
-
-          finally {
-
-            delete window[
-              callback
-            ];
-
-          }
-
-        };
-
-
-      const script =
-        document.createElement(
-          "script"
-        );
-
-
-      script.src =
-        URL_GOOGLE +
-
-        "?action=registrar" +
-
-        "&idQR=" +
-        encodeURIComponent(
-          asistencia.idQR
-        ) +
-
-        "&nombre=" +
-        encodeURIComponent(
-          asistencia.nombre
-        ) +
-
-        "&grupo=" +
-        encodeURIComponent(
-          asistencia.grupo
-        ) +
-
-        "&fecha=" +
-        encodeURIComponent(
-          asistencia.fecha
-        ) +
-
-        "&hora=" +
-        encodeURIComponent(
-          asistencia.hora
-        ) +
-
-        "&callback=" +
-        callback;
-
-
-      script.onerror =
-        function() {
-
-          delete window[
-            callback
-          ];
-
-          reject(
-            new Error(
-              "No se pudo conectar con Google."
-            )
-          );
-
-        };
-
-
-      document.body.appendChild(
-        script
-      );
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// MARCAR COMO SINCRONIZADA
-// ==========================================================
-
-function marcarSincronizada(
-  id
-) {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      const transaction =
-        db.transaction(
-          "asistencias",
-          "readwrite"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "asistencias"
-        );
-
-
-      const request =
-        store.get(id);
-
-
-      request.onsuccess =
-        function() {
-
-          const registro =
-            request.result;
-
-
-          if (!registro) {
-
-            resolve();
-
-            return;
-
-          }
-
-
-          registro.sincronizado =
-            true;
-
-
-          store.put(
-            registro
-          );
-
-
-          resolve();
-
-        };
-
-
-      request.onerror =
-        function() {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ==========================================================
-// CARGAR ALUMNOS DESDE GOOGLE
-// ==========================================================
-
-function descargarAlumnos() {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      if (!navigator.onLine) {
-
-        reject(
-          new Error(
-            "No hay conexión a Internet."
-          )
-        );
-
+      if (procesando) {
         return;
-
       }
 
+      procesando = true;
 
-      const callback =
-        "alumnos_" +
+      mostrarResultado(
+        "Procesando asistencia...",
+        "info"
+      );
+
+      const url =
+        API_URL +
+        "?idQR=" +
+        encodeURIComponent(idQR) +
+        "&t=" +
         Date.now();
 
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
 
-      window[callback] =
-        async function(respuesta) {
+          console.log("Respuesta:", data);
 
-          try {
+          if (data.ok) {
 
-            if (
-              !respuesta ||
-              !respuesta.ok
-            ) {
-
-              reject(
-                new Error(
-                  respuesta &&
-                  respuesta.mensaje
-                    ?
-
-                  respuesta.mensaje
-
-                    :
-
-                  "No fue posible descargar alumnos."
-                )
-              );
-
-              return;
-
-            }
-
-
-            for (
-              const alumno
-              of respuesta.alumnos
-            ) {
-
-              await guardarAlumno(
-                alumno
-              );
-
-            }
-
-
-            resolve(
-              respuesta.alumnos.length
+            mostrarResultado(
+              data.nombre +
+              " - " +
+              data.grupo +
+              "\n" +
+              data.mensaje +
+              "\n" +
+              data.hora,
+              "exito"
             );
 
-          }
+          } else {
 
-          catch (error) {
-
-            reject(
-              error
+            mostrarResultado(
+              data.mensaje,
+              "error"
             );
-
           }
 
-          finally {
+        })
+        .catch(error => {
 
-            delete window[
-              callback
-            ];
+          console.error(error);
 
-          }
-
-        };
-
-
-      const script =
-        document.createElement(
-          "script"
-        );
-
-
-      script.src =
-        URL_GOOGLE +
-
-        "?action=alumnos" +
-
-        "&callback=" +
-        callback;
-
-
-      script.onerror =
-        function() {
-
-          delete window[
-            callback
-          ];
-
-          reject(
-            new Error(
-              "No se pudo descargar la lista de alumnos."
-            )
+          mostrarResultado(
+            "Error al conectar con el servidor.",
+            "error"
           );
 
-        };
+        })
+        .finally(() => {
 
+          setTimeout(() => {
+            procesando = false;
+          }, 2000);
 
-      document.body.appendChild(
-        script
-      );
-
+        });
     }
-  );
 
-}
+    function iniciarScanner() {
 
+      scanner = new Html5Qrcode("reader");
 
-// ==========================================================
-// ESCAPAR HTML
-// ==========================================================
+      scanner.start(
+        {
+          facingMode: "environment"
+        },
+        {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          },
+          aspectRatio: 1.0
+        },
+        function(decodedText) {
 
-function escaparHTML(
-  valor
-) {
+          console.log(
+            "QR detectado:",
+            decodedText
+          );
 
-  if (
-    valor === null ||
-    valor === undefined
-  ) {
+          procesarQR(decodedText);
 
-    return "";
+        },
+        function(errorMessage) {
 
-  }
+          // Los errores normales de lectura
+          // se ignoran mientras busca un QR.
 
+        }
+      )
+      .then(() => {
 
-  return String(valor)
+        console.log(
+          "Cámara iniciada correctamente"
+        );
 
-    .replace(
-      /&/g,
-      "&amp;"
-    )
+      })
+      .catch(err => {
 
-    .replace(
-      /</g,
-      "&lt;"
-    )
+        console.error(
+          "Error al iniciar cámara:",
+          err
+        );
 
-    .replace(
-      />/g,
-      "&gt;"
-    )
+        mostrarResultado(
+          "No se pudo iniciar la cámara. Revisa los permisos del navegador.",
+          "error"
+        );
 
-    .replace(
-      /"/g,
-      "&quot;"
-    )
+      });
+    }
 
-    .replace(
-      /'/g,
-      "&#039;"
+    window.addEventListener(
+      "load",
+      function() {
+
+        if (typeof Html5Qrcode === "undefined") {
+
+          mostrarResultado(
+            "No se pudo cargar el lector QR.",
+            "error"
+          );
+
+          console.error(
+            "Html5Qrcode no está definido"
+          );
+
+          return;
+        }
+
+        iniciarScanner();
+
+      }
     );
 
-}
-
-
-// ==========================================================
-// INICIALIZACIÓN
-// ==========================================================
-
-async function iniciarAplicacion() {
-
-  try {
-
-    await abrirDB();
-
-    await actualizarContador();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Error inicializando:",
-      error
-    );
-
-  }
-
-}
-
-
-iniciarAplicacion();
-
-</script>
+  </script>
 
 </body>
-
 </html>
