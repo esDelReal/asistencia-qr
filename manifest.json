@@ -1,0 +1,11 @@
+{
+  "name": "Control de Asistencia",
+  "short_name": "Asistencia",
+  "description": "Sistema de control de asistencia mediante códigos QR",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": []
+}
