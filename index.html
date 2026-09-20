@@ -34,77 +34,6 @@
        RESET
        ========================================== */
 
-    .resumen-asistencia {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.tarjeta-resumen {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 14px 8px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.titulo-resumen {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.numero-resumen {
-  font-size: 28px;
-  font-weight: bold;
-  color: #222;
-}
-
-.barra-asistencia {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.barra-superior {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.barra-fondo {
-  width: 100%;
-  height: 10px;
-  background: #e5e5e5;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.barra-progreso {
-  height: 100%;
-  width: 0%;
-  background: #22c55e;
-  border-radius: 10px;
-  transition: width 0.3s ease;
-}
-
-@media (max-width: 500px) {
-  .resumen-asistencia {
-    gap: 6px;
-  }
-
-  .numero-resumen {
-    font-size: 24px;
-  }
-
-  .titulo-resumen {
-    font-size: 12px;
-  }
-}
     * {
       box-sizing: border-box;
     }
@@ -270,8 +199,7 @@
     }
 
 
-    .connection.offline
-    .connection-dot {
+    .connection.offline .connection-dot {
 
       background: #f59e0b;
 
@@ -279,7 +207,7 @@
 
 
     /* ==========================================
-       TARJETA
+       TARJETA PRINCIPAL
        ========================================== */
 
     .card {
@@ -303,7 +231,7 @@
 
 
     /* ==========================================
-       ESTADÍSTICAS
+       ESTADÍSTICAS SUPERIORES
        ========================================== */
 
     .stats {
@@ -365,6 +293,151 @@
 
 
     /* ==========================================
+       RESUMEN DE ASISTENCIA
+       ========================================== */
+
+    .resumen-asistencia {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+      gap: 10px;
+
+      margin:
+        0 0 12px;
+
+    }
+
+
+    .tarjeta-resumen {
+
+      background: #ffffff;
+
+      border:
+        1px solid
+        #e2e8f0;
+
+      border-radius: 14px;
+
+      padding:
+        14px 8px;
+
+      text-align: center;
+
+      box-shadow:
+        0 2px 8px
+        rgba(0,0,0,0.06);
+
+    }
+
+
+    .titulo-resumen {
+
+      font-size: 12px;
+
+      color: #64748b;
+
+      margin-bottom: 5px;
+
+    }
+
+
+    .numero-resumen {
+
+      font-size: 28px;
+
+      font-weight: 750;
+
+      color: #0f172a;
+
+      line-height: 1;
+
+    }
+
+
+    /* ==========================================
+       BARRA DE ASISTENCIA
+       ========================================== */
+
+    .barra-asistencia {
+
+      background: #f8fafc;
+
+      border:
+        1px solid
+        #e2e8f0;
+
+      border-radius: 14px;
+
+      padding: 13px 14px;
+
+      margin-bottom: 18px;
+
+    }
+
+
+    .barra-superior {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 10px;
+
+      margin-bottom: 8px;
+
+      font-size: 13px;
+
+      color: #475569;
+
+    }
+
+
+    .barra-superior strong {
+
+      font-size: 15px;
+
+      color: #0f172a;
+
+    }
+
+
+    .barra-fondo {
+
+      width: 100%;
+
+      height: 10px;
+
+      background: #e2e8f0;
+
+      border-radius: 10px;
+
+      overflow: hidden;
+
+    }
+
+
+    .barra-progreso {
+
+      height: 100%;
+
+      width: 0%;
+
+      background: #22c55e;
+
+      border-radius: 10px;
+
+      transition:
+        width 0.3s ease;
+
+    }
+
+
+    /* ==========================================
        CABECERA DEL ESCÁNER
        ========================================== */
 
@@ -414,11 +487,6 @@
     .camera-wrapper {
 
       width: 100%;
-
-      /*
-        La cámara se adapta al ancho disponible.
-        Nunca supera 460px.
-      */
 
       max-width:
         min(460px, 78vw);
@@ -732,6 +800,20 @@
 
       }
 
+
+      .numero-resumen {
+
+        font-size: 23px;
+
+      }
+
+
+      .titulo-resumen {
+
+        font-size: 10px;
+
+      }
+
     }
 
 
@@ -959,6 +1041,20 @@
 
       }
 
+
+      .resumen-asistencia {
+
+        gap: 4px;
+
+      }
+
+
+      .numero-resumen {
+
+        font-size: 21px;
+
+      }
+
     }
 
 
@@ -1036,7 +1132,9 @@
     <section class="card">
 
 
-      <!-- ESTADÍSTICAS -->
+      <!-- ======================================
+           ESTADÍSTICAS GENERALES
+           ====================================== -->
 
       <div class="stats">
 
@@ -1044,7 +1142,7 @@
         <div class="stat">
 
           <div class="stat-label">
-            Activos
+            Alumnos activos
           </div>
 
           <div
@@ -1077,6 +1175,95 @@
 
 
       <!-- ======================================
+           RESUMEN DE ASISTENCIA
+           ====================================== -->
+
+      <div class="resumen-asistencia">
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Total activos
+          </div>
+
+          <div
+            id="totalActivos"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Han ingresado
+          </div>
+
+          <div
+            id="hanIngresado"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Faltan
+          </div>
+
+          <div
+            id="faltanIngresar"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+      <!-- ======================================
+           BARRA DE ASISTENCIA
+           ====================================== -->
+
+      <div class="barra-asistencia">
+
+        <div class="barra-superior">
+
+          <span>
+            Asistencia de hoy
+          </span>
+
+          <strong id="porcentajeAsistencia">
+            0%
+          </strong>
+
+        </div>
+
+
+        <div class="barra-fondo">
+
+          <div
+            id="barraProgreso"
+            class="barra-progreso"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================
            ESCÁNER
            ====================================== -->
 
@@ -1098,36 +1285,6 @@
 
       <div class="camera-wrapper">
 
-        <!-- RESUMEN DE ASISTENCIA -->
-<div class="resumen-asistencia">
-
-  <div class="tarjeta-resumen">
-    <div class="titulo-resumen">Total activos</div>
-    <div id="totalActivos" class="numero-resumen">0</div>
-  </div>
-
-  <div class="tarjeta-resumen">
-    <div class="titulo-resumen">Han ingresado</div>
-    <div id="hanIngresado" class="numero-resumen">0</div>
-  </div>
-
-  <div class="tarjeta-resumen">
-    <div class="titulo-resumen">Faltan</div>
-    <div id="faltanIngresar" class="numero-resumen">0</div>
-  </div>
-
-</div>
-
-<div class="barra-asistencia">
-  <div class="barra-superior">
-    <span>Asistencia de hoy</span>
-    <strong id="porcentajeAsistencia">0%</strong>
-  </div>
-
-  <div class="barra-fondo">
-    <div id="barraProgreso" class="barra-progreso"></div>
-  </div>
-</div>        
         <div id="reader"></div>
 
       </div>
@@ -1188,107 +1345,7 @@
 
   <script>
 
-    async function actualizarResumenAsistencia() {
 
-  try {
-
-    // Obtener alumnos almacenados localmente
-    const alumnos = await obtenerTodosLosAlumnos();
-
-    // Solo alumnos activos
-    const activos = alumnos.filter(alumno => {
-
-      const estado = String(alumno.activo || "")
-        .trim()
-        .toLowerCase();
-
-      return estado === "sí" || estado === "si";
-    });
-
-    const totalActivos = activos.length;
-
-    // Fecha actual
-    const fechaHoy = obtenerFecha();
-
-    // Obtener asistencias locales
-    const asistencias = await obtenerTodasLasAsistencias();
-
-    // Alumnos que ya tienen asistencia hoy
-    const asistieronHoy = asistencias.filter(asistencia => {
-
-      return asistencia.fecha === fechaHoy &&
-             asistencia.estado !== "rechazado";
-
-    });
-
-    // Evitar contar dos veces el mismo QR
-    const idsUnicos = new Set(
-      asistieronHoy.map(asistencia => asistencia.idQR)
-    );
-
-    const hanIngresado = idsUnicos.size;
-
-    // Calcular faltantes
-    const faltan = Math.max(
-      totalActivos - hanIngresado,
-      0
-    );
-
-    // Porcentaje
-    const porcentaje = totalActivos > 0
-      ? Math.round((hanIngresado / totalActivos) * 100)
-      : 0;
-
-    async function obtenerTodasLasAsistencias() {
-
-  return new Promise((resolve, reject) => {
-
-    const transaction =
-      db.transaction(["asistencias"], "readonly");
-
-    const store =
-      transaction.objectStore("asistencias");
-
-    const request =
-      store.getAll();
-
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
-
-  });
-
-}
-    
-    // Actualizar pantalla
-    document.getElementById("totalActivos").textContent =
-      totalActivos;
-
-    document.getElementById("hanIngresado").textContent =
-      hanIngresado;
-
-    document.getElementById("faltanIngresar").textContent =
-      faltan;
-
-    document.getElementById("porcentajeAsistencia").textContent =
-      porcentaje + "%";
-
-    document.getElementById("barraProgreso").style.width =
-      porcentaje + "%";
-
-  } catch (error) {
-
-    console.error(
-      "Error actualizando resumen:",
-      error
-    );
-
-  }
-}
     /* =====================================================
        CONFIGURACIÓN
        ===================================================== */
@@ -1318,6 +1375,10 @@
 
     let db = null;
 
+
+    /* =====================================================
+       ABRIR BASE DE DATOS
+       ===================================================== */
 
     function abrirBaseDatos() {
 
@@ -1415,67 +1476,196 @@
 
     function guardarAlumnos(alumnos) {
 
-  return new Promise(
-    function(resolve, reject) {
+      return new Promise(
+        function(resolve, reject) {
 
-      if (!db) {
-        resolve();
-        return;
-      }
+          if (!db) {
 
-      const transaction =
-        db.transaction(
-          "alumnos",
-          "readwrite"
-        );
+            resolve();
 
-      const store =
-        transaction.objectStore(
-          "alumnos"
-        );
+            return;
 
-      alumnos.forEach(
-        function(alumno) {
+          }
 
-          store.put({
 
-            idQR:
-              alumno.idQR,
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readwrite"
+            );
 
-            nombre:
-              alumno.nombre,
 
-            grupo:
-              alumno.grupo,
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
 
-            activo:
-              alumno.activo
 
-          });
+          alumnos.forEach(
+            function(alumno) {
+
+              store.put({
+
+                idQR:
+                  alumno.idQR,
+
+                nombre:
+                  alumno.nombre,
+
+                grupo:
+                  alumno.grupo,
+
+                activo:
+                  alumno.activo
+
+              });
+
+            }
+          );
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
 
         }
       );
 
-      transaction.oncomplete =
-        function() {
+    }
 
-          resolve();
 
-        };
+    /* =====================================================
+       OBTENER TODOS LOS ALUMNOS LOCALES
+       ===================================================== */
 
-      transaction.onerror =
-        function() {
+    function obtenerTodosLosAlumnos() {
 
-          reject(
-            transaction.error
-          );
+      return new Promise(
+        function(resolve, reject) {
 
-        };
+          if (!db) {
+
+            resolve([]);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result || []
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
 
     }
-  );
 
-}
+
+    /* =====================================================
+       OBTENER TODAS LAS ASISTENCIAS LOCALES
+       ===================================================== */
+
+    function obtenerTodasLasAsistencias() {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve([]);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result || []
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
 
     /* =====================================================
        OBTENER ALUMNO LOCAL
@@ -1570,16 +1760,50 @@
 
 
           const request =
-            store.count();
+            store.getAll();
 
 
           request.onsuccess =
             function() {
 
+              const alumnos =
+                request.result || [];
+
+
+              const activos =
+                alumnos.filter(
+                  function(alumno) {
+
+                    const estado =
+                      String(
+                        alumno.activo || ""
+                      )
+                      .trim()
+                      .toLowerCase();
+
+
+                    return (
+                      estado === "sí" ||
+                      estado === "si"
+                    );
+
+                  }
+                );
+
+
               document.getElementById(
                 "totalAlumnos"
               ).textContent =
-                request.result;
+                activos.length;
+
+
+              resolve();
+
+            };
+
+
+          request.onerror =
+            function() {
 
               resolve();
 
@@ -1898,42 +2122,172 @@
        FECHA LOCAL
        ===================================================== */
 
-   function obtenerFecha() {
+    function obtenerFecha() {
 
-  const ahora = new Date();
+      const ahora =
+        new Date();
 
-  const dia =
-    String(ahora.getDate()).padStart(2, "0");
 
-  const mes =
-    String(ahora.getMonth() + 1).padStart(2, "0");
+      const dia =
+        String(
+          ahora.getDate()
+        ).padStart(
+          2,
+          "0"
+        );
 
-  const año =
-    ahora.getFullYear();
 
-  return dia + "/" + mes + "/" + año;
-}
+      const mes =
+        String(
+          ahora.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const año =
+        ahora.getFullYear();
+
+
+      return (
+        dia +
+        "/" +
+        mes +
+        "/" +
+        año
+      );
+
+    }
 
 
     /* =====================================================
        HORA LOCAL
        ===================================================== */
 
-   function obtenerHora() {
+    function obtenerHora() {
 
-  const ahora = new Date();
+      const ahora =
+        new Date();
 
-  const horas =
-    String(ahora.getHours()).padStart(2, "0");
 
-  const minutos =
-    String(ahora.getMinutes()).padStart(2, "0");
+      const horas =
+        String(
+          ahora.getHours()
+        ).padStart(
+          2,
+          "0"
+        );
 
-  const segundos =
-    String(ahora.getSeconds()).padStart(2, "0");
 
-  return horas + ":" + minutos + ":" + segundos;
-}
+      const minutos =
+        String(
+          ahora.getMinutes()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const segundos =
+        String(
+          ahora.getSeconds()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      return (
+        horas +
+        ":" +
+        minutos +
+        ":" +
+        segundos
+      );
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZAR RESUMEN DE ASISTENCIA
+       ===================================================== */
+
+    async function actualizarResumenAsistencia() {
+
+      if (!navigator.onLine) {
+
+        return;
+
+      }
+
+
+      try {
+
+        const url =
+          API_URL +
+          "?action=resumen&t=" +
+          Date.now();
+
+
+        const response =
+          await fetch(url);
+
+
+        const data =
+          await response.json();
+
+
+        if (!data.ok) {
+
+          return;
+
+        }
+
+
+        document.getElementById(
+          "totalActivos"
+        ).textContent =
+          data.totalActivos;
+
+
+        document.getElementById(
+          "hanIngresado"
+        ).textContent =
+          data.hanIngresado;
+
+
+        document.getElementById(
+          "faltanIngresar"
+        ).textContent =
+          data.faltan;
+
+
+        document.getElementById(
+          "porcentajeAsistencia"
+        ).textContent =
+          data.porcentaje +
+          "%";
+
+
+        document.getElementById(
+          "barraProgreso"
+        ).style.width =
+          data.porcentaje +
+          "%";
+
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error actualizando resumen:",
+          error
+        );
+
+      }
+
+    }
 
 
     /* =====================================================
@@ -2018,147 +2372,138 @@
        REGISTRAR OFFLINE
        ===================================================== */
 
-   async function registrarOffline(
-  idQR
-) {
-
-  const alumno =
-    await obtenerAlumnoLocal(
+    async function registrarOffline(
       idQR
-    );
+    ) {
+
+      const alumno =
+        await obtenerAlumnoLocal(
+          idQR
+        );
 
 
-  // ========================================================
-  // ALUMNO NO ENCONTRADO
-  // ========================================================
+      /* ALUMNO NO ENCONTRADO */
 
-  if (!alumno) {
+      if (!alumno) {
 
-    mostrarResultado(
-      "❌",
-      "Código no registrado",
-      "Este alumno todavía no está almacenado en el dispositivo.",
-      "error"
-    );
+        mostrarResultado(
+          "❌",
+          "Código no registrado",
+          "Este alumno todavía no está almacenado en el dispositivo.",
+          "error"
+        );
 
-    return;
+        return;
 
-  }
+      }
 
 
-  // ========================================================
-  // VALIDAR ALUMNO ACTIVO
-  // ========================================================
+      /* VALIDAR ALUMNO ACTIVO */
 
-  const activo =
-    String(
-      alumno.activo || ""
-    )
-    .trim()
-    .toLowerCase();
+      const activo =
+        String(
+          alumno.activo || ""
+        )
+        .trim()
+        .toLowerCase();
 
 
-  if (
-    activo !== "sí" &&
-    activo !== "si"
-  ) {
+      if (
+        activo !== "sí" &&
+        activo !== "si"
+      ) {
 
-    mostrarResultado(
-      "🚫",
-      "Alumno inactivo",
-      alumno.nombre +
-      " · " +
-      alumno.grupo +
-      "\nNo tiene autorización para registrar asistencia.",
-      "error"
-    );
+        mostrarResultado(
+          "🚫",
+          "Alumno inactivo",
+          alumno.nombre +
+          " · " +
+          alumno.grupo +
+          "\nNo tiene autorización para registrar asistencia.",
+          "error"
+        );
 
-    return;
+        return;
 
-  }
-
-
-  // ========================================================
-  // FECHA Y HORA
-  // ========================================================
-
-  const fecha =
-    obtenerFecha();
+      }
 
 
-  const hora =
-    obtenerHora();
+      /* FECHA Y HORA */
+
+      const fecha =
+        obtenerFecha();
 
 
-  // ========================================================
-  // DUPLICADO LOCAL
-  // ========================================================
-
-  const duplicado =
-    await verificarDuplicadoLocal(
-      idQR,
-      fecha
-    );
+      const hora =
+        obtenerHora();
 
 
-  if (duplicado) {
+      /* DUPLICADO */
 
-    mostrarResultado(
-      "⚠️",
-      "Asistencia duplicada",
-      alumno.nombre +
-      " · " +
-      alumno.grupo +
-      "\nYa fue registrado hoy.",
-      "error"
-    );
-
-    return;
-
-  }
+      const duplicado =
+        await verificarDuplicadoLocal(
+          idQR,
+          fecha
+        );
 
 
-  // ========================================================
-  // GUARDAR ASISTENCIA
-  // ========================================================
+      if (duplicado) {
 
-  await guardarAsistenciaLocal({
+        mostrarResultado(
+          "⚠️",
+          "Asistencia duplicada",
+          alumno.nombre +
+          " · " +
+          alumno.grupo +
+          "\nYa fue registrado hoy.",
+          "error"
+        );
 
-    idQR:
-      idQR,
+        return;
 
-    nombre:
-      alumno.nombre,
-
-    grupo:
-      alumno.grupo,
-
-    fecha:
-      fecha,
-
-    hora:
-      hora,
-
-    estado:
-      "pendiente"
-
-  });
+      }
 
 
-  await actualizarPendientes();
+      /* GUARDAR */
+
+      await guardarAsistenciaLocal({
+
+        idQR:
+          idQR,
+
+        nombre:
+          alumno.nombre,
+
+        grupo:
+          alumno.grupo,
+
+        fecha:
+          fecha,
+
+        hora:
+          hora,
+
+        estado:
+          "pendiente"
+
+      });
 
 
-  mostrarResultado(
-    "📱",
-    "Asistencia guardada",
-    alumno.nombre +
-    " · " +
-    alumno.grupo +
-    "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
-    "offline"
-  );
+      await actualizarPendientes();
 
-}
+
+      mostrarResultado(
+        "📱",
+        "Asistencia guardada",
+        alumno.nombre +
+        " · " +
+        alumno.grupo +
+        "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
+        "offline"
+      );
+
+    }
+
 
     /* =====================================================
        PROCESAR QR
@@ -2181,7 +2526,9 @@
       try {
 
 
-        /* OFFLINE */
+        /* ==========================================
+           OFFLINE
+           ========================================== */
 
         if (!navigator.onLine) {
 
@@ -2194,7 +2541,9 @@
         }
 
 
-        /* ONLINE */
+        /* ==========================================
+           ONLINE
+           ========================================== */
 
         mostrarResultado(
           "⏳",
@@ -2228,6 +2577,10 @@
         );
 
 
+        /* ==========================================
+           REGISTRO CORRECTO
+           ========================================== */
+
         if (data.ok) {
 
           mostrarResultado(
@@ -2241,29 +2594,61 @@
             "success"
           );
 
+
+          await actualizarResumenAsistencia();
+
         }
+
+
+        /* ==========================================
+           ALUMNO INACTIVO
+           ========================================== */
+
+        else if (data.inactivo) {
+
+          mostrarResultado(
+            "🚫",
+            "Alumno inactivo",
+            data.nombre +
+            " · " +
+            data.grupo +
+            "\n" +
+            data.mensaje,
+            "error"
+          );
+
+        }
+
+
+        /* ==========================================
+           DUPLICADO
+           ========================================== */
+
+        else if (data.duplicado) {
+
+          mostrarResultado(
+            "⚠️",
+            "Asistencia duplicada",
+            data.mensaje,
+            "error"
+          );
+
+        }
+
+
+        /* ==========================================
+           OTRO ERROR
+           ========================================== */
+
         else {
 
-          if (data.duplicado) {
-
-            mostrarResultado(
-              "⚠️",
-              "Asistencia duplicada",
-              data.mensaje,
-              "error"
-            );
-
-          }
-          else {
-
-            mostrarResultado(
-              "❌",
-              "Código no registrado",
-              data.mensaje,
-              "error"
-            );
-
-          }
+          mostrarResultado(
+            "❌",
+            "Código no registrado",
+            data.mensaje ||
+            "El código QR no está registrado.",
+            "error"
+          );
 
         }
 
@@ -2275,6 +2660,10 @@
           error
         );
 
+
+        /* ==========================================
+           SI SE PERDIÓ INTERNET
+           ========================================== */
 
         if (!navigator.onLine) {
 
@@ -2313,7 +2702,7 @@
 
 
     /* =====================================================
-       SINCRONIZAR
+       SINCRONIZAR PENDIENTES
        ===================================================== */
 
     async function sincronizarPendientes() {
@@ -2341,6 +2730,8 @@
       ) {
 
         await actualizarPendientes();
+
+        await actualizarResumenAsistencia();
 
         return;
 
@@ -2412,6 +2803,19 @@
             );
 
           }
+          else if (data.inactivo) {
+
+            /*
+              El alumno fue desactivado
+              antes de sincronizar.
+              No se registra la asistencia.
+            */
+
+            await eliminarAsistencia(
+              asistencia.id
+            );
+
+          }
 
         }
         catch(error) {
@@ -2429,6 +2833,9 @@
 
 
       await actualizarPendientes();
+
+
+      await actualizarResumenAsistencia();
 
 
       boton.textContent =
@@ -2504,6 +2911,11 @@
           "No se pudo cargar html5-qrcode.",
           "error"
         );
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Lector no disponible";
 
         return;
 
@@ -2613,6 +3025,8 @@
 
         await sincronizarPendientes();
 
+        await actualizarResumenAsistencia();
+
       }
     );
 
@@ -2640,7 +3054,7 @@
 
 
     /* =====================================================
-       BOTÓN
+       BOTÓN DE SINCRONIZACIÓN
        ===================================================== */
 
     document.getElementById(
@@ -2652,7 +3066,7 @@
 
 
     /* =====================================================
-       INICIO
+       INICIO DE APLICACIÓN
        ===================================================== */
 
     async function iniciarAplicacion() {
@@ -2674,6 +3088,8 @@
         if (navigator.onLine) {
 
           await sincronizarPendientes();
+
+          await actualizarResumenAsistencia();
 
         }
 
@@ -2697,6 +3113,7 @@
       "load",
       iniciarAplicacion
     );
+
 
   </script>
 
