@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Asistencia QR">
+
   <title>Control de Asistencia</title>
+
+  <link rel="manifest" href="./manifest.json">
 
   <script
     src="https://unpkg.com/html5-qrcode"
@@ -11,256 +19,1405 @@
   </script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
+    * {
+      box-sizing: border-box;
     }
 
-    h1 {
-      color: #1f2937;
-      margin-bottom: 10px;
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, #1e3a8a 0, transparent 32%),
+        radial-gradient(circle at bottom right, #0f766e 0, transparent 30%),
+        #0f172a;
+      color: #0f172a;
+      padding: 18px 14px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ENCABEZADO */
+
+    .header {
+      color: white;
+      margin-bottom: 16px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 25px;
+      font-weight: 750;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    /* ESTADO */
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.12);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+    }
+
+    .offline .dot {
+      background: #f59e0b;
+    }
+
+    /* TARJETA PRINCIPAL */
+
+    .card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,0.28),
+        0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    /* ESTADÍSTICAS */
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 11px 13px;
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      color: #0f172a;
+      font-size: 19px;
+      font-weight: 750;
+    }
+
+    /* CÁMARA */
+
+    .camera-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .camera-title strong {
+      font-size: 15px;
+      color: #1e293b;
+    }
+
+    .camera-title span {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .camera-box {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #020617;
+      border: 4px solid #e2e8f0;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.05),
+        0 8px 20px rgba(15,23,42,0.18);
     }
 
     #reader {
       width: 100%;
-      max-width: 500px;
-      margin: 20px auto;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
-    #resultado {
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 15px;
-      border-radius: 10px;
-      background: white;
-      min-height: 40px;
+    #reader video {
+      border-radius: 13px !important;
+      object-fit: cover !important;
     }
 
-    .exito {
-      color: #166534;
-      background: #dcfce7;
+    #reader__scan_region {
+      background: #020617 !important;
     }
 
-    .error {
-      color: #991b1b;
-      background: #fee2e2;
+    #reader__dashboard {
+      padding: 8px !important;
+      background: #020617 !important;
     }
 
-    .info {
-      color: #1e40af;
-      background: #dbeafe;
+    #reader__dashboard_section_swaplink {
+      color: white !important;
     }
 
-    button {
-      padding: 10px 20px;
+    /* RESULTADO */
+
+    .result {
+      margin-top: 15px;
+      padding: 14px;
+      border-radius: 15px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-content {
+      width: 100%;
+    }
+
+    .result-icon {
+      font-size: 23px;
+      margin-bottom: 3px;
+    }
+
+    .result-title {
+      font-size: 15px;
+      font-weight: 750;
+      color: #334155;
+    }
+
+    .result-detail {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #64748b;
+      white-space: pre-line;
+    }
+
+    .result.success {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    .result.success .result-title {
+      color: #047857;
+    }
+
+    .result.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .result.error .result-title {
+      color: #b91c1c;
+    }
+
+    .result.offline-result {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .result.offline-result .result-title {
+      color: #92400e;
+    }
+
+    /* PIE */
+
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 11px;
+      margin-top: 13px;
+    }
+
+    /* BOTÓN */
+
+    .sync-button {
+      width: 100%;
+      margin-top: 11px;
+      padding: 11px;
       border: none;
-      border-radius: 8px;
-      background: #2563eb;
+      border-radius: 12px;
+      background: #0f172a;
       color: white;
-      font-size: 16px;
+      font-size: 13px;
+      font-weight: 650;
       cursor: pointer;
     }
 
-    button:hover {
-      background: #1d4ed8;
+    .sync-button:active {
+      transform: scale(0.99);
+    }
+
+    .sync-button:disabled {
+      opacity: 0.5;
+    }
+
+    @media (max-width: 420px) {
+
+      body {
+        padding: 12px 10px;
+      }
+
+      .card {
+        padding: 14px;
+        border-radius: 19px;
+      }
+
+      .title {
+        font-size: 22px;
+      }
+
+      .camera-box {
+        max-width: 300px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Control de Asistencia</h1>
+<div class="app">
 
-  <p>Escanea el código QR del alumno</p>
+  <div class="header">
 
-  <div id="reader"></div>
+    <div class="header-top">
 
-  <div id="resultado" class="info">
-    Esperando código QR...
+      <div>
+        <h1 class="title">Control de Asistencia</h1>
+        <p class="subtitle">Escanea el código QR del alumno</p>
+      </div>
+
+      <div id="connectionStatus" class="status">
+        <span class="dot"></span>
+        <span id="connectionText">Conectado</span>
+      </div>
+
+    </div>
+
   </div>
 
-  <script>
 
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
+  <div class="card">
 
-    let scanner;
-    let procesando = false;
+    <div class="stats">
 
-    function mostrarResultado(mensaje, tipo) {
+      <div class="stat">
+        <div class="stat-label">Alumnos disponibles</div>
+        <div class="stat-value" id="totalAlumnos">—</div>
+      </div>
 
-      const resultado = document.getElementById("resultado");
+      <div class="stat">
+        <div class="stat-label">Pendientes de sincronizar</div>
+        <div class="stat-value" id="pendientes">0</div>
+      </div>
 
-      resultado.textContent = mensaje;
+    </div>
 
-      resultado.className = "";
 
-      if (tipo === "exito") {
-        resultado.classList.add("exito");
+    <div class="camera-title">
+      <strong>Escáner QR</strong>
+      <span id="cameraStatus">Iniciando cámara...</span>
+    </div>
+
+
+    <div class="camera-box">
+      <div id="reader"></div>
+    </div>
+
+
+    <div id="resultado" class="result">
+
+      <div class="result-content">
+
+        <div class="result-icon">📷</div>
+
+        <div class="result-title">
+          Esperando código QR
+        </div>
+
+        <div class="result-detail">
+          Coloca el código dentro del recuadro
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <button
+      id="syncButton"
+      class="sync-button"
+      onclick="sincronizarPendientes()"
+      disabled>
+      Sincronizar pendientes
+    </button>
+
+  </div>
+
+
+  <div class="footer">
+    Sistema de asistencia QR
+  </div>
+
+</div>
+
+
+<script>
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
+
+const DB_NAME = "AsistenciaQR";
+const DB_VERSION = 1;
+
+let scanner = null;
+let procesando = false;
+let db = null;
+
+
+/* =====================================================
+   BASE DE DATOS LOCAL
+===================================================== */
+
+function abrirDB() {
+
+  return new Promise((resolve, reject) => {
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = function(event) {
+
+      const database = event.target.result;
+
+      if (!database.objectStoreNames.contains("alumnos")) {
+
+        database.createObjectStore(
+          "alumnos",
+          { keyPath: "idQR" }
+        );
+
       }
 
-      if (tipo === "error") {
-        resultado.classList.add("error");
-      }
+      if (!database.objectStoreNames.contains("asistencias")) {
 
-      if (tipo === "info") {
-        resultado.classList.add("info");
-      }
-    }
-
-    function procesarQR(idQR) {
-
-      if (procesando) {
-        return;
-      }
-
-      procesando = true;
-
-      mostrarResultado(
-        "Procesando asistencia...",
-        "info"
-      );
-
-      const url =
-        API_URL +
-        "?idQR=" +
-        encodeURIComponent(idQR) +
-        "&t=" +
-        Date.now();
-
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-
-          console.log("Respuesta:", data);
-
-          if (data.ok) {
-
-            mostrarResultado(
-              data.nombre +
-              " - " +
-              data.grupo +
-              "\n" +
-              data.mensaje +
-              "\n" +
-              data.hora,
-              "exito"
-            );
-
-          } else {
-
-            mostrarResultado(
-              data.mensaje,
-              "error"
-            );
-          }
-
-        })
-        .catch(error => {
-
-          console.error(error);
-
-          mostrarResultado(
-            "Error al conectar con el servidor.",
-            "error"
+        const store =
+          database.createObjectStore(
+            "asistencias",
+            {
+              keyPath: "id",
+              autoIncrement: true
+            }
           );
 
-        })
-        .finally(() => {
-
-          setTimeout(() => {
-            procesando = false;
-          }, 2000);
-
-        });
-    }
-
-    function iniciarScanner() {
-
-      scanner = new Html5Qrcode("reader");
-
-      scanner.start(
-        {
-          facingMode: "environment"
-        },
-        {
-          fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
-          },
-          aspectRatio: 1.0
-        },
-        function(decodedText) {
-
-          console.log(
-            "QR detectado:",
-            decodedText
-          );
-
-          procesarQR(decodedText);
-
-        },
-        function(errorMessage) {
-
-          // Los errores normales de lectura
-          // se ignoran mientras busca un QR.
-
-        }
-      )
-      .then(() => {
-
-        console.log(
-          "Cámara iniciada correctamente"
+        store.createIndex(
+          "estado",
+          "estado",
+          { unique: false }
         );
 
-      })
-      .catch(err => {
+      }
 
-        console.error(
-          "Error al iniciar cámara:",
-          err
-        );
+    };
 
-        mostrarResultado(
-          "No se pudo iniciar la cámara. Revisa los permisos del navegador.",
-          "error"
-        );
+    request.onsuccess = function(event) {
 
+      db = event.target.result;
+
+      resolve(db);
+
+    };
+
+    request.onerror = function() {
+
+      reject(request.error);
+
+    };
+
+  });
+
+}
+
+
+/* =====================================================
+   ALUMNOS
+===================================================== */
+
+function guardarAlumnos(alumnos) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction("alumnos", "readwrite");
+
+    const store =
+      transaction.objectStore("alumnos");
+
+    alumnos.forEach(alumno => {
+
+      store.put({
+        idQR: alumno.idQR,
+        nombre: alumno.nombre,
+        grupo: alumno.grupo
       });
-    }
 
-    window.addEventListener(
-      "load",
-      function() {
+    });
 
-        if (typeof Html5Qrcode === "undefined") {
+    transaction.oncomplete = resolve;
 
-          mostrarResultado(
-            "No se pudo cargar el lector QR.",
-            "error"
-          );
+    transaction.onerror = () => {
+      reject(transaction.error);
+    };
 
-          console.error(
-            "Html5Qrcode no está definido"
-          );
+  });
 
-          return;
-        }
+}
 
-        iniciarScanner();
 
+function obtenerAlumnoLocal(idQR) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction("alumnos", "readonly");
+
+    const store =
+      transaction.objectStore("alumnos");
+
+    const request =
+      store.get(idQR);
+
+    request.onsuccess = () => {
+
+      resolve(request.result || null);
+
+    };
+
+    request.onerror = () => {
+
+      reject(request.error);
+
+    };
+
+  });
+
+}
+
+
+function contarAlumnos() {
+
+  return new Promise((resolve) => {
+
+    const transaction =
+      db.transaction("alumnos", "readonly");
+
+    const store =
+      transaction.objectStore("alumnos");
+
+    const request = store.count();
+
+    request.onsuccess = () => {
+
+      document.getElementById("totalAlumnos")
+        .textContent = request.result;
+
+      resolve(request.result);
+
+    };
+
+  });
+
+}
+
+
+/* =====================================================
+   ASISTENCIAS LOCALES
+===================================================== */
+
+function guardarAsistenciaLocal(asistencia) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction("asistencias", "readwrite");
+
+    const store =
+      transaction.objectStore("asistencias");
+
+    store.add(asistencia);
+
+    transaction.oncomplete = resolve;
+
+    transaction.onerror = () => {
+      reject(transaction.error);
+    };
+
+  });
+
+}
+
+
+function obtenerPendientes() {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction("asistencias", "readonly");
+
+    const store =
+      transaction.objectStore("asistencias");
+
+    const request =
+      store.getAll();
+
+    request.onsuccess = () => {
+
+      const pendientes =
+        request.result.filter(
+          item => item.estado === "pendiente"
+        );
+
+      resolve(pendientes);
+
+    };
+
+    request.onerror = () => {
+
+      reject(request.error);
+
+    };
+
+  });
+
+}
+
+
+async function actualizarPendientes() {
+
+  const pendientes =
+    await obtenerPendientes();
+
+  document.getElementById("pendientes")
+    .textContent = pendientes.length;
+
+  document.getElementById("syncButton")
+    .disabled = pendientes.length === 0;
+}
+
+
+/* =====================================================
+   VERIFICAR DUPLICADO LOCAL
+===================================================== */
+
+function yaRegistradoLocal(idQR, fecha) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction("asistencias", "readonly");
+
+    const store =
+      transaction.objectStore("asistencias");
+
+    const request =
+      store.getAll();
+
+    request.onsuccess = () => {
+
+      const encontrado =
+        request.result.some(item =>
+          item.idQR === idQR &&
+          item.fecha === fecha
+        );
+
+      resolve(encontrado);
+
+    };
+
+    request.onerror = () => {
+
+      reject(request.error);
+
+    };
+
+  });
+
+}
+
+
+/* =====================================================
+   REGISTRAR OFFLINE
+===================================================== */
+
+async function registrarOffline(idQR, alumno) {
+
+  const ahora = new Date();
+
+  const fecha =
+    ahora.toLocaleDateString(
+      "es-MX",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
       }
     );
 
-  </script>
+  const hora =
+    ahora.toLocaleTimeString(
+      "es-MX"
+    );
+
+  const duplicado =
+    await yaRegistradoLocal(idQR, fecha);
+
+  if (duplicado) {
+
+    mostrarResultado(
+      "⚠️",
+      "Asistencia ya registrada",
+      alumno.nombre +
+      "\nEste alumno ya fue registrado hoy en este dispositivo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+  await guardarAsistenciaLocal({
+
+    idQR: idQR,
+
+    nombre: alumno.nombre,
+
+    grupo: alumno.grupo,
+
+    fecha: fecha,
+
+    hora: hora,
+
+    estado: "pendiente"
+
+  });
+
+  await actualizarPendientes();
+
+  mostrarResultado(
+    "📱",
+    "Asistencia guardada",
+    alumno.nombre +
+    " · " +
+    alumno.grupo +
+    "\nSin conexión. Se sincronizará cuando vuelva Internet.",
+    "offline-result"
+  );
+
+}
+
+
+/* =====================================================
+   PROCESAR QR
+===================================================== */
+
+async function procesarQR(idQR) {
+
+  if (procesando) {
+    return;
+  }
+
+  procesando = true;
+
+  try {
+
+    /* ---------------------------------------------
+       SIN INTERNET
+    --------------------------------------------- */
+
+    if (!navigator.onLine) {
+
+      const alumno =
+        await obtenerAlumnoLocal(idQR);
+
+      if (!alumno) {
+
+        mostrarResultado(
+          "❌",
+          "Código no registrado",
+          "Este código QR no está disponible en el dispositivo.",
+          "error"
+        );
+
+      } else {
+
+        await registrarOffline(
+          idQR,
+          alumno
+        );
+
+      }
+
+      return;
+    }
+
+
+    /* ---------------------------------------------
+       CON INTERNET
+    --------------------------------------------- */
+
+    mostrarResultado(
+      "⏳",
+      "Procesando...",
+      "Consultando asistencia",
+      ""
+    );
+
+    const url =
+      API_URL +
+      "?idQR=" +
+      encodeURIComponent(idQR) +
+      "&t=" +
+      Date.now();
+
+    const response =
+      await fetch(url);
+
+    const data =
+      await response.json();
+
+    console.log("Respuesta:", data);
+
+
+    if (data.ok) {
+
+      mostrarResultado(
+        "✓",
+        "Asistencia registrada",
+        data.nombre +
+        " · " +
+        data.grupo +
+        "\n" +
+        data.hora,
+        "success"
+      );
+
+    } else {
+
+      mostrarResultado(
+        "⚠️",
+        data.duplicado
+          ? "Asistencia duplicada"
+          : "Código no registrado",
+        data.mensaje,
+        "error"
+      );
+
+    }
+
+
+    /* Actualizar alumnos locales */
+
+    cargarAlumnosDesdeServidor();
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    /*
+      Si perdimos Internet justo durante la consulta,
+      intentamos registrar localmente.
+    */
+
+    if (!navigator.onLine) {
+
+      const alumno =
+        await obtenerAlumnoLocal(idQR);
+
+      if (alumno) {
+
+        await registrarOffline(
+          idQR,
+          alumno
+        );
+
+      } else {
+
+        mostrarResultado(
+          "📡",
+          "Sin conexión",
+          "El alumno no está almacenado en el dispositivo.",
+          "error"
+        );
+
+      }
+
+    } else {
+
+      mostrarResultado(
+        "❌",
+        "Error de conexión",
+        "No fue posible comunicarse con el servidor.",
+        "error"
+      );
+
+    }
+
+  }
+
+  finally {
+
+    setTimeout(() => {
+
+      procesando = false;
+
+    }, 1800);
+
+  }
+
+}
+
+
+/* =====================================================
+   CARGAR ALUMNOS DESDE GOOGLE SHEETS
+===================================================== */
+
+async function cargarAlumnosDesdeServidor() {
+
+  if (!navigator.onLine) {
+    return;
+  }
+
+  try {
+
+    const url =
+      API_URL +
+      "?action=alumnos&t=" +
+      Date.now();
+
+    const response =
+      await fetch(url);
+
+    const data =
+      await response.json();
+
+    if (
+      data.ok &&
+      Array.isArray(data.alumnos)
+    ) {
+
+      await guardarAlumnos(
+        data.alumnos
+      );
+
+      await contarAlumnos();
+
+    }
+
+  }
+
+  catch(error) {
+
+    console.log(
+      "No se pudieron actualizar los alumnos:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   SINCRONIZAR ASISTENCIAS
+===================================================== */
+
+async function sincronizarPendientes() {
+
+  if (!navigator.onLine) {
+
+    mostrarResultado(
+      "📡",
+      "Sin conexión",
+      "Las asistencias se mantienen guardadas en el dispositivo.",
+      "offline-result"
+    );
+
+    return;
+
+  }
+
+  const pendientes =
+    await obtenerPendientes();
+
+  if (pendientes.length === 0) {
+
+    await actualizarPendientes();
+
+    return;
+
+  }
+
+  const boton =
+    document.getElementById("syncButton");
+
+  boton.disabled = true;
+
+  boton.textContent =
+    "Sincronizando...";
+
+
+  for (const asistencia of pendientes) {
+
+    try {
+
+      const url =
+        API_URL +
+        "?action=registrar" +
+        "&idQR=" +
+        encodeURIComponent(
+          asistencia.idQR
+        ) +
+        "&nombre=" +
+        encodeURIComponent(
+          asistencia.nombre
+        ) +
+        "&grupo=" +
+        encodeURIComponent(
+          asistencia.grupo
+        ) +
+        "&fecha=" +
+        encodeURIComponent(
+          asistencia.fecha
+        ) +
+        "&hora=" +
+        encodeURIComponent(
+          asistencia.hora
+        ) +
+        "&t=" +
+        Date.now();
+
+      const response =
+        await fetch(url);
+
+      const data =
+        await response.json();
+
+
+      if (
+        data.ok ||
+        data.duplicado
+      ) {
+
+        await eliminarAsistenciaLocal(
+          asistencia.id
+        );
+
+      }
+
+    }
+
+    catch(error) {
+
+      console.log(
+        "Pendiente no sincronizado:",
+        asistencia
+      );
+
+      break;
+
+    }
+
+  }
+
+  await actualizarPendientes();
+
+  boton.textContent =
+    "Sincronizar pendientes";
+
+}
+
+
+/* =====================================================
+   ELIMINAR ASISTENCIA LOCAL
+===================================================== */
+
+function eliminarAsistenciaLocal(id) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction(
+        "asistencias",
+        "readwrite"
+      );
+
+    const store =
+      transaction.objectStore(
+        "asistencias"
+      );
+
+    store.delete(id);
+
+    transaction.oncomplete = resolve;
+
+    transaction.onerror = () => {
+      reject(transaction.error);
+    };
+
+  });
+
+}
+
+
+/* =====================================================
+   INTERFAZ
+===================================================== */
+
+function mostrarResultado(
+  icono,
+  titulo,
+  detalle,
+  clase
+) {
+
+  const resultado =
+    document.getElementById(
+      "resultado"
+    );
+
+  resultado.className =
+    "result " + clase;
+
+  resultado.innerHTML = `
+
+    <div class="result-content">
+
+      <div class="result-icon">
+        ${icono}
+      </div>
+
+      <div class="result-title">
+        ${titulo}
+      </div>
+
+      <div class="result-detail">
+        ${detalle}
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+function actualizarConexion() {
+
+  const status =
+    document.getElementById(
+      "connectionStatus"
+    );
+
+  const texto =
+    document.getElementById(
+      "connectionText"
+    );
+
+  if (navigator.onLine) {
+
+    status.classList.remove(
+      "offline"
+    );
+
+    texto.textContent =
+      "Conectado";
+
+  } else {
+
+    status.classList.add(
+      "offline"
+    );
+
+    texto.textContent =
+      "Sin conexión";
+
+  }
+
+}
+
+
+/* =====================================================
+   EVENTOS DE CONEXIÓN
+===================================================== */
+
+window.addEventListener(
+  "online",
+  async function() {
+
+    actualizarConexion();
+
+    await cargarAlumnosDesdeServidor();
+
+    await sincronizarPendientes();
+
+  }
+);
+
+
+window.addEventListener(
+  "offline",
+  function() {
+
+    actualizarConexion();
+
+    mostrarResultado(
+      "📱",
+      "Modo sin conexión",
+      "Las nuevas asistencias se guardarán en este dispositivo.",
+      "offline-result"
+    );
+
+  }
+);
+
+
+/* =====================================================
+   INICIAR CÁMARA
+===================================================== */
+
+async function iniciarScanner() {
+
+  scanner =
+    new Html5Qrcode(
+      "reader"
+    );
+
+  try {
+
+    await scanner.start(
+
+      {
+        facingMode: "environment"
+      },
+
+      {
+        fps: 10,
+
+        qrbox: {
+          width: 210,
+          height: 210
+        },
+
+        aspectRatio: 1.0
+
+      },
+
+      function(decodedText) {
+
+        console.log(
+          "QR detectado:",
+          decodedText
+        );
+
+        procesarQR(
+          decodedText
+        );
+
+      },
+
+      function(errorMessage) {
+
+        // Errores normales durante
+        // la búsqueda de QR.
+      }
+
+    );
+
+    document.getElementById(
+      "cameraStatus"
+    ).textContent =
+      "Cámara activa";
+
+  }
+
+  catch(error) {
+
+    console.error(
+      "Error cámara:",
+      error
+    );
+
+    document.getElementById(
+      "cameraStatus"
+    ).textContent =
+      "Error de cámara";
+
+    mostrarResultado(
+      "📷",
+      "No se pudo iniciar la cámara",
+      "Revisa el permiso de cámara del navegador.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   SERVICE WORKER
+===================================================== */
+
+if (
+  "serviceWorker" in navigator
+) {
+
+  window.addEventListener(
+    "load",
+    function() {
+
+      navigator.serviceWorker
+        .register(
+          "./service-worker.js"
+        )
+        .then(
+          registration => {
+
+            console.log(
+              "Service Worker activo:",
+              registration.scope
+            );
+
+          }
+        )
+        .catch(
+          error => {
+
+            console.error(
+              "Error Service Worker:",
+              error
+            );
+
+          }
+        );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   INICIO
+===================================================== */
+
+async function iniciarAplicacion() {
+
+  try {
+
+    await abrirDB();
+
+    actualizarConexion();
+
+    await contarAlumnos();
+
+    await actualizarPendientes();
+
+    /*
+      Primero intentamos actualizar
+      la lista de alumnos.
+    */
+
+    await cargarAlumnosDesdeServidor();
+
+    /*
+      Si ya existen pendientes y
+      tenemos Internet, intentamos
+      sincronizarlos.
+    */
+
+    if (navigator.onLine) {
+
+      await sincronizarPendientes();
+
+    }
+
+    /*
+      Finalmente iniciamos cámara.
+    */
+
+    if (
+      typeof Html5Qrcode ===
+      "undefined"
+    ) {
+
+      mostrarResultado(
+        "❌",
+        "No se pudo cargar el lector QR",
+        "Revisa la conexión y vuelve a cargar la página.",
+        "error"
+      );
+
+      return;
+
+    }
+
+    await iniciarScanner();
+
+  }
+
+  catch(error) {
+
+    console.error(
+      "Error iniciando aplicación:",
+      error
+    );
+
+  }
+
+}
+
+
+window.addEventListener(
+  "load",
+  iniciarAplicacion
+);
+
+</script>
 
 </body>
 </html>
