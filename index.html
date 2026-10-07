@@ -2,19 +2,32 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    >
-<meta
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
     name="theme-color"
     content="#0f172a"
   >
 
   <title>Ludwig Van Beethoven</title>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- ==========================================
+       LECTOR QR
+       ========================================== -->
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
+
 
   <style>
-     /* ==========================================
+
+    /* ==========================================
        RESET
        ========================================== */
 
@@ -1329,544 +1342,757 @@
 
   <script>
 
-/* =========================================================
-   CONFIGURACIÓN
-========================================================= */
 
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
+    /* =====================================================
+       CONFIGURACIÓN
+       ===================================================== */
 
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
 
-/* =========================================================
-   VARIABLES
-========================================================= */
 
-let db = null;
-let scanner = null;
-let procesandoQR = false;
+    /* =====================================================
+       VARIABLES
+       ===================================================== */
 
+    let scanner = null;
 
-/* =========================================================
-   ELEMENTOS
-========================================================= */
+    let procesando = false;
 
-const mensaje = document.getElementById("mensaje");
 
-const puntoEstado =
-  document.getElementById("puntoEstado");
+    /* =====================================================
+       BASE DE DATOS LOCAL
+       ===================================================== */
 
-const textoEstado =
-  document.getElementById("textoEstado");
+    const DB_NAME =
+      "AsistenciaQR";
 
-const totalActivos =
-  document.getElementById("totalActivos");
+    const DB_VERSION =
+      1;
 
-const pendientes =
-  document.getElementById("pendientes");
+    let db = null;
 
-const resumenActivos =
-  document.getElementById("resumenActivos");
 
-const hanIngresado =
-  document.getElementById("hanIngresado");
+    /* =====================================================
+       ABRIR BASE DE DATOS
+       ===================================================== */
 
-const faltanIngresar =
-  document.getElementById("faltanIngresar");
+    function abrirBaseDatos() {
 
-const porcentajeAsistencia =
-  document.getElementById("porcentajeAsistencia");
+      return new Promise(
+        function(resolve, reject) {
 
-const barraProgreso =
-  document.getElementById("barraProgreso");
+          const request =
+            indexedDB.open(
+              DB_NAME,
+              DB_VERSION
+            );
 
-const fechaResumen =
-  document.getElementById("fechaResumen");
 
+          request.onupgradeneeded =
+            function(event) {
 
-/* =========================================================
-   MENSAJES
-========================================================= */
+              const database =
+                event.target.result;
 
-function mostrarMensaje(texto, tipo = "info") {
 
-  mensaje.textContent = texto;
+              if (
+                !database.objectStoreNames.contains(
+                  "alumnos"
+                )
+              ) {
 
-  mensaje.className = "mensaje " + tipo;
+                database.createObjectStore(
+                  "alumnos",
+                  {
+                    keyPath: "idQR"
+                  }
+                );
 
-}
+              }
 
 
-function ocultarMensaje() {
+              if (
+                !database.objectStoreNames.contains(
+                  "asistencias"
+                )
+              ) {
 
-  mensaje.className = "mensaje";
+                const store =
+                  database.createObjectStore(
+                    "asistencias",
+                    {
+                      keyPath: "id",
+                      autoIncrement: true
+                    }
+                  );
 
-  mensaje.textContent = "";
 
-}
+                store.createIndex(
+                  "estado",
+                  "estado",
+                  {
+                    unique: false
+                  }
+                );
 
+              }
 
-/* =========================================================
-   CONEXIÓN
-========================================================= */
+            };
 
-function actualizarEstadoConexion() {
 
-  if (navigator.onLine) {
+          request.onsuccess =
+            function(event) {
 
-    puntoEstado.classList.remove("offline");
+              db =
+                event.target.result;
 
-    textoEstado.textContent = "Conectado";
+              resolve(db);
 
-  } else {
+            };
 
-    puntoEstado.classList.add("offline");
 
-    textoEstado.textContent = "Sin conexión";
+          request.onerror =
+            function() {
 
-  }
+              reject(
+                request.error
+              );
 
-}
+            };
 
-
-/* =========================================================
-   INDEXEDDB
-========================================================= */
-
-function abrirDB() {
-
-  return new Promise((resolve, reject) => {
-
-    const request =
-      indexedDB.open("AsistenciaQR", 1);
-
-    request.onupgradeneeded = function(event) {
-
-      const database = event.target.result;
-
-      if (!database.objectStoreNames.contains("alumnos")) {
-
-        database.createObjectStore(
-          "alumnos",
-          { keyPath: "idQR" }
-        );
-
-      }
-
-      if (!database.objectStoreNames.contains("asistencias")) {
-
-        const store =
-          database.createObjectStore(
-            "asistencias",
-            {
-              keyPath: "id",
-              autoIncrement: true
-            }
-          );
-
-        store.createIndex(
-          "estado",
-          "estado",
-          { unique: false }
-        );
-
-      }
-
-    };
-
-    request.onsuccess = function(event) {
-
-      db = event.target.result;
-
-      resolve(db);
-
-    };
-
-    request.onerror = function(event) {
-
-      reject(event.target.error);
-
-    };
-
-  });
-
-}
-
-
-/* =========================================================
-   GUARDAR ALUMNOS
-   IMPORTANTE:
-   REEMPLAZA COMPLETAMENTE LA CACHÉ LOCAL
-========================================================= */
-
-function guardarAlumnos(alumnos) {
-
-  return new Promise((resolve, reject) => {
-
-    if (!db) {
-
-      reject(new Error("Base local no disponible"));
-
-      return;
-
-    }
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readwrite"
+        }
       );
-
-    const store =
-      transaction.objectStore("alumnos");
-
-
-    /*
-      MUY IMPORTANTE:
-
-      Primero eliminamos TODOS los alumnos
-      guardados anteriormente.
-
-      Así no quedan alumnos antiguos
-      que ya no existen en Google Sheets.
-    */
-
-    const limpiar = store.clear();
-
-
-    limpiar.onsuccess = function() {
-
-      for (const alumno of alumnos) {
-
-        store.put({
-
-          idQR: alumno.idQR,
-
-          nombre: alumno.nombre,
-
-          grupo: alumno.grupo,
-
-          activo: alumno.activo
-
-        });
-
-      }
-
-    };
-
-
-    transaction.oncomplete = function() {
-
-      resolve();
-
-    };
-
-
-    transaction.onerror = function(event) {
-
-      reject(event.target.error);
-
-    };
-
-  });
-
-}
-
-
-/* =========================================================
-   OBTENER ALUMNOS LOCALES
-========================================================= */
-
-function obtenerTodosLosAlumnos() {
-
-  return new Promise((resolve, reject) => {
-
-    if (!db) {
-
-      reject(new Error("Base local no disponible"));
-
-      return;
-
-    }
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readonly"
-      );
-
-    const store =
-      transaction.objectStore("alumnos");
-
-    const request =
-      store.getAll();
-
-    request.onsuccess = function() {
-
-      resolve(request.result || []);
-
-    };
-
-    request.onerror = function(event) {
-
-      reject(event.target.error);
-
-    };
-
-  });
-
-}
-
-
-/* =========================================================
-   BUSCAR ALUMNO LOCAL
-========================================================= */
-
-function buscarAlumnoLocal(idQR) {
-
-  return new Promise((resolve, reject) => {
-
-    if (!db) {
-
-      reject(new Error("Base local no disponible"));
-
-      return;
-
-    }
-
-    const transaction =
-      db.transaction(
-        "alumnos",
-        "readonly"
-      );
-
-    const store =
-      transaction.objectStore("alumnos");
-
-    const request =
-      store.get(idQR);
-
-    request.onsuccess = function() {
-
-      resolve(request.result || null);
-
-    };
-
-    request.onerror = function(event) {
-
-      reject(event.target.error);
-
-    };
-
-  });
-
-}
-
-
-/* =========================================================
-   GUARDAR ASISTENCIA OFFLINE
-========================================================= */
-
-function registrarOffline(alumno, idQR) {
-
-  return new Promise((resolve, reject) => {
-
-    if (!db) {
-
-      reject(new Error("Base local no disponible"));
-
-      return;
 
     }
 
 
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readwrite"
-      );
+    /* =====================================================
+       GUARDAR ALUMNOS
+       ===================================================== */
 
-    const store =
-      transaction.objectStore("asistencias");
+    function guardarAlumnos(alumnos) {
 
+  return new Promise(
+    function(resolve, reject) {
 
-    const ahora = new Date();
+      if (!db) {
 
-
-    const fecha =
-      String(ahora.getDate()).padStart(2, "0") +
-      "/" +
-      String(ahora.getMonth() + 1).padStart(2, "0") +
-      "/" +
-      ahora.getFullYear();
-
-
-    const hora =
-      String(ahora.getHours()).padStart(2, "0") +
-      ":" +
-      String(ahora.getMinutes()).padStart(2, "0") +
-      ":" +
-      String(ahora.getSeconds()).padStart(2, "0");
-
-
-    const registro = {
-
-      idQR: idQR,
-
-      nombre: alumno.nombre,
-
-      grupo: alumno.grupo,
-
-      fecha: fecha,
-
-      hora: hora,
-
-      estado: "pendiente"
-
-    };
-
-
-    /*
-      Antes de guardar verificamos si ya
-      existe una asistencia pendiente
-      del mismo alumno.
-    */
-
-    const request =
-      store.getAll();
-
-
-    request.onsuccess = function() {
-
-      const registros =
-        request.result || [];
-
-
-      const duplicado =
-        registros.some(registro =>
-
-          registro.idQR === idQR &&
-
-          registro.fecha === fecha &&
-
-          (
-            registro.estado === "pendiente" ||
-            registro.estado === "sincronizado"
-          )
-
-        );
-
-
-      if (duplicado) {
-
-        mostrarMensaje(
-          "Este alumno ya tiene un registro de asistencia para hoy.",
-          "warning"
-        );
-
-        resolve(false);
+        resolve();
 
         return;
 
       }
 
 
-      store.add(registro);
-
-    };
-
-
-    request.onerror = function(event) {
-
-      reject(event.target.error);
-
-    };
+      const transaction =
+        db.transaction(
+          "alumnos",
+          "readwrite"
+        );
 
 
-    transaction.oncomplete = function() {
+      const store =
+        transaction.objectStore(
+          "alumnos"
+        );
 
-      resolve(true);
 
-    };
+      /*
+       * IMPORTANTE:
+       * Eliminamos la lista anterior completa.
+       *
+       * Esto evita que alumnos eliminados de
+       * Google Sheets permanezcan en IndexedDB.
+       */
+
+      store.clear();
 
 
-    transaction.onerror = function(event) {
+      /*
+       * Guardamos únicamente la lista actual
+       * recibida desde Google Sheets.
+       */
 
-      reject(event.target.error);
+      alumnos.forEach(
+        function(alumno) {
 
-    };
+          store.put({
 
-  });
+            idQR:
+              alumno.idQR,
+
+            nombre:
+              alumno.nombre,
+
+            grupo:
+              alumno.grupo,
+
+            activo:
+              alumno.activo
+
+          });
+
+        }
+      );
+
+
+      transaction.oncomplete =
+        function() {
+
+          resolve();
+
+        };
+
+
+      transaction.onerror =
+        function() {
+
+          reject(
+            transaction.error
+          );
+
+        };
+
+    }
+  );
 
 }
 
 
-/* =========================================================
-   CONTAR PENDIENTES
-========================================================= */
+    /* =====================================================
+       OBTENER TODOS LOS ALUMNOS LOCALES
+       ===================================================== */
 
-function actualizarPendientes() {
+    function obtenerTodosLosAlumnos() {
 
-  return new Promise((resolve, reject) => {
+      return new Promise(
+        function(resolve, reject) {
 
-    if (!db) {
+          if (!db) {
 
-      resolve();
+            resolve([]);
 
-      return;
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result || []
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
 
     }
 
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readonly"
+
+    /* =====================================================
+       OBTENER TODAS LAS ASISTENCIAS LOCALES
+       ===================================================== */
+
+    function obtenerTodasLasAsistencias() {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve([]);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result || []
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
       );
 
-    const store =
-      transaction.objectStore("asistencias");
-
-    const request =
-      store.getAll();
+    }
 
 
-    request.onsuccess = function() {
+    /* =====================================================
+       OBTENER ALUMNO LOCAL
+       ===================================================== */
 
-      const registros =
-        request.result || [];
+    function obtenerAlumnoLocal(idQR) {
 
-      const total =
-        registros.filter(
-          r => r.estado === "pendiente"
-        ).length;
+      return new Promise(
+        function(resolve, reject) {
 
+          if (!db) {
 
-      pendientes.textContent = total;
+            resolve(null);
 
-      resolve();
+            return;
 
-    };
+          }
 
 
-    request.onerror = function(event) {
+          const transaction =
+            db.transaction(
+              "alumnos",
+              "readonly"
+            );
 
-      reject(event.target.error);
 
-    };
+          const store =
+            transaction.objectStore(
+              "alumnos"
+            );
 
-  });
+
+          const request =
+            store.get(idQR);
+
+
+          request.onsuccess =
+            function() {
+
+              resolve(
+                request.result ||
+                null
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       CONTAR ALUMNOS
+       ===================================================== */
+
+  function actualizarTotalAlumnos() {
+
+  return new Promise(
+    function(resolve) {
+
+      if (!db) {
+
+        resolve();
+
+        return;
+
+      }
+
+
+      const transaction =
+        db.transaction(
+          "alumnos",
+          "readonly"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          "alumnos"
+        );
+
+
+      const request =
+        store.getAll();
+
+
+      request.onsuccess =
+        function() {
+
+          const alumnos =
+            request.result || [];
+
+
+          const activos =
+            alumnos.filter(
+              function(alumno) {
+
+                const estado =
+                  String(
+                    alumno.activo || ""
+                  )
+                  .trim()
+                  .toLowerCase();
+
+
+                return (
+                  estado === "sí" ||
+                  estado === "si"
+                );
+
+              }
+            );
+
+
+          /*
+           * Este valor solamente se utiliza
+           * cuando estamos trabajando OFFLINE.
+           *
+           * Cuando hay Internet, el valor oficial
+           * será obtenido desde Google Sheets
+           * mediante actualizarResumenAsistencia().
+           */
+
+          document.getElementById(
+            "totalAlumnos"
+          ).textContent =
+            activos.length;
+
+
+          resolve();
+
+        };
+
+
+      request.onerror =
+        function() {
+
+          resolve();
+
+        };
+
+    }
+  );
 
 }
 
 
-/* =========================================================
-   CARGAR ALUMNOS DESDE GOOGLE SHEETS
-========================================================= */
+    /* =====================================================
+       GUARDAR ASISTENCIA LOCAL
+       ===================================================== */
 
-async function cargarAlumnosDesdeServidor() {
+    function guardarAsistenciaLocal(
+      asistencia
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          store.add(
+            asistencia
+          );
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       OBTENER PENDIENTES
+       ===================================================== */
+
+    function obtenerPendientes() {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db) {
+
+            resolve([]);
+
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              const todos =
+                request.result ||
+                [];
+
+
+              const pendientes =
+                todos.filter(
+                  function(item) {
+
+                    return (
+                      item.estado ===
+                      "pendiente"
+                    );
+
+                  }
+                );
+
+
+              resolve(
+                pendientes
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZAR PENDIENTES
+       ===================================================== */
+
+    async function actualizarPendientes() {
+
+      const pendientes =
+        await obtenerPendientes();
+
+
+      document.getElementById(
+        "pendientes"
+      ).textContent =
+        pendientes.length;
+
+
+      document.getElementById(
+        "syncButton"
+      ).disabled =
+        pendientes.length === 0;
+
+    }
+
+
+    /* =====================================================
+       MOSTRAR RESULTADO
+       ===================================================== */
+
+    function mostrarResultado(
+      icono,
+      titulo,
+      detalle,
+      clase
+    ) {
+
+      const resultado =
+        document.getElementById(
+          "resultado"
+        );
+
+
+      resultado.className =
+        "result " + clase;
+
+
+      resultado.innerHTML =
+
+        "<div>" +
+
+          '<div class="result-icon">' +
+            icono +
+          "</div>" +
+
+          '<div class="result-title">' +
+            titulo +
+          "</div>" +
+
+          '<div class="result-detail">' +
+            detalle +
+          "</div>" +
+
+        "</div>";
+
+    }
+
+
+    /* =====================================================
+       CONEXIÓN
+       ===================================================== */
+
+    function actualizarConexion() {
+
+      const status =
+        document.getElementById(
+          "connectionStatus"
+        );
+
+
+      const texto =
+        document.getElementById(
+          "connectionText"
+        );
+
+
+      if (navigator.onLine) {
+
+        status.classList.remove(
+          "offline"
+        );
+
+
+        texto.textContent =
+          "Conectado";
+
+      }
+      else {
+
+        status.classList.add(
+          "offline"
+        );
+
+
+        texto.textContent =
+          "Sin conexión";
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CARGAR ALUMNOS
+       ===================================================== */
+
+    async function cargarAlumnos() {
+
+  /*
+   * Si estamos sin Internet,
+   * utilizamos la información local.
+   */
 
   if (!navigator.onLine) {
 
-    return false;
+    await actualizarTotalAlumnos();
+
+    return;
 
   }
 
@@ -1886,7 +2112,8 @@ async function cargarAlumnosDesdeServidor() {
     if (!response.ok) {
 
       throw new Error(
-        "Error HTTP " + response.status
+        "HTTP " +
+        response.status
       );
 
     }
@@ -1896,48 +2123,158 @@ async function cargarAlumnosDesdeServidor() {
       await response.json();
 
 
-    if (!data.ok) {
+    if (
+      data.ok &&
+      Array.isArray(
+        data.alumnos
+      )
+    ) {
 
-      throw new Error(
-        data.error ||
-        "No se pudieron obtener los alumnos"
+
+      /*
+       * Actualizamos completamente
+       * la caché local.
+       */
+
+      await guardarAlumnos(
+        data.alumnos
       );
+
+
+      /*
+       * NO utilizamos la caché para determinar
+       * el número oficial de alumnos activos.
+       *
+       * Ese valor será obtenido desde:
+       *
+       * Google Sheets → action=resumen
+       */
 
     }
 
+  }
+  catch(error) {
 
-    /*
-      Reemplazamos completamente
-      la caché local.
-    */
-
-    await guardarAlumnos(
-      data.alumnos || []
-    );
-
-
-    return true;
-
-  } catch (error) {
-
-    console.error(
-      "Error cargando alumnos:",
+    console.log(
+      "No se pudieron actualizar alumnos:",
       error
     );
 
-    return false;
+
+    /*
+     * Si falla la conexión aunque navigator.onLine
+     * diga que estamos conectados, utilizamos
+     * la información local como respaldo.
+     */
+
+    await actualizarTotalAlumnos();
 
   }
 
 }
 
 
-/* =========================================================
-   RESUMEN DE ASISTENCIA
-   FUENTE PRINCIPAL = GOOGLE SHEETS
-========================================================= */
+    /* =====================================================
+       FECHA LOCAL
+       ===================================================== */
 
-async function actualizarResumenAsistencia() {
+    function obtenerFecha() {
+
+      const ahora =
+        new Date();
+
+
+      const dia =
+        String(
+          ahora.getDate()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const mes =
+        String(
+          ahora.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const año =
+        ahora.getFullYear();
+
+
+      return (
+        dia +
+        "/" +
+        mes +
+        "/" +
+        año
+      );
+
+    }
+
+
+    /* =====================================================
+       HORA LOCAL
+       ===================================================== */
+
+    function obtenerHora() {
+
+      const ahora =
+        new Date();
+
+
+      const horas =
+        String(
+          ahora.getHours()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const minutos =
+        String(
+          ahora.getMinutes()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      const segundos =
+        String(
+          ahora.getSeconds()
+        ).padStart(
+          2,
+          "0"
+        );
+
+
+      return (
+        horas +
+        ":" +
+        minutos +
+        ":" +
+        segundos
+      );
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZAR RESUMEN DE ASISTENCIA
+       ===================================================== */
+
+   async function actualizarResumenAsistencia() {
+
+  /*
+   * El resumen oficial solamente puede obtenerse
+   * desde Google Sheets cuando tenemos conexión.
+   */
 
   if (!navigator.onLine) {
 
@@ -1961,7 +2298,8 @@ async function actualizarResumenAsistencia() {
     if (!response.ok) {
 
       throw new Error(
-        "Error HTTP " + response.status
+        "HTTP " +
+        response.status
       );
 
     }
@@ -1973,75 +2311,118 @@ async function actualizarResumenAsistencia() {
 
     if (!data.ok) {
 
-      throw new Error(
-        data.error ||
-        "No se pudo obtener el resumen"
+      console.log(
+        "Error en resumen:",
+        data
       );
+
+      return;
 
     }
 
 
     /*
-      MUY IMPORTANTE:
+     * ==================================================
+     * FUENTE OFICIAL:
+     * GOOGLE SHEETS
+     * ==================================================
+     */
 
-      Estos valores vienen directamente
-      de Google Sheets.
 
-      No usamos IndexedDB para determinar
-      cuántos alumnos activos existen.
-    */
+    const total =
+      Number(
+        data.totalActivos
+      ) || 0;
 
-    const activos =
-      Number(data.totalActivos) || 0;
 
     const ingresados =
-      Number(data.hanIngresado) || 0;
+      Number(
+        data.hanIngresado
+      ) || 0;
+
 
     const faltan =
-      Number(data.faltan) || 0;
+      Number(
+        data.faltan
+      ) || 0;
+
 
     const porcentaje =
-      Number(data.porcentaje) || 0;
+      Number(
+        data.porcentaje
+      ) || 0;
 
 
-    /* ESTADÍSTICA SUPERIOR */
+    /*
+     * ALUMNOS ACTIVOS
+     *
+     * Ahora el número superior y el resumen
+     * utilizan exactamente el mismo dato
+     * proveniente de Google Sheets.
+     */
 
-    totalActivos.textContent =
-      activos;
+    document.getElementById(
+      "totalAlumnos"
+    ).textContent =
+      total;
 
 
-    /* RESUMEN */
+    document.getElementById(
+      "totalActivos"
+    ).textContent =
+      total;
 
-    resumenActivos.textContent =
-      activos;
 
-    hanIngresado.textContent =
+    /*
+     * HAN INGRESADO
+     */
+
+    document.getElementById(
+      "hanIngresado"
+    ).textContent =
       ingresados;
 
-    faltanIngresar.textContent =
+
+    /*
+     * FALTAN
+     */
+
+    document.getElementById(
+      "faltanIngresar"
+    ).textContent =
       faltan;
 
-    porcentajeAsistencia.textContent =
-      porcentaje + "%";
+
+    /*
+     * PORCENTAJE
+     */
+
+    document.getElementById(
+      "porcentajeAsistencia"
+    ).textContent =
+      porcentaje +
+      "%";
 
 
-    barraProgreso.style.width =
+    /*
+     * BARRA
+     */
+
+    document.getElementById(
+      "barraProgreso"
+    ).style.width =
       Math.min(
         100,
-        Math.max(0, porcentaje)
-      ) + "%";
+        Math.max(
+          0,
+          porcentaje
+        )
+      ) +
+      "%";
 
 
-    if (data.fecha) {
-
-      fechaResumen.textContent =
-        "Fecha: " +
-        data.fecha;
-
-    }
-
-
-  } catch (error) {
+  }
+  catch(error) {
 
     console.error(
       "Error actualizando resumen:",
@@ -2053,50 +2434,106 @@ async function actualizarResumenAsistencia() {
 }
 
 
-/* =========================================================
-   PROCESAR QR
-========================================================= */
+    /* =====================================================
+       DUPLICADO LOCAL
+       ===================================================== */
 
-async function procesarQR(idQR) {
+    function verificarDuplicadoLocal(
+      idQR,
+      fecha
+    ) {
 
-  if (procesandoQR) {
+      return new Promise(
+        function(resolve, reject) {
 
-    return;
+          if (!db) {
 
-  }
+            resolve(false);
 
+            return;
 
-  procesandoQR = true;
-
-
-  try {
-
-    idQR =
-      String(idQR || "")
-        .trim();
+          }
 
 
-    if (!idQR) {
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readonly"
+            );
 
-      return;
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.getAll();
+
+
+          request.onsuccess =
+            function() {
+
+              const duplicado =
+                request.result.some(
+                  function(item) {
+
+                    return (
+                      item.idQR ===
+                        idQR &&
+                      item.fecha ===
+                        fecha
+                    );
+
+                  }
+                );
+
+
+              resolve(
+                duplicado
+              );
+
+            };
+
+
+          request.onerror =
+            function() {
+
+              reject(
+                request.error
+              );
+
+            };
+
+        }
+      );
 
     }
 
 
     /* =====================================================
-       MODO OFFLINE
-    ===================================================== */
+       REGISTRAR OFFLINE
+       ===================================================== */
 
-    if (!navigator.onLine) {
+    async function registrarOffline(
+      idQR
+    ) {
 
       const alumno =
-        await buscarAlumnoLocal(idQR);
+        await obtenerAlumnoLocal(
+          idQR
+        );
 
+
+      /* ALUMNO NO ENCONTRADO */
 
       if (!alumno) {
 
-        mostrarMensaje(
-          "QR no encontrado en la información disponible sin conexión.",
+        mostrarResultado(
+          "❌",
+          "Código no registrado",
+          "Este alumno todavía no está almacenado en el dispositivo.",
           "error"
         );
 
@@ -2105,10 +2542,14 @@ async function procesarQR(idQR) {
       }
 
 
+      /* VALIDAR ALUMNO ACTIVO */
+
       const activo =
-        String(alumno.activo || "")
-          .toLowerCase()
-          .trim();
+        String(
+          alumno.activo || ""
+        )
+        .trim()
+        .toLowerCase();
 
 
       if (
@@ -2116,8 +2557,13 @@ async function procesarQR(idQR) {
         activo !== "si"
       ) {
 
-        mostrarMensaje(
-          "Alumno inactivo.",
+        mostrarResultado(
+          "🚫",
+          "Alumno inactivo",
+          alumno.nombre +
+          " · " +
+          alumno.grupo +
+          "\nNo tiene autorización para registrar asistencia.",
           "error"
         );
 
@@ -2126,404 +2572,679 @@ async function procesarQR(idQR) {
       }
 
 
-      const guardado =
-        await registrarOffline(
-          alumno,
-          idQR
+      /* FECHA Y HORA */
+
+      const fecha =
+        obtenerFecha();
+
+
+      const hora =
+        obtenerHora();
+
+
+      /* DUPLICADO */
+
+      const duplicado =
+        await verificarDuplicadoLocal(
+          idQR,
+          fecha
         );
 
 
-      if (guardado) {
+      if (duplicado) {
 
-        mostrarMensaje(
-          "Asistencia registrada sin conexión. Se sincronizará automáticamente.",
-          "warning"
+        mostrarResultado(
+          "⚠️",
+          "Asistencia duplicada",
+          alumno.nombre +
+          " · " +
+          alumno.grupo +
+          "\nYa fue registrado hoy.",
+          "error"
         );
+
+        return;
 
       }
 
 
+      /* GUARDAR */
+
+      await guardarAsistenciaLocal({
+
+        idQR:
+          idQR,
+
+        nombre:
+          alumno.nombre,
+
+        grupo:
+          alumno.grupo,
+
+        fecha:
+          fecha,
+
+        hora:
+          hora,
+
+        estado:
+          "pendiente"
+
+      });
+
+
       await actualizarPendientes();
 
-      return;
+
+      mostrarResultado(
+        "📱",
+        "Asistencia guardada",
+        alumno.nombre +
+        " · " +
+        alumno.grupo +
+        "\nGuardada en el dispositivo. Se sincronizará al recuperar Internet.",
+        "offline"
+      );
 
     }
 
 
     /* =====================================================
-       MODO ONLINE
-    ===================================================== */
+       PROCESAR QR
+       ===================================================== */
 
-    mostrarMensaje(
-      "Registrando asistencia...",
-      "info"
-    );
-
-
-    const url =
-      API_URL +
-      "?idQR=" +
-      encodeURIComponent(idQR) +
-      "&t=" +
-      Date.now();
-
-
-    const response =
-      await fetch(url);
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        "Error HTTP " + response.status
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    /* ALUMNO REGISTRADO */
-
-    if (data.ok) {
-
-      mostrarMensaje(
-        "✓ " +
-        (data.nombre || "Alumno") +
-        " — asistencia registrada correctamente.",
-        "exito"
-      );
-
-
-      /*
-        Actualizamos el resumen
-        inmediatamente.
-      */
-
-      await actualizarResumenAsistencia();
-
-
-      return;
-
-    }
-
-
-    /* DUPLICADO */
-
-    if (data.duplicado) {
-
-      mostrarMensaje(
-        "Este alumno ya registró su asistencia hoy.",
-        "warning"
-      );
-
-
-      await actualizarResumenAsistencia();
-
-      return;
-
-    }
-
-
-    /* INACTIVO */
-
-    if (
-      data.inactivo ||
-      data.error === "ALUMNO_INACTIVO"
+    async function procesarQR(
+      idQR
     ) {
 
-      mostrarMensaje(
-        "Alumno inactivo. No se puede registrar la asistencia.",
-        "error"
-      );
+      if (procesando) {
 
-      return;
-
-    }
-
-
-    /* QR NO ENCONTRADO */
-
-    if (
-      data.noEncontrado ||
-      data.error === "ALUMNO_NO_ENCONTRADO"
-    ) {
-
-      mostrarMensaje(
-        "QR no encontrado. Verifica que el alumno esté registrado.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    /* OTRO ERROR */
-
-    mostrarMensaje(
-      data.error ||
-      "No se pudo registrar la asistencia.",
-      "error"
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Error procesando QR:",
-      error
-    );
-
-
-    /*
-      Si perdimos la conexión justo durante
-      el registro, intentamos trabajar offline.
-    */
-
-    if (!navigator.onLine) {
-
-      try {
-
-        const alumno =
-          await buscarAlumnoLocal(idQR);
-
-
-        if (alumno) {
-
-          const activo =
-            String(alumno.activo || "")
-              .toLowerCase()
-              .trim();
-
-
-          if (
-            activo === "sí" ||
-            activo === "si"
-          ) {
-
-            const guardado =
-              await registrarOffline(
-                alumno,
-                idQR
-              );
-
-
-            if (guardado) {
-
-              mostrarMensaje(
-                "Se perdió la conexión. La asistencia quedó guardada para sincronizarse.",
-                "warning"
-              );
-
-            }
-
-          } else {
-
-            mostrarMensaje(
-              "Alumno inactivo.",
-              "error"
-            );
-
-          }
-
-        } else {
-
-          mostrarMensaje(
-            "No hay conexión y el alumno no está disponible en la información local.",
-            "error"
-          );
-
-        }
-
-
-      } catch (offlineError) {
-
-        console.error(
-          offlineError
-        );
-
-        mostrarMensaje(
-          "No se pudo registrar la asistencia.",
-          "error"
-        );
+        return;
 
       }
 
 
-    } else {
+      procesando = true;
 
-      mostrarMensaje(
-        "Error de comunicación con el servidor.",
-        "error"
-      );
-
-    }
-
-  } finally {
-
-    /*
-      Pequeño bloqueo para evitar que
-      una misma lectura QR se procese
-      varias veces inmediatamente.
-    */
-
-    setTimeout(() => {
-
-      procesandoQR = false;
-
-    }, 1200);
-
-  }
-
-}
-
-
-/* =========================================================
-   SINCRONIZAR PENDIENTES
-========================================================= */
-
-async function sincronizarPendientes() {
-
-  if (!navigator.onLine) {
-
-    return;
-
-  }
-
-
-  if (!db) {
-
-    return;
-
-  }
-
-
-  try {
-
-    const transaction =
-      db.transaction(
-        "asistencias",
-        "readwrite"
-      );
-
-    const store =
-      transaction.objectStore("asistencias");
-
-
-    const registros =
-      await new Promise(
-        (resolve, reject) => {
-
-          const request =
-            store.getAll();
-
-          request.onsuccess =
-            () => resolve(
-              request.result || []
-            );
-
-          request.onerror =
-            () => reject(
-              request.error
-            );
-
-        }
-      );
-
-
-    const pendientesLocal =
-      registros.filter(
-        r => r.estado === "pendiente"
-      );
-
-
-    for (
-      const registro
-      of pendientesLocal
-    ) {
 
       try {
 
-        const params =
-          new URLSearchParams({
 
-            action: "registrar",
+        /* ==========================================
+           OFFLINE
+           ========================================== */
 
-            idQR: registro.idQR,
+        if (!navigator.onLine) {
 
-            nombre: registro.nombre,
+          await registrarOffline(
+            idQR
+          );
 
-            grupo: registro.grupo,
+          return;
 
-            fecha: registro.fecha,
+        }
 
-            hora: registro.hora
 
-          });
+        /* ==========================================
+           ONLINE
+           ========================================== */
+
+        mostrarResultado(
+          "⏳",
+          "Procesando...",
+          "Consultando servidor",
+          ""
+        );
+
+
+        const url =
+          API_URL +
+          "?idQR=" +
+          encodeURIComponent(
+            idQR
+          ) +
+          "&t=" +
+          Date.now();
 
 
         const response =
-          await fetch(
-            API_URL +
-            "?" +
-            params.toString() +
-            "&t=" +
-            Date.now()
-          );
-
-
-        if (!response.ok) {
-
-          continue;
-
-        }
+          await fetch(url);
 
 
         const data =
           await response.json();
 
 
-        /*
-          Si se registró correctamente
-          o ya estaba registrado,
-          eliminamos el pendiente local.
-        */
+        console.log(
+          "Respuesta:",
+          data
+        );
 
-        if (
-          data.ok ||
-          data.duplicado
-        ) {
 
-          store.delete(
-            registro.id
+        /* ==========================================
+           REGISTRO CORRECTO
+           ========================================== */
+
+        if (data.ok) {
+
+          mostrarResultado(
+            "✓",
+            "Asistencia registrada",
+            data.nombre +
+            " · " +
+            data.grupo +
+            "\n" +
+            data.hora,
+            "success"
+          );
+
+
+          await actualizarResumenAsistencia();
+
+        }
+
+
+        /* ==========================================
+           ALUMNO INACTIVO
+           ========================================== */
+
+        else if (data.inactivo) {
+
+          mostrarResultado(
+            "🚫",
+            "Alumno inactivo",
+            data.nombre +
+            " · " +
+            data.grupo +
+            "\n" +
+            data.mensaje,
+            "error"
           );
 
         }
 
 
-        /*
-          Si el alumno está inactivo,
-          también eliminamos el pendiente.
-        */
+        /* ==========================================
+           DUPLICADO
+           ========================================== */
 
-        else if (
-          data.inactivo ||
-          data.error === "ALUMNO_INACTIVO"
-        ) {
+        else if (data.duplicado) {
 
-          store.delete(
-            registro.id
+          mostrarResultado(
+            "⚠️",
+            "Asistencia duplicada",
+            data.mensaje,
+            "error"
           );
 
         }
 
-      } catch (error) {
+
+        /* ==========================================
+           OTRO ERROR
+           ========================================== */
+
+        else {
+
+          mostrarResultado(
+            "❌",
+            "Código no registrado",
+            data.mensaje ||
+            "El código QR no está registrado.",
+            "error"
+          );
+
+        }
+
+      }
+      catch(error) {
 
         console.error(
-          "Error sincronizando registro:",
+          "Error:",
+          error
+        );
+
+
+        /* ==========================================
+           SI SE PERDIÓ INTERNET
+           ========================================== */
+
+        if (!navigator.onLine) {
+
+          await registrarOffline(
+            idQR
+          );
+
+        }
+        else {
+
+          mostrarResultado(
+            "❌",
+            "Error de conexión",
+            "No fue posible comunicarse con el servidor.",
+            "error"
+          );
+
+        }
+
+      }
+      finally {
+
+        setTimeout(
+          function() {
+
+            procesando =
+              false;
+
+          },
+          1500
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SINCRONIZAR PENDIENTES
+       ===================================================== */
+
+    async function sincronizarPendientes() {
+
+      if (!navigator.onLine) {
+
+        mostrarResultado(
+          "📱",
+          "Sin conexión",
+          "Las asistencias permanecen guardadas en el dispositivo.",
+          "offline"
+        );
+
+        return;
+
+      }
+
+
+      const pendientes =
+        await obtenerPendientes();
+
+
+      if (
+        pendientes.length === 0
+      ) {
+
+        await actualizarPendientes();
+
+        await actualizarResumenAsistencia();
+
+        return;
+
+      }
+
+
+      const boton =
+        document.getElementById(
+          "syncButton"
+        );
+
+
+      boton.disabled =
+        true;
+
+
+      boton.textContent =
+        "Sincronizando...";
+
+
+      for (
+        const asistencia of pendientes
+      ) {
+
+        try {
+
+          const url =
+            API_URL +
+            "?action=registrar" +
+            "&idQR=" +
+            encodeURIComponent(
+              asistencia.idQR
+            ) +
+            "&nombre=" +
+            encodeURIComponent(
+              asistencia.nombre
+            ) +
+            "&grupo=" +
+            encodeURIComponent(
+              asistencia.grupo
+            ) +
+            "&fecha=" +
+            encodeURIComponent(
+              asistencia.fecha
+            ) +
+            "&hora=" +
+            encodeURIComponent(
+              asistencia.hora
+            ) +
+            "&t=" +
+            Date.now();
+
+
+          const response =
+            await fetch(url);
+
+
+          const data =
+            await response.json();
+
+
+          if (
+            data.ok ||
+            data.duplicado
+          ) {
+
+            await eliminarAsistencia(
+              asistencia.id
+            );
+
+          }
+          else if (data.inactivo) {
+
+            /*
+              El alumno fue desactivado
+              antes de sincronizar.
+              No se registra la asistencia.
+            */
+
+            await eliminarAsistencia(
+              asistencia.id
+            );
+
+          }
+
+        }
+        catch(error) {
+
+          console.log(
+            "No se pudo sincronizar:",
+            asistencia
+          );
+
+          break;
+
+        }
+
+      }
+
+
+      await actualizarPendientes();
+
+
+      await actualizarResumenAsistencia();
+
+
+      boton.textContent =
+        "Sincronizar pendientes";
+
+    }
+
+
+    /* =====================================================
+       ELIMINAR ASISTENCIA LOCAL
+       ===================================================== */
+
+    function eliminarAsistencia(
+      id
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          store.delete(id);
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       INICIAR CÁMARA
+       ===================================================== */
+
+    async function iniciarCamara() {
+
+      if (
+        typeof Html5Qrcode ===
+        "undefined"
+      ) {
+
+        mostrarResultado(
+          "❌",
+          "Lector QR no disponible",
+          "No se pudo cargar html5-qrcode.",
+          "error"
+        );
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Lector no disponible";
+
+        return;
+
+      }
+
+
+      scanner =
+        new Html5Qrcode(
+          "reader"
+        );
+
+
+      try {
+
+        await scanner.start(
+
+          {
+            facingMode:
+              "environment"
+          },
+
+          {
+
+            fps: 10,
+
+            qrbox: {
+
+              width: 210,
+
+              height: 210
+
+            },
+
+            aspectRatio: 1.0
+
+          },
+
+          function(decodedText) {
+
+            console.log(
+              "QR:",
+              decodedText
+            );
+
+
+            procesarQR(
+              decodedText
+            );
+
+          },
+
+          function(errorMessage) {
+
+            /*
+              Errores normales durante
+              la búsqueda de QR.
+            */
+
+          }
+
+        );
+
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Cámara activa";
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error de cámara:",
+          error
+        );
+
+
+        document.getElementById(
+          "cameraStatus"
+        ).textContent =
+          "Error";
+
+
+        mostrarResultado(
+          "📷",
+          "No se pudo iniciar la cámara",
+          "Revisa el permiso de cámara del navegador.",
+          "error"
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       EVENTO ONLINE
+       ===================================================== */
+
+    window.addEventListener(
+      "online",
+      async function() {
+
+        actualizarConexion();
+
+        await cargarAlumnos();
+
+        await sincronizarPendientes();
+
+        await actualizarResumenAsistencia();
+
+      }
+    );
+
+
+    /* =====================================================
+       EVENTO OFFLINE
+       ===================================================== */
+
+    window.addEventListener(
+      "offline",
+      function() {
+
+        actualizarConexion();
+
+
+        mostrarResultado(
+          "📱",
+          "Modo sin conexión",
+          "Las nuevas asistencias se guardarán en este dispositivo.",
+          "offline"
+        );
+
+      }
+    );
+
+
+    /* =====================================================
+       BOTÓN DE SINCRONIZACIÓN
+       ===================================================== */
+
+    document.getElementById(
+      "syncButton"
+    ).addEventListener(
+      "click",
+      sincronizarPendientes
+    );
+
+
+    /* =====================================================
+       INICIO DE APLICACIÓN
+       ===================================================== */
+
+    async function iniciarAplicacion() {
+
+      try {
+
+        await abrirBaseDatos();
+
+
+        actualizarConexion();
+
+
+        await cargarAlumnos();
+
+
+        await actualizarPendientes();
+
+
+        if (navigator.onLine) {
+
+          await sincronizarPendientes();
+
+          await actualizarResumenAsistencia();
+
+        }
+
+
+        await iniciarCamara();
+
+      }
+      catch(error) {
+
+        console.error(
+          "Error iniciando aplicación:",
           error
         );
 
@@ -2532,264 +3253,15 @@ async function sincronizarPendientes() {
     }
 
 
-    await actualizarPendientes();
-
-    await actualizarResumenAsistencia();
-
-
-  } catch (error) {
-
-    console.error(
-      "Error en sincronización:",
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   CÁMARA
-========================================================= */
-
-async function iniciarCamara() {
-
-  try {
-
-    if (scanner) {
-
-      return;
-
-    }
-
-
-    scanner =
-      new Html5Qrcode("reader");
-
-
-    await scanner.start(
-
-      {
-        facingMode: {
-          exact: "environment"
-        }
-      },
-
-      {
-        fps: 10,
-
-        qrbox: {
-          width: 210,
-          height: 210
-        },
-
-        aspectRatio: 1.0
-
-      },
-
-      decodedText => {
-
-        procesarQR(decodedText);
-
-      },
-
-      errorMessage => {
-
-        /*
-          No mostramos errores de lectura
-          continuamente porque son normales
-          mientras la cámara busca un QR.
-        */
-
-      }
-
+    window.addEventListener(
+      "load",
+      iniciarAplicacion
     );
 
 
-  } catch (error) {
+  </script>
 
-    console.error(
-      "Error iniciando cámara:",
-      error
-    );
-
-
-    mostrarMensaje(
-      "No se pudo iniciar la cámara. Verifica que el navegador tenga permiso para usarla.",
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EVENTO ONLINE
-========================================================= */
-
-window.addEventListener(
-  "online",
-  async function() {
-
-    actualizarEstadoConexion();
-
-
-    mostrarMensaje(
-      "Conexión restablecida. Actualizando información...",
-      "info"
-    );
-
-
-    /*
-      Primero descargamos la lista actual
-      de Google Sheets.
-    */
-
-    await cargarAlumnosDesdeServidor();
-
-
-    /*
-      Después sincronizamos pendientes.
-    */
-
-    await sincronizarPendientes();
-
-
-    /*
-      Finalmente actualizamos el resumen.
-    */
-
-    await actualizarResumenAsistencia();
-
-
-    await actualizarPendientes();
-
-
-    setTimeout(
-      ocultarMensaje,
-      2500
-    );
-
-  }
-);
-
-
-/* =========================================================
-   EVENTO OFFLINE
-========================================================= */
-
-window.addEventListener(
-  "offline",
-  function() {
-
-    actualizarEstadoConexion();
-
-
-    mostrarMensaje(
-      "Sin conexión. Las asistencias se guardarán localmente y se sincronizarán al recuperar Internet.",
-      "warning"
-    );
-
-  }
-);
-
-
-/* =========================================================
-   INICIALIZACIÓN
-========================================================= */
-
-async function iniciarAplicacion() {
-
-  try {
-
-    /* Abrir IndexedDB */
-
-    await abrirDB();
-
-
-    /* Estado de conexión */
-
-    actualizarEstadoConexion();
-
-
-    /*
-      Si tenemos Internet:
-
-      1. Descargar alumnos actuales
-      2. Reemplazar caché local
-      3. Sincronizar pendientes
-      4. Actualizar resumen
-    */
-
-    if (navigator.onLine) {
-
-      await cargarAlumnosDesdeServidor();
-
-      await sincronizarPendientes();
-
-      await actualizarResumenAsistencia();
-
-    } else {
-
-      /*
-        Sin Internet solamente podemos
-        trabajar con la información local.
-      */
-
-      await actualizarPendientes();
-
-      mostrarMensaje(
-        "Trabajando sin conexión. Los registros se sincronizarán cuando vuelva Internet.",
-        "warning"
-      );
-
-    }
-
-
-    /*
-      Mostrar pendientes
-    */
-
-    await actualizarPendientes();
-
-
-    /*
-      Iniciar cámara
-    */
-
-    await iniciarCamara();
-
-
-  } catch (error) {
-
-    console.error(
-      "Error iniciando aplicación:",
-      error
-    );
-
-
-    mostrarMensaje(
-      "No se pudo iniciar correctamente la aplicación.",
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ARRANCAR
-========================================================= */
-
-window.addEventListener(
-  "load",
-  iniciarAplicacion
-);
-
-</script>
 
 </body>
+
 </html>
