@@ -2,334 +2,1332 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+<meta
+    name="theme-color"
+    content="#0f172a"
+  >
 
   <title>Ludwig Van Beethoven</title>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
   <style>
+     /* ==========================================
+       RESET
+       ========================================== */
+
     * {
       box-sizing: border-box;
     }
 
+
+    html {
+      width: 100%;
+      min-height: 100%;
+    }
+
+
     body {
+
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f3f6fa;
-      color: #1f2937;
+
+      width: 100%;
+
+      min-height: 100vh;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+      background:
+        linear-gradient(
+          145deg,
+          #0f172a 0%,
+          #172554 50%,
+          #0f766e 100%
+        );
+
+      color: #0f172a;
+
+      padding:
+        clamp(8px, 2vw, 28px);
+
     }
 
-    header {
-      background: #17365d;
+
+    /* ==========================================
+       CONTENEDOR
+       ========================================== */
+
+    .app {
+
+      width: 100%;
+
+      max-width: 820px;
+
+      margin: 0 auto;
+
+    }
+
+
+    /* ==========================================
+       ENCABEZADO
+       ========================================== */
+
+    .header {
+
       color: white;
-      padding: 18px 15px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+
+      margin-bottom:
+        clamp(10px, 2vw, 18px);
+
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
 
-    header p {
-      margin: 6px 0 0;
-      font-size: 14px;
-      opacity: .9;
-    }
+    .header-row {
 
-    .container {
-      width: 95%;
-      max-width: 900px;
-      margin: 20px auto;
-    }
-
-    .estado {
       display: flex;
+
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 15px;
-      font-size: 14px;
-      font-weight: bold;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
     }
 
-    .punto {
-      width: 11px;
-      height: 11px;
+
+    .title {
+
+      margin: 0;
+
+      font-size:
+        clamp(21px, 4vw, 30px);
+
+      font-weight: 750;
+
+      line-height: 1.15;
+
+      letter-spacing: -0.5px;
+
+    }
+
+
+    .subtitle {
+
+      margin:
+        5px 0 0;
+
+      color: #cbd5e1;
+
+      font-size:
+        clamp(11px, 1.8vw, 14px);
+
+    }
+
+
+    /* ==========================================
+       ESTADO DE CONEXIÓN
+       ========================================== */
+
+    .connection {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      padding:
+        7px 11px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(255,255,255,0.12);
+
+      border:
+        1px solid
+        rgba(255,255,255,0.15);
+
+      color: white;
+
+      font-size:
+        clamp(10px, 1.5vw, 12px);
+
+      white-space: nowrap;
+
+      flex-shrink: 0;
+
+    }
+
+
+    .connection-dot {
+
+      width: 8px;
+
+      height: 8px;
+
       border-radius: 50%;
+
       background: #22c55e;
+
+      flex-shrink: 0;
+
     }
 
-    .punto.offline {
-      background: #ef4444;
+
+    .connection.offline .connection-dot {
+
+      background: #f59e0b;
+
     }
 
-    .estadisticas {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 18px;
-    }
+
+    /* ==========================================
+       TARJETA PRINCIPAL
+       ========================================== */
 
     .card {
-      background: white;
-      border-radius: 12px;
-      padding: 15px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+
+      width: 100%;
+
+      background:
+        rgba(255,255,255,0.98);
+
+      border-radius:
+        clamp(16px, 3vw, 24px);
+
+      padding:
+        clamp(12px, 3vw, 26px);
+
+      box-shadow:
+        0 18px 40px
+        rgba(0,0,0,0.25);
+
     }
 
-    .card .numero {
+
+    /* ==========================================
+       ESTADÍSTICAS SUPERIORES
+       ========================================== */
+
+    .stats {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+      gap:
+        clamp(7px, 2vw, 12px);
+
+      margin-bottom:
+        clamp(11px, 2vw, 18px);
+
+    }
+
+
+    .stat {
+
+      min-width: 0;
+
+      background: #f8fafc;
+
+      border:
+        1px solid
+        #e2e8f0;
+
+      border-radius: 13px;
+
+      padding:
+        clamp(9px, 2vw, 14px);
+
+    }
+
+
+    .stat-label {
+
+      font-size:
+        clamp(9px, 1.5vw, 11px);
+
+      color: #64748b;
+
+      margin-bottom: 3px;
+
+    }
+
+
+    .stat-value {
+
+      font-size:
+        clamp(18px, 3vw, 24px);
+
+      font-weight: 750;
+
+      color: #0f172a;
+
+    }
+
+
+    /* ==========================================
+       RESUMEN DE ASISTENCIA
+       ========================================== */
+
+    .resumen-asistencia {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+      gap: 10px;
+
+      margin:
+        0 0 12px;
+
+    }
+
+
+    .tarjeta-resumen {
+
+      background: #ffffff;
+
+      border:
+        1px solid
+        #e2e8f0;
+
+      border-radius: 14px;
+
+      padding:
+        14px 8px;
+
+      text-align: center;
+
+      box-shadow:
+        0 2px 8px
+        rgba(0,0,0,0.06);
+
+    }
+
+
+    .titulo-resumen {
+
+      font-size: 12px;
+
+      color: #64748b;
+
+      margin-bottom: 5px;
+
+    }
+
+
+    .numero-resumen {
+
       font-size: 28px;
-      font-weight: bold;
-      color: #17365d;
+
+      font-weight: 750;
+
+      color: #0f172a;
+
+      line-height: 1;
+
     }
 
-    .card .titulo {
-      margin-top: 5px;
+
+    /* ==========================================
+       BARRA DE ASISTENCIA
+       ========================================== */
+
+    .barra-asistencia {
+
+      background: #f8fafc;
+
+      border:
+        1px solid
+        #e2e8f0;
+
+      border-radius: 14px;
+
+      padding: 13px 14px;
+
+      margin-bottom: 18px;
+
+    }
+
+
+    .barra-superior {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 10px;
+
+      margin-bottom: 8px;
+
       font-size: 13px;
-      color: #6b7280;
+
+      color: #475569;
+
     }
 
-    .scanner-card {
-      background: white;
-      border-radius: 15px;
-      padding: 18px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
-      text-align: center;
+
+    .barra-superior strong {
+
+      font-size: 15px;
+
+      color: #0f172a;
+
     }
 
-    .scanner-card h2 {
-      margin-top: 0;
-      color: #17365d;
+
+    .barra-fondo {
+
+      width: 100%;
+
+      height: 10px;
+
+      background: #e2e8f0;
+
+      border-radius: 10px;
+
+      overflow: hidden;
+
     }
+
+
+    .barra-progreso {
+
+      height: 100%;
+
+      width: 0%;
+
+      background: #22c55e;
+
+      border-radius: 10px;
+
+      transition:
+        width 0.3s ease;
+
+    }
+
+
+    /* ==========================================
+       CABECERA DEL ESCÁNER
+       ========================================== */
+
+    .camera-header {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 10px;
+
+      margin-bottom: 8px;
+
+    }
+
+
+    .camera-title {
+
+      font-size:
+        clamp(13px, 2vw, 16px);
+
+      font-weight: 700;
+
+      color: #1e293b;
+
+    }
+
+
+    .camera-status {
+
+      font-size:
+        clamp(10px, 1.5vw, 12px);
+
+      color: #64748b;
+
+      text-align: right;
+
+    }
+
+
+    /* ==========================================
+       CÁMARA RESPONSIVA
+       ========================================== */
+
+    .camera-wrapper {
+
+      width: 100%;
+
+      max-width:
+        min(460px, 78vw);
+
+      margin:
+        0 auto;
+
+      padding: 4px;
+
+      background: #020617;
+
+      border-radius:
+        clamp(15px, 3vw, 20px);
+
+      box-shadow:
+        0 8px 22px
+        rgba(15,23,42,0.20);
+
+      overflow: hidden;
+
+    }
+
 
     #reader {
+
       width: 100%;
-      max-width: 500px;
-      margin: auto;
+
     }
 
-    .mensaje {
-      margin: 15px auto;
-      padding: 14px;
-      border-radius: 10px;
-      font-weight: bold;
-      max-width: 600px;
-      display: none;
+
+    #reader video {
+
+      width: 100% !important;
+
+      height: auto !important;
+
+      max-width: 100% !important;
+
+      border-radius: 14px !important;
+
+      object-fit: cover !important;
+
     }
 
-    .mensaje.exito {
-      display: block;
-      background: #dcfce7;
-      color: #166534;
+
+    #reader__scan_region {
+
+      background: #020617 !important;
+
     }
 
-    .mensaje.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
+
+    #reader__dashboard {
+
+      background: #020617 !important;
+
+      padding: 5px !important;
+
     }
 
-    .mensaje.info {
-      display: block;
-      background: #dbeafe;
-      color: #1e40af;
+
+    #reader__dashboard_section_swaplink {
+
+      color: white !important;
+
     }
 
-    .mensaje.warning {
-      display: block;
-      background: #fef3c7;
-      color: #92400e;
-    }
 
-    .resumen {
-      background: white;
-      border-radius: 15px;
-      padding: 18px;
-      margin-top: 18px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
-    }
+    /* ==========================================
+       RESULTADO
+       ========================================== */
 
-    .resumen h2 {
-      margin-top: 0;
-      color: #17365d;
-    }
+    .result {
 
-    .resumen-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
+      width: 100%;
 
-    .resumen-item {
+      margin-top:
+        clamp(10px, 2vw, 14px);
+
+      padding:
+        clamp(10px, 2vw, 15px);
+
+      min-height:
+        clamp(64px, 10vw, 78px);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
       text-align: center;
-      padding: 12px;
-      border-radius: 10px;
+
+      border-radius: 14px;
+
       background: #f8fafc;
+
+      border:
+        1px solid
+        #e2e8f0;
+
     }
 
-    .resumen-item strong {
-      display: block;
-      font-size: 25px;
-      color: #17365d;
+
+    .result-icon {
+
+      font-size:
+        clamp(20px, 3vw, 25px);
+
+      margin-bottom: 2px;
+
     }
 
-    .resumen-item span {
-      font-size: 13px;
-      color: #6b7280;
+
+    .result-title {
+
+      font-size:
+        clamp(13px, 2vw, 16px);
+
+      font-weight: 750;
+
+      color: #334155;
+
+      overflow-wrap: anywhere;
+
     }
 
-    .porcentaje {
-      text-align: center;
-      margin-top: 18px;
-      font-size: 18px;
-      font-weight: bold;
+
+    .result-detail {
+
+      margin-top: 3px;
+
+      font-size:
+        clamp(11px, 1.7vw, 13px);
+
+      color: #64748b;
+
+      white-space: pre-line;
+
+      overflow-wrap: anywhere;
+
     }
 
-    .barra {
+
+    .result.success {
+
+      background: #ecfdf5;
+
+      border-color: #a7f3d0;
+
+    }
+
+
+    .result.success .result-title {
+
+      color: #047857;
+
+    }
+
+
+    .result.error {
+
+      background: #fef2f2;
+
+      border-color: #fecaca;
+
+    }
+
+
+    .result.error .result-title {
+
+      color: #b91c1c;
+
+    }
+
+
+    .result.offline {
+
+      background: #fffbeb;
+
+      border-color: #fde68a;
+
+    }
+
+
+    .result.offline .result-title {
+
+      color: #92400e;
+
+    }
+
+
+    /* ==========================================
+       BOTÓN
+       ========================================== */
+
+    .sync-button {
+
       width: 100%;
-      height: 18px;
-      background: #e5e7eb;
-      border-radius: 20px;
-      overflow: hidden;
-      margin-top: 10px;
+
+      min-height: 44px;
+
+      margin-top:
+        clamp(9px, 2vw, 12px);
+
+      padding:
+        10px 14px;
+
+      border: 0;
+
+      border-radius: 11px;
+
+      background: #0f172a;
+
+      color: white;
+
+      font-size:
+        clamp(11px, 1.7vw, 13px);
+
+      font-weight: 650;
+
+      cursor: pointer;
+
     }
 
-    #barraProgreso {
-      height: 100%;
-      width: 0%;
-      background: #22c55e;
-      transition: width .4s ease;
+
+    .sync-button:disabled {
+
+      opacity: 0.45;
+
+      cursor: default;
+
     }
 
-    .pendientes {
-      margin-top: 15px;
+
+    /* ==========================================
+       PIE
+       ========================================== */
+
+    .footer {
+
       text-align: center;
-      font-size: 13px;
-      color: #6b7280;
+
+      margin-top:
+        clamp(9px, 2vw, 13px);
+
+      color: #94a3b8;
+
+      font-size:
+        clamp(9px, 1.4vw, 11px);
+
     }
 
-    footer {
-      text-align: center;
-      padding: 25px 10px;
-      color: #6b7280;
-      font-size: 12px;
-    }
 
-    @media (max-width: 600px) {
+    /* ==========================================
+       CELULARES PEQUEÑOS
+       ========================================== */
 
-      header h1 {
+    @media (max-width: 380px) {
+
+      body {
+
+        padding: 8px;
+
+      }
+
+
+      .header-row {
+
+        gap: 8px;
+
+        align-items: flex-start;
+
+      }
+
+
+      .title {
+
         font-size: 20px;
+
       }
 
-      .estadisticas {
-        grid-template-columns: repeat(2, 1fr);
+
+      .subtitle {
+
+        font-size: 11px;
+
       }
 
-      .resumen-grid {
-        grid-template-columns: 1fr;
+
+      .connection {
+
+        padding:
+          6px 8px;
+
+        font-size: 10px;
+
       }
 
-      .scanner-card {
-        padding: 10px;
+
+      .card {
+
+        padding: 11px;
+
       }
 
-      #reader {
-        max-width: 100%;
+
+      .camera-wrapper {
+
+        max-width: 300px;
+
       }
+
+
+      .numero-resumen {
+
+        font-size: 23px;
+
+      }
+
+
+      .titulo-resumen {
+
+        font-size: 10px;
+
+      }
+
     }
+
+
+    /* ==========================================
+       CELULARES MEDIANOS
+       ========================================== */
+
+    @media (
+      min-width: 381px
+    ) and (
+      max-width: 599px
+    ) {
+
+      .camera-wrapper {
+
+        max-width: 340px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       TABLETS
+       ========================================== */
+
+    @media (min-width: 600px) {
+
+      .camera-wrapper {
+
+        max-width: 400px;
+
+      }
+
+      .card {
+
+        padding: 22px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       LAPTOP
+       ========================================== */
+
+    @media (min-width: 900px) {
+
+      .app {
+
+        max-width: 820px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 440px;
+
+      }
+
+
+      .card {
+
+        padding: 26px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       MONITORES GRANDES
+       ========================================== */
+
+    @media (min-width: 1200px) {
+
+      .app {
+
+        max-width: 850px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 460px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       CELULAR / TABLET HORIZONTAL
+       ========================================== */
+
+    @media (
+      max-height: 600px
+    ) and (
+      orientation: landscape
+    ) {
+
+      body {
+
+        padding:
+          8px 14px;
+
+      }
+
+
+      .header {
+
+        margin-bottom: 7px;
+
+      }
+
+
+      .title {
+
+        font-size: 20px;
+
+      }
+
+
+      .subtitle {
+
+        display: none;
+
+      }
+
+
+      .card {
+
+        padding:
+          10px 14px;
+
+      }
+
+
+      .stats {
+
+        margin-bottom: 7px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 300px;
+
+      }
+
+
+      .result {
+
+        margin-top: 7px;
+
+        min-height: 54px;
+
+        padding: 7px;
+
+      }
+
+
+      .footer {
+
+        display: none;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       PANTALLAS MUY PEQUEÑAS
+       ========================================== */
+
+    @media (max-width: 320px) {
+
+      body {
+
+        padding: 5px;
+
+      }
+
+
+      .title {
+
+        font-size: 18px;
+
+      }
+
+
+      .connection {
+
+        font-size: 9px;
+
+        padding:
+          5px 7px;
+
+      }
+
+
+      .card {
+
+        padding: 9px;
+
+        border-radius: 15px;
+
+      }
+
+
+      .camera-wrapper {
+
+        max-width: 285px;
+
+      }
+
+
+      .result {
+
+        padding: 8px;
+
+      }
+
+
+      .resumen-asistencia {
+
+        gap: 4px;
+
+      }
+
+
+      .numero-resumen {
+
+        font-size: 21px;
+
+      }
+
+    }
+
+
+    /* ==========================================
+       DISPOSITIVOS TÁCTILES
+       ========================================== */
+
+    @media (pointer: coarse) {
+
+      .sync-button {
+
+        min-height: 46px;
+
+      }
+
+    }
+
+
   </style>
+
 </head>
+
 
 <body>
 
-<header>
-  <h1>Secundaria N.º 101</h1>
-  <p>Ludwig Van Beethoven</p>
-</header>
 
-<div class="container">
+  <main class="app">
 
-  <!-- ESTADO DE CONEXIÓN -->
-  <div class="estado">
-    <div id="puntoEstado" class="punto"></div>
-    <span id="textoEstado">Conectando...</span>
-  </div>
 
-  <!-- ESTADÍSTICAS SUPERIORES -->
-  <div class="estadisticas">
+    <!-- ========================================
+         ENCABEZADO
+         ======================================== -->
 
-    <div class="card">
-      <div id="totalActivos" class="numero">0</div>
-      <div class="titulo">Alumnos activos</div>
-    </div>
+    <header class="header">
 
-    <div class="card">
-      <div id="pendientes" class="numero">0</div>
-      <div class="titulo">Pendientes de sincronizar</div>
-    </div>
+      <div class="header-row">
 
-  </div>
+        <div>
 
-  <!-- MENSAJE -->
-  <div id="mensaje" class="mensaje"></div>
+          <h1 class="title">
+            Secundaria N° 101 "Ludwig Van Beethoven"
+          </h1>
 
-  <!-- ESCÁNER -->
-  <div class="scanner-card">
+          <p class="subtitle">
+            Control de Asistencia
+          </p>
 
-    <h2>Registro de asistencia</h2>
+        </div>
 
-    <div id="reader"></div>
 
-  </div>
+        <div
+          id="connectionStatus"
+          class="connection"
+        >
 
-  <!-- RESUMEN -->
-  <div class="resumen">
+          <span
+            class="connection-dot">
+          </span>
 
-    <h2>Resumen de asistencia</h2>
+          <span id="connectionText">
+            Conectado
+          </span>
 
-    <div class="resumen-grid">
+        </div>
 
-      <div class="resumen-item">
-        <strong id="resumenActivos">0</strong>
-        <span>Alumnos activos</span>
       </div>
 
-      <div class="resumen-item">
-        <strong id="hanIngresado">0</strong>
-        <span>Han ingresado</span>
+    </header>
+
+
+    <!-- ========================================
+         TARJETA PRINCIPAL
+         ======================================== -->
+
+    <section class="card">
+
+
+      <!-- ======================================
+           ESTADÍSTICAS GENERALES
+           ====================================== -->
+
+      <div class="stats">
+
+
+        <div class="stat">
+
+          <div class="stat-label">
+            Alumnos activos
+          </div>
+
+          <div
+            id="totalAlumnos"
+            class="stat-value"
+          >
+            —
+          </div>
+
+        </div>
+
+
+        <div class="stat">
+
+          <div class="stat-label">
+            Pendientes
+          </div>
+
+          <div
+            id="pendientes"
+            class="stat-value"
+          >
+            0
+          </div>
+
+        </div>
+
+
       </div>
 
-      <div class="resumen-item">
-        <strong id="faltanIngresar">0</strong>
-        <span>Faltan</span>
+
+      <!-- ======================================
+           RESUMEN DE ASISTENCIA
+           ====================================== -->
+
+      <div class="resumen-asistencia">
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Total activos
+          </div>
+
+          <div
+            id="totalActivos"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Han ingresado
+          </div>
+
+          <div
+            id="hanIngresado"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
+        <div class="tarjeta-resumen">
+
+          <div class="titulo-resumen">
+            Faltan
+          </div>
+
+          <div
+            id="faltanIngresar"
+            class="numero-resumen"
+          >
+            0
+          </div>
+
+        </div>
+
+
       </div>
 
-    </div>
 
-    <div class="porcentaje">
-      Asistencia: <span id="porcentajeAsistencia">0%</span>
-    </div>
+      <!-- ======================================
+           BARRA DE ASISTENCIA
+           ====================================== -->
 
-    <div class="barra">
-      <div id="barraProgreso"></div>
-    </div>
+      <div class="barra-asistencia">
 
-    <div id="fechaResumen" class="pendientes"></div>
+        <div class="barra-superior">
 
-  </div>
+          <span>
+            Asistencia de hoy
+          </span>
 
-</div>
+          <strong id="porcentajeAsistencia">
+            0%
+          </strong>
 
-<footer>
-  Sistema de asistencia QR
-</footer>
+        </div>
 
 
-<script>
+        <div class="barra-fondo">
+
+          <div
+            id="barraProgreso"
+            class="barra-progreso"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================
+           ESCÁNER
+           ====================================== -->
+
+      <div class="camera-header">
+
+        <span class="camera-title">
+          Escáner QR
+        </span>
+
+        <span
+          id="cameraStatus"
+          class="camera-status"
+        >
+          Iniciando...
+        </span>
+
+      </div>
+
+
+      <div class="camera-wrapper">
+
+        <div id="reader"></div>
+
+      </div>
+
+
+      <!-- ======================================
+           RESULTADO
+           ====================================== -->
+
+      <div
+        id="resultado"
+        class="result"
+      >
+
+        <div>
+
+          <div class="result-icon">
+            📷
+          </div>
+
+          <div class="result-title">
+            Esperando código QR
+          </div>
+
+          <div class="result-detail">
+            Coloca el código dentro del recuadro
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================
+           SINCRONIZACIÓN
+           ====================================== -->
+
+      <button
+        id="syncButton"
+        class="sync-button"
+        type="button"
+        disabled
+      >
+        Sincronizar pendientes
+      </button>
+
+
+    </section>
+
+
+    <footer class="footer">
+      Sistema de asistencia QR
+    </footer>
+
+
+  </main>
+
+
+  <script>
 
 /* =========================================================
    CONFIGURACIÓN
