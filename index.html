@@ -1137,6 +1137,15 @@
 
       </div>
 
+      <button
+        id="cameraButton"
+        class="sync-button"
+        type="button"
+        onclick="reanudarEscaneo()"
+      >
+        Escanear siguiente alumno
+      </button>
+
 
       <!-- ======================================
            RESULTADO
@@ -1170,14 +1179,14 @@
            SINCRONIZACIÓN
            ====================================== -->
 
-     <button
-  id="nextScanButton"
-  class="sync-button"
-  type="button"
-  style="display:none; background:#0f766e;"
->
-  Escanear siguiente alumno
-</button>
+      <button
+        id="syncButton"
+        class="sync-button"
+        type="button"
+        disabled
+      >
+        Sincronizar pendientes
+      </button>
 
 
     </section>
@@ -1209,7 +1218,7 @@
 
     let procesando = false;
 
-    let escaneoDetenido = false;
+    let qrBloqueado = false;
 
     let sincronizando = false;
 
@@ -2510,80 +2519,39 @@
        PROCESAR QR
        ===================================================== */
 
-   async function procesarQR(idQR) {
+    async function procesarQR(
+      idQR
+    ) {
 
-  // Bloquear inmediatamente nuevas lecturas.
-  if (procesando) return;
+      /*
+       * Evita que el mismo QR sea procesado
+       * varias veces por la cámara.
+       */
 
-  procesando = true;
-  escaneoDetenido = true;
+      if (procesando) {
 
-  const botonSiguiente =
-    document.getElementById("nextScanButton");
+        return;
 
-  botonSiguiente.style.display = "none";
-
-  document.getElementById("cameraStatus").textContent =
-    "Validando alumno...";
-
-  try {
-
-    idQR = String(idQR || "").trim();
-
-    if (!idQR) {
-      mostrarResultado(
-        "❌",
-        "QR vacío",
-        "No se pudo leer un código válido.",
-        "error"
-      );
-      return;
-    }
-
-    // Detener la cámara antes de validar.
-    if (scanner) {
-      try {
-        await scanner.stop();
-      } catch (error) {
-        console.log("La cámara ya estaba detenida:", error);
       }
 
+
+      procesando =
+        true;
+
+
       try {
-        await scanner.clear();
-      } catch (error) {
-        console.log("No fue necesario limpiar el lector:", error);
-      }
 
-      scanner = null;
-    }
+        idQR =
+          String(
+            idQR || ""
+          ).trim();
 
-    // La función existente conserva la validación
-    // online, offline, alumno activo y duplicados.
-    await procesarQRValidacion(idQR);
 
-  } catch (error) {
+        if (!idQR) {
 
-    console.error("Error procesando QR:", error);
+          return;
 
-    mostrarResultado(
-      "❌",
-      "Error de lectura",
-      "No fue posible validar el código. Intenta nuevamente.",
-      "error"
-    );
-
-  } finally {
-
-    // No reanudar automáticamente.
-    // El usuario decidirá cuándo escanear al siguiente alumno.
-    document.getElementById("cameraStatus").textContent =
-      "Lectura pausada";
-
-    botonSiguiente.style.display = "block";
-    botonSiguiente.disabled = false;
-    botonSiguiente.textContent = "Escanear siguiente alumno";
-  }
-}
+        }
 
 
         /* ==========================================
@@ -3198,10 +3166,47 @@
 
 
     /* =====================================================
+       DETENER Y REANUDAR ESCÁNER
+       ===================================================== */
+
+    async function detenerCamara() {
+      if (!scanner) return;
+      const instancia = scanner;
+      scanner = null;
+      try {
+        await instancia.stop();
+      } catch (error) {
+        console.log("La cámara ya estaba detenida:", error);
+      }
+      try {
+        await instancia.clear();
+      } catch (error) {
+        console.log("No fue necesario limpiar el lector:", error);
+      }
+    }
+
+    async function reanudarEscaneo() {
+      if (procesando) return;
+      const boton = document.getElementById("cameraButton");
+      boton.disabled = true;
+      boton.textContent = "Activando cámara...";
+      qrBloqueado = false;
+      try {
+        await iniciarCamara();
+      } finally {
+        boton.disabled = false;
+        boton.textContent = "Escanear siguiente alumno";
+      }
+    }
+
+
+    /* =====================================================
        INICIAR CÁMARA
        ===================================================== */
 
     async function iniciarCamara() {
+
+      if (scanner) return;
 
       if (
         typeof Html5Qrcode ===
@@ -3258,17 +3263,20 @@
 
           },
 
-          function(decodedText) {
+          async function(decodedText) {
 
-            console.log(
-              "QR:",
-              decodedText
-            );
+            // Bloqueo inmediato: evita lecturas repetidas del mismo QR.
+            if (qrBloqueado || procesando) return;
+            qrBloqueado = true;
 
+            console.log("QR detectado:", decodedText);
 
-            procesarQR(
-              decodedText
-            );
+            // Detener la cámara antes de validar/registrar al alumno.
+            await detenerCamara();
+            document.getElementById("cameraStatus").textContent =
+              "QR detectado · cámara detenida";
+
+            await procesarQR(decodedText);
 
           },
 
@@ -3286,7 +3294,13 @@
         document.getElementById(
           "cameraStatus"
         ).textContent =
-          "Cámara activa";
+          "Cámara activa · esperando QR";
+
+        const botonCamara = document.getElementById("cameraButton");
+        if (botonCamara) {
+          botonCamara.disabled = false;
+          botonCamara.textContent = "Escanear siguiente alumno";
+        }
 
       }
       catch(error) {
@@ -3392,24 +3406,6 @@
       sincronizarPendientes
     );
 
-    document.getElementById("nextScanButton")
-  .addEventListener("click", async function() {
-
-    if (procesando) return;
-
-    this.disabled = true;
-    this.textContent = "Iniciando cámara...";
-
-    procesando = false;
-    escaneoDetenido = false;
-
-    try {
-      await iniciarCamara();
-    } catch (error) {
-      console.error("No se pudo reanudar la cámara:", error);
-    }
-
-  });
 
     /* =====================================================
        INICIO
