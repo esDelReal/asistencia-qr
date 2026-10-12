@@ -3392,6 +3392,24 @@
       sincronizarPendientes
     );
 
+    document.getElementById("nextScanButton")
+  .addEventListener("click", async function() {
+
+    if (procesando) return;
+
+    this.disabled = true;
+    this.textContent = "Iniciando cámara...";
+
+    procesando = false;
+    escaneoDetenido = false;
+
+    try {
+      await iniciarCamara();
+    } catch (error) {
+      console.error("No se pudo reanudar la cámara:", error);
+    }
+
+  });
 
     /* =====================================================
        INICIO
