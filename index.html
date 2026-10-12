@@ -1209,6 +1209,8 @@
 
     let procesando = false;
 
+    let escaneoDetenido = false;
+
     let sincronizando = false;
 
     let db = null;
@@ -2508,39 +2510,80 @@
        PROCESAR QR
        ===================================================== */
 
-    async function procesarQR(
-      idQR
-    ) {
+   async function procesarQR(idQR) {
 
-      /*
-       * Evita que el mismo QR sea procesado
-       * varias veces por la cámara.
-       */
+  // Bloquear inmediatamente nuevas lecturas.
+  if (procesando) return;
 
-      if (procesando) {
+  procesando = true;
+  escaneoDetenido = true;
 
-        return;
+  const botonSiguiente =
+    document.getElementById("nextScanButton");
 
+  botonSiguiente.style.display = "none";
+
+  document.getElementById("cameraStatus").textContent =
+    "Validando alumno...";
+
+  try {
+
+    idQR = String(idQR || "").trim();
+
+    if (!idQR) {
+      mostrarResultado(
+        "❌",
+        "QR vacío",
+        "No se pudo leer un código válido.",
+        "error"
+      );
+      return;
+    }
+
+    // Detener la cámara antes de validar.
+    if (scanner) {
+      try {
+        await scanner.stop();
+      } catch (error) {
+        console.log("La cámara ya estaba detenida:", error);
       }
 
-
-      procesando =
-        true;
-
-
       try {
+        await scanner.clear();
+      } catch (error) {
+        console.log("No fue necesario limpiar el lector:", error);
+      }
 
-        idQR =
-          String(
-            idQR || ""
-          ).trim();
+      scanner = null;
+    }
 
+    // La función existente conserva la validación
+    // online, offline, alumno activo y duplicados.
+    await procesarQRValidacion(idQR);
 
-        if (!idQR) {
+  } catch (error) {
 
-          return;
+    console.error("Error procesando QR:", error);
 
-        }
+    mostrarResultado(
+      "❌",
+      "Error de lectura",
+      "No fue posible validar el código. Intenta nuevamente.",
+      "error"
+    );
+
+  } finally {
+
+    // No reanudar automáticamente.
+    // El usuario decidirá cuándo escanear al siguiente alumno.
+    document.getElementById("cameraStatus").textContent =
+      "Lectura pausada";
+
+    botonSiguiente.style.display = "block";
+    botonSiguiente.disabled = false;
+    botonSiguiente.textContent = "Escanear siguiente alumno";
+  }
+}
 
 
         /* ==========================================
