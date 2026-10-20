@@ -1,4 +1,5 @@
-const CACHE_NAME = "asistencia-qr-v1";
+
+const CACHE_NAME = "asistencia-qr-v2";
 
 const ARCHIVOS = [
   "./",
@@ -6,7 +7,6 @@ const ARCHIVOS = [
 ];
 
 self.addEventListener("install", event => {
-
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ARCHIVOS))
@@ -15,63 +15,58 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
-
 self.addEventListener("activate", event => {
-
   event.waitUntil(
-    caches.keys().then(keys => {
-
-      return Promise.all(
+    caches.keys().then(keys =>
+      Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
           .map(key => caches.delete(key))
-      );
-
-    })
+      )
+    ).then(() => self.clients.claim())
   );
-
-  self.clients.claim();
 });
 
-
 self.addEventListener("fetch", event => {
+  const request = event.request;
+  const url = new URL(request.url);
 
+  // No interceptar API de Google ni otras solicitudes externas.
+  if (
+    request.method !== "GET" ||
+    url.origin !== self.location.origin
+  ) {
+    return;
+  }
+
+  // Para archivos de la aplicación: red primero, caché como respaldo.
   event.respondWith(
-
-    fetch(event.request)
+    fetch(request)
       .then(response => {
-
-        if (
-          response &&
-          response.status === 200
-        ) {
-
-          const copia =
-            response.clone();
+        if (response && response.ok) {
+          const copia = response.clone();
 
           caches.open(CACHE_NAME)
-            .then(cache => {
-
-              cache.put(
-                event.request,
-                copia
-              );
-
-            });
-
+            .then(cache => cache.put(request, copia))
+            .catch(error => console.warn("No se pudo actualizar la caché:", error));
         }
 
         return response;
-
       })
-      .catch(() => {
+      .catch(async () => {
+        const guardada = await caches.match(request);
 
-        return caches.match(
-          event.request
+        if (guardada) {
+          return guardada;
+        }
+
+        return new Response(
+          "Sin conexión y sin copia local disponible.",
+          {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" }
+          }
         );
-
       })
-
   );
-
 });
