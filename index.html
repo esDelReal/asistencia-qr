@@ -24,6 +24,7 @@
 
   <script
     src="https://unpkg.com/html5-qrcode"
+    defer
     type="text/javascript">
   </script>
 
@@ -1215,6 +1216,9 @@
     let db = null;
 
     let internetReal = false;
+
+    /* Evita aceptar lecturas antes de disponer de la lista local de alumnos. */
+    let datosInicialesListos = false;
 
     let ultimaVerificacionInternet = 0;
 
@@ -3255,6 +3259,9 @@
 
           async function(decodedText) {
 
+            // No procesar códigos hasta terminar la carga inicial de la lista.
+            if (!datosInicialesListos) return;
+
             // Bloqueo inmediato: evita lecturas repetidas del mismo QR.
             if (qrBloqueado || procesando) return;
             qrBloqueado = true;
@@ -3325,35 +3332,13 @@
 
     window.addEventListener(
       "online",
-      async function() {
+      function() {
 
+        /* El navegador reporta conectividad; la API la confirma al responder. */
         actualizarConexion();
-
-
-        /*
-         * Damos un pequeño margen para que
-         * la conexión realmente se estabilice.
-         */
-
-        await new Promise(
-          function(resolve) {
-
-            setTimeout(
-              resolve,
-              800
-            );
-
-          }
-        );
-
-
-        await cargarAlumnos();
-
-
-        await sincronizarPendientes();
-
-
-        await actualizarResumenAsistencia();
+        setTimeout(function() {
+          void actualizarDatosEnSegundoPlano();
+        }, 800);
 
       }
     );
@@ -3398,100 +3383,93 @@
 
 
     /* =====================================================
-       INICIO
+       SERVICE WORKER
        ===================================================== */
 
-    async function iniciarAplicacion() {
+    function registrarServiceWorker() {
+
+      if (
+        "serviceWorker" in navigator &&
+        location.protocol === "https:"
+      ) {
+
+        navigator.serviceWorker.register("./service-worker.js")
+          .catch(function(error) {
+            console.warn("No se pudo registrar el service worker:", error);
+          });
+
+      }
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZACIÓN EN SEGUNDO PLANO
+       ===================================================== */
+
+    async function actualizarDatosEnSegundoPlano() {
+
+      if (!navigator.onLine) {
+        /* IndexedDB ya está abierta: permite usar la lista guardada sin Internet. */
+        datosInicialesListos = true;
+        return;
+      }
 
       try {
 
-        /*
-         * Primero abrimos IndexedDB.
-         *
-         * Esto es fundamental para poder trabajar
-         * aunque no exista Internet.
-         */
-
-        await abrirBaseDatos();
-
-
-        /*
-         * Estado inicial.
-         */
-
-        internetReal =
-          navigator.onLine;
-
-
-        actualizarConexion();
-
-
-        /*
-         * Cargar alumnos.
-         *
-         * Online:
-         *   Google Sheets → IndexedDB
-         *
-         * Offline:
-         *   IndexedDB
-         */
-
         await cargarAlumnos();
-
-
-        /*
-         * Mostrar pendientes inmediatamente.
-         */
-
+        datosInicialesListos = true;
+        await sincronizarPendientes();
+        await actualizarResumenAsistencia();
         await actualizarPendientes();
-
-
-        /*
-         * Si hay Internet:
-         *
-         * 1. sincronizar
-         * 2. actualizar resumen
-         */
-
-        if (navigator.onLine) {
-
-          await sincronizarPendientes();
-
-          await actualizarResumenAsistencia();
-
-        }
-
-
-        /*
-         * La cámara se inicia después de
-         * preparar completamente la base local.
-         */
-
-        await iniciarCamara();
 
       }
       catch(error) {
 
-        console.error(
-          "Error iniciando aplicación:",
-          error
-        );
+        console.warn("La actualización en segundo plano no terminó:", error);
+
+      }
+
+    }
 
 
-        /*
-         * Incluso si algo falla,
-         * intentamos mantener la cámara disponible.
-         */
+    /* =====================================================
+       INICIO RÁPIDO
+       ===================================================== */
 
+    async function iniciarAplicacion() {
+
+      registrarServiceWorker();
+
+      try {
+
+        /* La base local es el único requisito antes de preparar la interfaz. */
+        await abrirBaseDatos();
+
+        internetReal = false;
+        actualizarConexion();
+
+        /* Mostrar datos locales y pendientes sin esperar a Google Sheets. */
+        await actualizarTotalAlumnos();
+        await actualizarPendientes();
+
+        /* Arrancar cámara antes de hacer solicitudes remotas. */
+        await iniciarCamara();
+
+        /* Las llamadas remotas se ejecutan después de habilitar el escáner. */
+        void actualizarDatosEnSegundoPlano();
+
+      }
+      catch(error) {
+
+        console.error("Error iniciando aplicación:", error);
+
+        /* Si la base local falla, todavía intentamos habilitar la cámara. */
         try {
-
           await iniciarCamara();
-
         }
-        catch(e) {
-
-          console.error(e);
-
+        catch(errorCamara) {
+          console.error("No se pudo iniciar la cámara:", errorCamara);
         }
 
       }
@@ -3503,10 +3481,7 @@
        INICIAR
        ===================================================== */
 
-    window.addEventListener(
-      "load",
-      iniciarAplicacion
-    );
+    window.addEventListener("load", iniciarAplicacion);
 
   </script>
 
