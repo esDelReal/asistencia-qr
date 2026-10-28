@@ -1202,6 +1202,24 @@
       "https://script.google.com/macros/s/AKfycbyczkWRDi9dsKxoKrGQYkLeK9SM7Uts0LKsXnRPL8qGGNnaT4Tb_69inXr3F8Gzf7Pd/exec";
 
 
+    /*
+     * Token de acceso a la Apps Script.
+     *
+     * Se envía en cada petición y Apps Script
+     * lo valida antes de responder.
+     *
+     * Debe coincidir con el valor guardado en
+     * Script Properties > TOKEN.
+     *
+     * Al estar en el cliente, cualquiera puede
+     * leerlo: sube la barrera, no sustituye
+     * una autenticación real.
+     */
+
+    const TOKEN =
+      "qr-asistencia-7f3c9b21e84d4a6c9f05b2d7e1a3c8f4";
+
+
     /* =====================================================
        VARIABLES
        ===================================================== */
@@ -1955,7 +1973,9 @@
         const response =
           await fetch(
             API_URL +
-            "?action=alumnos&t=" +
+            "?action=alumnos&token=" +
+            TOKEN +
+            "&t=" +
             Date.now(),
             {
               method: "GET",
@@ -2208,7 +2228,9 @@
         const response =
           await fetch(
             API_URL +
-            "?action=resumen&t=" +
+            "?action=resumen&token=" +
+            TOKEN +
+            "&t=" +
             Date.now(),
             {
               method: "GET",
@@ -2625,6 +2647,8 @@
             encodeURIComponent(
               idQR
             ) +
+            "&token=" +
+            TOKEN +
             "&t=" +
             Date.now();
 
@@ -3012,6 +3036,8 @@
               encodeURIComponent(
                 asistencia.hora
               ) +
+              "&token=" +
+              TOKEN +
               "&t=" +
               Date.now();
 
