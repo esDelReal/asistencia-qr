@@ -3,7 +3,11 @@
 
 <head>
 
-  <meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="description" content="Control de asistencia mediante códigos QR">
+<meta charset="UTF-8">
 
   <meta
     name="viewport"
@@ -22,11 +26,12 @@
        LECTOR QR
        ========================================== -->
 
-  <script
-    src="https://unpkg.com/html5-qrcode"
+  <script src="./lib/html5-qrcode.mim.js" defer></script>
+  
+  <!--<script src="https://unpkg.com/html5-qrcode"
     defer
     type="text/javascript">
-  </script>
+  </script>-->
 
 
   <style>
