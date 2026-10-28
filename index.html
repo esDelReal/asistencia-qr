@@ -3,11 +3,12 @@
 
 <head>
 
+<meta charset="UTF-8">
+
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="description" content="Control de asistencia mediante códigos QR">
-<meta charset="UTF-8">
 
   <meta
     name="viewport"
@@ -27,11 +28,6 @@
        ========================================== -->
 
   <script src="./lib/html5-qrcode.mim.js" defer></script>
-  
-  <!--<script src="https://unpkg.com/html5-qrcode"
-    defer
-    type="text/javascript">
-  </script>-->
 
 
   <style>
@@ -1829,26 +1825,44 @@
 
 
       resultado.className =
-        "result " + clase;
+        "result " + (clase || "");
 
 
-      resultado.innerHTML =
+      /*
+       * Se usa textContent y no innerHTML.
+       *
+       * El nombre y el mensaje vienen de
+       * Google Sheets: si fueran HTML,
+       * se interpretarían en el dispositivo.
+       */
 
-        "<div>" +
+      function texto(tag, claseNodo, contenido) {
 
-          '<div class="result-icon">' +
-            icono +
-          "</div>" +
+        const nodo =
+          document.createElement(tag);
 
-          '<div class="result-title">' +
-            titulo +
-          "</div>" +
+        nodo.className = claseNodo;
+        nodo.textContent =
+          contenido == null
+            ? ""
+            : String(contenido);
 
-          '<div class="result-detail">' +
-            detalle +
-          "</div>" +
+        return nodo;
 
-        "</div>";
+      }
+
+
+      const contenedor =
+        document.createElement("div");
+
+      contenedor.append(
+        texto("div", "result-icon", icono),
+        texto("div", "result-title", titulo),
+        texto("div", "result-detail", detalle)
+      );
+
+
+      resultado.replaceChildren(contenedor);
 
     }
 
@@ -3468,6 +3482,22 @@
       catch(error) {
 
         console.error("Error iniciando aplicación:", error);
+
+        /*
+         * Sin IndexedDB la lista local no existe,
+         * pero la cámara debe seguir funcionando:
+         * sin este flag el escáner descartaría
+         * todas las lecturas en silencio.
+         */
+
+        datosInicialesListos = true;
+
+        mostrarResultado(
+          "⚠️",
+          "Almacenamiento local no disponible",
+          "Las asistencias no se guardarán sin conexión.",
+          "error"
+        );
 
         /* Si la base local falla, todavía intentamos habilitar la cámara. */
         try {

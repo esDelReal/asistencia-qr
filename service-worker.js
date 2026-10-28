@@ -1,10 +1,12 @@
 
-const CACHE_NAME = "asistencia-qr-v2";
+const CACHE_NAME = "asistencia-qr-v3";
 
 const ARCHIVOS = [
   "./",
-  "./index.html"
+  "./index.html",
   "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
   "./lib/html5-qrcode.mim.js"
 ];
 
@@ -12,9 +14,8 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ARCHIVOS))
+      .then(() => self.skipWaiting())
   );
-
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
