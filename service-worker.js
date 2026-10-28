@@ -4,6 +4,8 @@ const CACHE_NAME = "asistencia-qr-v2";
 const ARCHIVOS = [
   "./",
   "./index.html"
+  "./manifest.json",
+  "./lib/html5-qrcode.mim.js"
 ];
 
 self.addEventListener("install", event => {
