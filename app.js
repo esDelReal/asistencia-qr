@@ -63,6 +63,35 @@
     let ultimaVerificacionInternet = 0;
 
 
+    /* =====================================================
+       LECTOR TIPO PISTOLA
+       ===================================================== */
+
+    /*
+     * La pistola lectora (USB/OTG o Bluetooth) se
+     * comporta como un teclado: escribe el código y
+     * lo cierra con Enter. No usa la cámara ni
+     * html5-qrcode.
+     *
+     * Estas variables acumulan esa escritura hasta
+     * el Enter y la envían por la misma ruta que
+     * usa la cámara.
+     */
+
+    let bufferLector = "";
+
+    let temporizadorBufferLector = null;
+
+    const COLA_LECTOR = [];
+
+    let procesandoColaLector = false;
+
+    let lectorDetectado = false;
+
+    /* Las teclas de un mismo código llegan en menos de este tiempo. */
+    const ESPERA_BUFFER_LECTOR = 700;
+
+
     /*
      * Tiempo máximo de espera para una petición
      * al servidor.
@@ -2348,6 +2377,273 @@
 
 
     /* =====================================================
+       LECTOR TIPO PISTOLA (ENTRADA POR TECLADO)
+       ===================================================== */
+
+    function dormir(ms) {
+
+      return new Promise(function(resolve) {
+
+        setTimeout(resolve, ms);
+
+      });
+
+    }
+
+
+    function normalizarCodigoLector(texto) {
+
+      return String(texto || "")
+        .replace(/[\r\n\t]/g, "")
+        .trim();
+
+    }
+
+
+    async function procesarLecturaDelLector(codigo) {
+
+      /*
+       * Espera a tener la lista local de alumnos,
+       * igual que la cámara. Si tarda demasiado,
+       * se avisa en pantalla y se descarta.
+       */
+
+      let espera = 0;
+
+      while (!datosInicialesListos && espera < 6000) {
+        await dormir(200);
+        espera += 200;
+      }
+
+
+      if (!datosInicialesListos) {
+
+        mostrarResultado(
+          "⏳",
+          "Cargando lista de alumnos",
+          "Espera un momento antes de escanear.",
+          ""
+        );
+
+        return;
+
+      }
+
+
+      /*
+       * Si la cámara está procesando otro código,
+       * se espera a que lo libere. procesarQR además
+       * tarda 600 ms en soltar su candado.
+       */
+
+      let esperaProceso = 0;
+
+      while (procesando && esperaProceso < 12000) {
+        await dormir(150);
+        esperaProceso += 150;
+      }
+
+
+      if (procesando) {
+
+        mostrarResultado(
+          "⏳",
+          "Espera un momento",
+          "Hay una lectura en curso.",
+          ""
+        );
+
+        return;
+
+      }
+
+
+      /*
+       * Mismo candado que usa la cámara: evita que
+       * las dos rutas procesen a la vez.
+       */
+
+      qrBloqueado = true;
+
+
+      if (scanner) {
+
+        await detenerCamara();
+
+        document.getElementById("cameraStatus").textContent =
+          "Lector detectado · cámara detenida";
+
+      }
+
+
+      await procesarQR(codigo);
+
+    }
+
+
+    async function procesarColaDelLector() {
+
+      if (procesandoColaLector) return;
+
+      procesandoColaLector = true;
+
+
+      try {
+
+        /*
+         * Los disparos rápidos se atienden en orden:
+         * si la pistola se adelanta a la respuesta del
+         * servidor, la lectura espera en la cola en
+         * vez de perderse.
+         */
+
+        while (COLA_LECTOR.length > 0) {
+
+          const codigo = COLA_LECTOR.shift();
+
+          await procesarLecturaDelLector(codigo);
+
+        }
+
+      }
+      finally {
+
+        procesandoColaLector = false;
+
+      }
+
+    }
+
+
+    function encolarLecturaDelLector(codigo) {
+
+      if (!codigo) return;
+
+
+      COLA_LECTOR.push(codigo);
+
+
+      if (!lectorDetectado) {
+
+        lectorDetectado = true;
+
+        document.getElementById("cameraStatus").textContent =
+          "Lector detectado";
+
+      }
+
+
+      void procesarColaDelLector();
+
+    }
+
+
+    function manejarTeclaDelLector(evento) {
+
+      const destino = evento.target;
+
+
+      /*
+       * Si hay un campo de texto enfocado, la escritura
+       * normal manda: este escucha solo cuando la página
+       * está en modo escaneo.
+       */
+
+      if (
+        destino &&
+        (
+          destino.tagName === "INPUT" ||
+          destino.tagName === "TEXTAREA" ||
+          destino.isContentEditable
+        )
+      ) {
+        return;
+      }
+
+
+      /* Atajos de teclado (Ctrl+R, etc.) no cuentan. */
+      if (
+        evento.ctrlKey ||
+        evento.metaKey ||
+        evento.altKey
+      ) {
+        return;
+      }
+
+
+      if (evento.key === "Escape") {
+        bufferLector = "";
+        return;
+      }
+
+
+      /*
+       * Enter cierra el código escrito por la pistola
+       * (el sufijo estándar: CR).
+       */
+
+      if (evento.key === "Enter") {
+
+        if (!bufferLector) return;
+
+
+        evento.preventDefault();
+
+
+        const codigo =
+          normalizarCodigoLector(bufferLector);
+
+
+        bufferLector = "";
+        clearTimeout(temporizadorBufferLector);
+        temporizadorBufferLector = null;
+
+
+        encolarLecturaDelLector(codigo);
+
+        return;
+
+      }
+
+
+      if (evento.key === "Backspace") {
+
+        if (bufferLector) {
+          evento.preventDefault();
+          bufferLector = bufferLector.slice(0, -1);
+        }
+
+        return;
+
+      }
+
+
+      /* Solo caracteres imprimibles. */
+      if (evento.key.length !== 1) return;
+
+
+      bufferLector += evento.key;
+
+
+      /*
+       * Si no llega el Enter, lo acumulado se descarta:
+       * evita que tecleo suelto se mezcle con un código.
+       */
+
+      clearTimeout(temporizadorBufferLector);
+
+      temporizadorBufferLector = setTimeout(
+        function() {
+          bufferLector = "";
+          temporizadorBufferLector = null;
+        },
+        ESPERA_BUFFER_LECTOR
+      );
+
+    }
+
+
+    /* =====================================================
        EVENTO ONLINE
        ===================================================== */
 
@@ -2400,6 +2696,16 @@
     ).addEventListener(
       "click",
       sincronizarPendientes
+    );
+
+
+    /* =====================================================
+       LECTOR TIPO PISTOLA
+       ===================================================== */
+
+    document.addEventListener(
+      "keydown",
+      manejarTeclaDelLector
     );
 
 

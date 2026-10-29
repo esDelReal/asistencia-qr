@@ -36,3 +36,18 @@ estado `pendiente` y la fecha que devolvió el servidor (o la del
 dispositivo si aún no hubo respuesta). Al volver la conexión se
 reintenta sola; un pendiente que el servidor rechace cinco veces se
 descarta de la cola para que no crezca sin límite.
+
+## Pistola lectora de códigos
+
+La app admite una pistola lectora (USB/OTG o Bluetooth) además de la
+cámara, sin instalar nada: la pistola actúa como teclado, escribe el
+código y lo cierra con Enter. Al primer disparo la app muestra
+"Lector detectado" en la línea de estado, detiene la cámara y registra
+por la misma ruta que la cámara. Los disparos rápidos se atienden en
+cola, así que no se pierde ninguno aunque el servidor tarde.
+
+Configuración de la pistola (código de configuración del fabricante):
+
+1. Habilitar la symbología **QR** (de fábrica suele venir solo 1D).
+2. Sufijo **CR (Enter)** activado.
+3. Sin prefijo ni sufijo de texto personalizado.
