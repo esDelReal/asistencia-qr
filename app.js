@@ -2399,9 +2399,6 @@
     );
 
 
-    const cameraButton = document.getElementById("cameraButton");
-    if (cameraButton) cameraButton.addEventListener("click", reanudarEscaneo);
-
     /* =====================================================
        LECTOR TIPO PISTOLA
        ===================================================== */

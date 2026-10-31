@@ -8,7 +8,7 @@ const ARCHIVOS = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
-  "./lib/html5-qrcode.min.js"
+  "./lib/html5-qrcode.mim.js"
 ];
 
 // INSTALACIÓN

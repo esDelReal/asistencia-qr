@@ -11,7 +11,7 @@ internet guardando en el dispositivo y sincroniza con Google Sheets.
 | `index.html` | Estructura de la página (5 KB, sin CSS ni JS embebidos) |
 | `estilos.css` | Todo el CSS |
 | `app.js` | Toda la lógica: cámara, IndexedDB, sincronización |
-| `service-worker.js` | Caché offline (versión `asistencia-qr-v4`) |
+| `service-worker.js` | Caché offline (versión `asistencia-qr-v5`) |
 | `manifest.json` + `icon-192/512.png` | Instalación como aplicación |
 | `lib/html5-qrcode.mim.js` | Lector QR local (no depende de CDNs) |
 | `validar-token.js` | Código para pegar en Google Apps Script, no se usa en la web |
