@@ -885,3 +885,75 @@
       }
 
     }
+
+/* ============================================================
+   OPTIMIZACION ANDROID / MOVIL - NO MODIFICA LA LOGICA QR
+   Conserva todas las tarjetas, pendientes y porcentaje.
+   ============================================================ */
+@media (max-width: 599px) and (orientation: portrait) {
+  body {
+    padding-top: max(5px, env(safe-area-inset-top, 0px));
+    padding-right: max(7px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(5px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(7px, env(safe-area-inset-left, 0px));
+  }
+  .header { margin-bottom: 7px; }
+  .header-row { gap: 4px 8px; align-items: center; }
+  .header-row > div:first-child { flex-basis: 190px; }
+  .title { font-size: clamp(15px, 4vw, 20px); line-height: 1.15; }
+  .subtitle { margin-top: 2px; font-size: 11px; line-height: 1.15; }
+  .connection { padding: 5px 8px; font-size: 10px; }
+  .card { padding: 10px; border-radius: 17px; }
+  .stats { gap: 6px; margin-bottom: 7px; }
+  .stat { padding: 6px 9px; border-radius: 10px; }
+  .stat-label { font-size: 10px; margin-bottom: 1px; }
+  .stat-value { font-size: 19px; line-height: 1.1; }
+  .resumen-asistencia { gap: 6px; margin-bottom: 7px; }
+  .tarjeta-resumen { padding: 7px 4px; border-radius: 10px; }
+  .titulo-resumen { font-size: 10px; margin-bottom: 3px; }
+  .numero-resumen { font-size: 22px; }
+  .barra-asistencia { padding: 7px 9px; margin-bottom: 9px; border-radius: 10px; }
+  .barra-superior { margin-bottom: 4px; font-size: 11px; }
+  .barra-superior strong { font-size: 13px; }
+  .barra-fondo { height: 7px; }
+  .camera-header { margin-bottom: 5px; gap: 5px; }
+  .camera-title { font-size: 13px; }
+  .camera-status { font-size: 10px; }
+  .camera-wrapper {
+    width: 100%;
+    max-width: min(100%, 290px);
+    padding: 3px;
+    border-radius: 13px;
+  }
+  #reader { width: 100%; overflow: hidden; }
+  #reader video {
+    display: block;
+    width: 100% !important;
+    height: clamp(165px, 24dvh, 225px) !important;
+    max-width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 10px !important;
+  }
+  #reader__dashboard { padding: 3px !important; }
+  .result {
+    margin-top: 7px;
+    padding: 7px;
+    min-height: 51px;
+    border-radius: 10px;
+  }
+  .result-icon { font-size: 19px; margin-bottom: 0; }
+  .result-title { font-size: 12px; }
+  .result-detail { font-size: 10px; margin-top: 2px; }
+  .sync-button { margin-top: 6px; min-height: 40px; padding: 7px 10px; }
+  .footer { margin-top: 6px; font-size: 9px; }
+}
+
+/* Ajuste adicional para pantallas Android de poca altura. */
+@media (max-width: 599px) and (max-height: 740px) and (orientation: portrait) {
+  .camera-wrapper { max-width: min(100%, 255px); }
+  #reader video { height: 160px !important; }
+  .title { font-size: 15px; }
+  .stat-value { font-size: 17px; }
+  .numero-resumen { font-size: 19px; }
+  .tarjeta-resumen { padding-top: 5px; padding-bottom: 5px; }
+}
