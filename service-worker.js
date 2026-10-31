@@ -1,5 +1,4 @@
-
-const CACHE_NAME = "asistencia-qr-v4";
+const CACHE_NAME = "asistencia-qr-v5";
 
 const ARCHIVOS = [
   "./",
@@ -9,34 +8,54 @@ const ARCHIVOS = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
-  "./lib/html5-qrcode.mim.js"
+  "./lib/html5-qrcode.min.js"
 ];
 
+// INSTALACIÓN
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ARCHIVOS))
+      .then(async cache => {
+        await Promise.all(
+          ARCHIVOS.map(async archivo => {
+            try {
+              await cache.add(
+                new Request(archivo, { cache: "reload" })
+              );
+            } catch (error) {
+              console.warn(
+                "No se pudo guardar en caché:",
+                archivo,
+                error
+              );
+            }
+          })
+        );
+      })
       .then(() => self.skipWaiting())
   );
 });
 
+// ACTIVACIÓN
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
+// INTERCEPTAR SOLICITUDES
 self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // No interceptar API de Google ni otras solicitudes externas.
   if (
     request.method !== "GET" ||
     url.origin !== self.location.origin
@@ -44,16 +63,22 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Para archivos de la aplicación: red primero, caché como respaldo.
   event.respondWith(
     fetch(request)
       .then(response => {
-        if (response && response.ok) {
+        if (response.ok) {
           const copia = response.clone();
 
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(request, copia))
-            .catch(error => console.warn("No se pudo actualizar la caché:", error));
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, copia))
+              .catch(error => {
+                console.warn(
+                  "Error actualizando caché:",
+                  error
+                );
+              })
+          );
         }
 
         return response;
@@ -69,7 +94,9 @@ self.addEventListener("fetch", event => {
           "Sin conexión y sin copia local disponible.",
           {
             status: 503,
-            headers: { "Content-Type": "text/plain; charset=utf-8" }
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8"
+            }
           }
         );
       })
