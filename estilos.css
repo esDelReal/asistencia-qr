@@ -957,3 +957,35 @@
   .numero-resumen { font-size: 19px; }
   .tarjeta-resumen { padding-top: 5px; padding-bottom: 5px; }
 }
+
+/* AJUSTE RESPONSIVO DEL ESCÁNER EN ANDROID */
+
+@media (max-width: 599px) and (orientation: portrait) {
+
+  .camera-wrapper {
+    width: 100%;
+    max-width: min(100%, 58dvh) !important;
+    margin: 0 auto;
+    padding: 4px;
+  }
+
+  #reader {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+
+  #reader__scan_region {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+  }
+
+  #reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+}
