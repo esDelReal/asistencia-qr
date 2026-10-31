@@ -84,3 +84,9 @@ Pasos en **script.google.com**:
 La hora clasificada es la del momento de la llegada: en línea, la del
 servidor de Apps Script; en los registros hechos sin conexión, la que
 envió el dispositivo al sincronizar.
+
+Para que el reporte semanal en Excel (`generarReporteSemanal` en tu
+Code.gs) incluya la columna, usar como encabezado
+`ENCABEZADOS_ASISTENCIA.concat(["Estado entrada"])` y leer esa
+cantidad de columnas; las hojas antiguas sin la columna calculan el
+estado con la hora de la propia fila.
