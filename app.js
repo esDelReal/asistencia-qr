@@ -1570,32 +1570,45 @@
 
 
           /* ========================================
-             ASISTENCIA CORRECTA
+             ASISTENCIA DUPLICADA (PRIORIDAD)
              ======================================== */
 
-          if (data.ok) {
+          if (data.duplicado === true) {
+
+            mostrarResultado(
+              "⚠️",
+              "Asistencia previamente registrada",
+              (data.nombre || "Alumno") +
+              " · " + (data.grupo || "") +
+              "\nRegistro original: " + (data.hora || "No disponible") +
+              "\nEstado: " + (data.estatus || calcularEstatusEntrada(data.hora)) +
+              "\nNo se generó una nueva asistencia.",
+              "error"
+            );
+
+            actualizarResumenAsistencia();
+
+          }
+
+          /* ========================================
+             ASISTENCIA NUEVA
+             ======================================== */
+
+          else if (data.ok === true) {
 
             if (data.fecha) {
               fechaServidor = data.fecha;
             }
 
-
             mostrarResultado(
               "✓",
               "Asistencia registrada",
-              data.nombre +
-              " · " +
-              data.grupo +
-              "\nHora: " +
-              data.hora +
+              data.nombre + " · " + data.grupo +
+              "\nHora: " + data.hora +
               "\nEstado: " +
-              (
-                data.estatus ||
-                calcularEstatusEntrada(data.hora)
-              ),
+              (data.estatus || calcularEstatusEntrada(data.hora)),
               "success"
             );
-
 
             actualizarResumenAsistencia();
 
@@ -1616,24 +1629,6 @@
               data.grupo +
               "\n" +
               data.mensaje,
-              "error"
-            );
-
-          }
-
-
-          /* ========================================
-             ASISTENCIA DUPLICADA
-             ======================================== */
-
-          else if (data.duplicado) {
-
-            mostrarResultado(
-              "⚠️",
-              "Asistencia duplicada",
-              (data.mensaje || "La asistencia ya fue registrada.") +
-              (data.hora ? "\nHora: " + data.hora : "") +
-              (data.estatus ? "\nEstado: " + data.estatus : ""),
               "error"
             );
 
