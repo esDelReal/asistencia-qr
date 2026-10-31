@@ -42,23 +42,6 @@
     /* Evita aceptar lecturas antes de disponer de la lista local de alumnos. */
     let datosInicialesListos = false;
 
-    /*
-     * Fecha devuelta por el servidor.
-     *
-     * Al guardar una asistencia offline se usa
-     * esta en lugar del reloj del dispositivo:
-     * evita que un reloj desfasado registre la
-     * asistencia en el día equivocado.
-     */
-    let fechaServidor = null;
-
-    /*
-     * Reintentos máximos de un pendiente que el
-     * servidor rechaza por un motivo que no sea
-     * duplicado ni alumno inactivo.
-     */
-    const MAX_INTENTOS = 5;
-
     let ultimaVerificacionInternet = 0;
     const registrosEnRevision = new Set();
 
@@ -1138,11 +1121,6 @@
           return;
 
         }
-                     /* La fecha del servidor manda para el registro offline. */
-        if (data.fecha) {
-          fechaServidor = data.fecha;
-        }
-
 
         internetReal =
           true;
@@ -1596,10 +1574,6 @@
 
           else if (data.ok === true) {
 
-            if (data.fecha) {
-              fechaServidor = data.fecha;
-            }
-
             mostrarResultado(
               "✓",
               "Asistencia registrada",
@@ -1774,98 +1748,6 @@
 
 
     /* =====================================================
-       ACTUALIZAR INTENTOS
-       ===================================================== */
-
-    function actualizarIntento(
-      id,
-      intento
-    ) {
-
-      return new Promise(
-        function(resolve, reject) {
-
-          if (!db) {
-
-            resolve();
-
-            return;
-
-          }
-
-
-          const transaction =
-            db.transaction(
-              "asistencias",
-              "readwrite"
-            );
-
-
-          const store =
-            transaction.objectStore(
-              "asistencias"
-            );
-
-
-          const request =
-            store.get(id);
-
-
-          request.onsuccess =
-            function() {
-
-              const registro =
-                request.result;
-
-
-              if (!registro) {
-
-                return;
-
-              }
-
-
-              registro.intento =
-                intento;
-
-
-              store.put(registro);
-
-            };
-
-
-          request.onerror =
-            function() {
-
-              reject(
-                request.error
-              );
-
-            };
-
-
-          transaction.oncomplete =
-            function() {
-
-              resolve();
-
-            };
-
-
-          transaction.onerror =
-            function() {
-
-              reject(
-                transaction.error
-              );
-
-            };
-
-        }
-      );
-
-    }
-               /* =====================================================
        SINCRONIZAR PENDIENTES
        ===================================================== */
 
