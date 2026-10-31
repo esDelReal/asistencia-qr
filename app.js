@@ -61,6 +61,7 @@
     const MAX_INTENTOS = 5;
 
     let ultimaVerificacionInternet = 0;
+    const registrosEnRevision = new Set();
 
 
     /* =====================================================
@@ -1044,6 +1045,29 @@
 
     }
 
+    /* =====================================================
+       CLASIFICACIÓN DE ENTRADA
+       ===================================================== */
+
+    function calcularEstatusEntrada(hora) {
+      const texto = String(hora || "").trim();
+      const partes = texto.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+
+      if (!partes) return "Hora no disponible";
+
+      const h = Number(partes[1]);
+      const m = Number(partes[2]);
+      const s = Number(partes[3] || 0);
+
+      if (h > 23 || m > 59 || s > 59) {
+        return "Hora no disponible";
+      }
+
+      return (h * 3600 + m * 60 + s) >= (14 * 3600 + 11 * 60)
+        ? "Retardo"
+        : "A tiempo";
+    }
+
 
     /* =====================================================
        RESUMEN
@@ -1115,9 +1139,7 @@
           return;
 
         }
-
-
-        /* La fecha del servidor manda para el registro offline. */
+                     /* La fecha del servidor manda para el registro offline. */
         if (data.fecha) {
           fechaServidor = data.fecha;
         }
@@ -1307,19 +1329,18 @@
 
         /* ==========================================
            FECHA / HORA
-           ==========================================
-
-           Si el servidor ya nos dio la fecha,
-           se usa esa y no el reloj local.
            ========================================== */
 
-        const fecha =
-          fechaServidor ||
-          obtenerFecha();
+        // Fecha del dispositivo en el momento de la lectura; evita
+        // reutilizar una fecha del servidor de un día anterior.
+        const fecha = obtenerFecha();
 
 
         const hora =
           obtenerHora();
+
+        const estatus =
+          calcularEstatusEntrada(hora);
 
 
         /* ==========================================
@@ -1371,6 +1392,9 @@
           hora:
             hora,
 
+          estatus:
+            estatus,
+
           estado:
             "pendiente"
 
@@ -1386,7 +1410,8 @@
           alumno.nombre +
           " · " +
           alumno.grupo +
-          "\nSin conexión. Se sincronizará automáticamente.",
+          "\nHora: " + hora + "\nEstado: " + estatus +
+          "\nSin conexión. Pendiente de sincronizar.",
           "offline"
         );
 
@@ -1520,15 +1545,11 @@
               {
                 method: "GET",
                 cache: "no-store",
-                signal:
-                  controller.signal
+                signal: controller.signal
               }
             );
 
-
-          clearTimeout(
-            timeout
-          );
+          clearTimeout(timeout);
 
 
           if (!response.ok) {
@@ -1545,12 +1566,12 @@
             await response.json();
 
 
-          internetReal =
-            true;          actualizarConexion();
+          internetReal = true;
+          actualizarConexion();
 
 
           /* ========================================
-             CORRECTO
+             ASISTENCIA CORRECTA
              ======================================== */
 
           if (data.ok) {
@@ -1566,16 +1587,16 @@
               data.nombre +
               " · " +
               data.grupo +
-              "\n" +
-              data.hora,
+              "\nHora: " +
+              data.hora +
+              "\nEstado: " +
+              (
+                data.estatus ||
+                calcularEstatusEntrada(data.hora)
+              ),
               "success"
             );
 
-
-            /*
-             * No esperamos al resumen para liberar
-             * el siguiente escaneo.
-             */
 
             actualizarResumenAsistencia();
 
@@ -1583,7 +1604,7 @@
 
 
           /* ========================================
-             INACTIVO
+             ALUMNO INACTIVO
              ======================================== */
 
           else if (data.inactivo) {
@@ -1603,7 +1624,7 @@
 
 
           /* ========================================
-             DUPLICADO
+             ASISTENCIA DUPLICADA
              ======================================== */
 
           else if (data.duplicado) {
@@ -1611,7 +1632,9 @@
             mostrarResultado(
               "⚠️",
               "Asistencia duplicada",
-              data.mensaje,
+              (data.mensaje || "La asistencia ya fue registrada.") +
+              (data.hora ? "\nHora: " + data.hora : "") +
+              (data.estatus ? "\nEstado: " + data.estatus : ""),
               "error"
             );
 
@@ -1619,7 +1642,7 @@
 
 
           /* ========================================
-             DESCONOCIDO
+             CÓDIGO DESCONOCIDO
              ======================================== */
 
           else {
@@ -1647,13 +1670,6 @@
             error
           );
 
-
-          /*
-           * AQUÍ ESTÁ LA MEJORA PRINCIPAL:
-           *
-           * Si Google Apps Script no responde,
-           * guardamos automáticamente en IndexedDB.
-           */
 
           internetReal =
             false;
@@ -1686,12 +1702,6 @@
 
       }
       finally {
-
-        /*
-         * Antes eran 1500 ms.
-         *
-         * Ahora permitimos escanear mucho más rápido.
-         */
 
         setTimeout(
           function() {
@@ -1861,328 +1871,81 @@
       );
 
     }
-
-
-    /* =====================================================
+               /* =====================================================
        SINCRONIZAR PENDIENTES
        ===================================================== */
 
     async function sincronizarPendientes() {
-
-      /*
-       * Evita dos procesos simultáneos.
-       */
-
-      if (sincronizando) {
-
-        return;
-
-      }
-
-
-      /*
-       * Sin Internet:
-       * no intentamos nada.
-       */
-
-      if (!navigator.onLine) {
-
+      if (sincronizando || !navigator.onLine || !db) {
         await actualizarPendientes();
-
         return;
-
       }
-
-
-      sincronizando =
-        true;
-
-
-      const boton =
-        document.getElementById(
-          "syncButton"
-        );
-
-
-      /* Pendientes descartados en esta pasada. */
-      let descartados = 0;
-
-
+      sincronizando = true;
+      const boton = document.getElementById("syncButton");
+      let sincronizadas = 0;
+      let requierenRevision = 0;
       try {
-
-        const pendientes =
-          await obtenerPendientes();
-
-
-        if (
-          pendientes.length === 0
-        ) {
-
-          await actualizarPendientes();
-
-          return;
-
+        const pendientes = await obtenerPendientes();
+        if (boton) {
+          boton.disabled = true;
+          boton.textContent = "Sincronizando " + pendientes.length + "...";
         }
-
-
-        boton.disabled =
-          true;
-
-
-        boton.textContent =
-          "Sincronizando " +
-          pendientes.length +
-          "...";
-
-
-        for (
-          const asistencia of pendientes
-        ) {
-
-          /*
-           * Si se pierde Internet,
-           * conservamos todos los pendientes.
-           */
-
-          if (!navigator.onLine) {
-
-            break;
-
+        for (const asistencia of pendientes) {
+          if (!navigator.onLine) break;
+          // No se elimina ninguna asistencia por número de intentos.
+          // Un rechazo explícito permanece localmente para revisión.
+          if (registrosEnRevision.has(asistencia.id)) {
+            requierenRevision++;
+            continue;
           }
-
-
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), TIMEOUT_RED);
           try {
-
-            const controller =
-              new AbortController();
-
-
-            const timeout =
-              setTimeout(
-                function() {
-
-                  controller.abort();
-
-                },
-                TIMEOUT_RED
-              );
-
-
-            const url =
-              API_URL +
-              "?action=registrar" +
-              "&idQR=" +
-              encodeURIComponent(
-                asistencia.idQR
-              ) +
-              "&nombre=" +
-              encodeURIComponent(
-                asistencia.nombre
-              ) +
-              "&grupo=" +
-              encodeURIComponent(
-                asistencia.grupo
-              ) +
-              "&fecha=" +
-              encodeURIComponent(
-                asistencia.fecha
-              ) +
-              "&hora=" +
-              encodeURIComponent(
-                asistencia.hora
-              ) +
-              "&token=" +
-              TOKEN +
-              "&t=" +
-              Date.now();
-
-
-            const response =
-              await fetch(
-                url,
-                {
-                  method: "GET",
-                  cache: "no-store",
-                  signal:
-                    controller.signal
-                }
-              );
-
-
-            clearTimeout(
-              timeout
-            );
-
-
-            if (!response.ok) {
-
-              throw new Error(
-                "HTTP " +
-                response.status
-              );
-
+            const datos = {
+              idQR: asistencia.idQR,
+              fecha: asistencia.fecha,
+              hora: asistencia.hora
+            };
+            const url = API_URL + "?action=sincronizar&datos=" +
+              encodeURIComponent(JSON.stringify(datos)) +
+              "&token=" + encodeURIComponent(TOKEN) + "&t=" + Date.now();
+            const response = await fetch(url, {
+              method: "GET",
+              cache: "no-store",
+              signal: controller.signal
+            });
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const data = await response.json();
+            // Solo una confirmación de guardado o duplicado en el servidor
+            // autoriza eliminar la copia local.
+            if (data && (data.ok === true || data.duplicado === true)) {
+              await eliminarAsistencia(asistencia.id);
+              sincronizadas++;
+            } else {
+              registrosEnRevision.add(asistencia.id);
+              requierenRevision++;
+              console.warn("Asistencia conservada para revisión:", asistencia.id, data);
             }
-
-
-            const data =
-              await response.json();
-
-
-            /*
-             * REGISTRADO CORRECTAMENTE
-             */
-
-            if (data.ok) {
-
-              await eliminarAsistencia(
-                asistencia.id
-              );
-
-            }
-
-
-            /*
-             * YA EXISTÍA
-             */
-
-            else if (
-              data.duplicado
-            ) {
-
-              /*
-               * Si ya existe en servidor,
-               * no necesitamos conservarlo localmente.
-               */
-
-              await eliminarAsistencia(
-                asistencia.id
-              );
-
-            }
-
-
-            /*
-             * ALUMNO INACTIVO
-             */
-
-            else if (
-              data.inactivo
-            ) {
-
-              /*
-               * El servidor confirma que ya no
-               * está autorizado.
-               */
-
-              await eliminarAsistencia(
-                asistencia.id
-              );
-
-            }
-
-
-            /*
-             * OTRO ERROR
-             *
-             * Se reintenta unas cuantas veces y
-             * después se descarta, para que la cola
-             * no crezca sin límite.
-             */
-
-            else {
-
-              const intento =
-                (Number(asistencia.intento) || 0) + 1;
-
-
-              if (intento >= MAX_INTENTOS) {
-
-                await eliminarAsistencia(
-                  asistencia.id
-                );
-
-                descartados++;
-
-              }
-              else {
-
-                await actualizarIntento(
-                  asistencia.id,
-                  intento
-                );
-
-              }
-
-            }
-
-          }
-          catch(error) {
-
-            console.warn(
-              "Sincronización detenida:",
-              error
-            );
-
-
-            /*
-             * Conservamos este registro
-             * y todos los siguientes.
-             */
-
-            internetReal =
-              false;
-
-
+          } catch (error) {
+            console.warn("Asistencia conservada; error de sincronización:", error);
+            // Un error de red o respuesta ambigua nunca elimina el registro.
             break;
-
+          } finally {
+            clearTimeout(timeout);
           }
-
         }
-
-      }
-      catch(error) {
-
-        console.error(
-          "Error sincronizando:",
-          error
-        );
-
-      }
-      finally {
-
-        sincronizando =
-          false;
-
-
+        if (requierenRevision > 0) {
+          mostrarResultado("⚠️", "Pendientes por revisar",
+            requierenRevision + " asistencia(s) no fueron confirmadas por el servidor. Permanecen guardadas en este dispositivo.", "error");
+        }
+      } catch (error) {
+        console.error("Error sincronizando:", error);
+      } finally {
+        sincronizando = false;
         await actualizarPendientes();
-
-
-        if (navigator.onLine) {
-
-          actualizarResumenAsistencia();
-
-        }
-
-
-        boton.textContent =
-          "Sincronizar pendientes";
-
-
-        if (descartados > 0) {
-
-          mostrarResultado(
-            "🗑️",
-            "Pendientes descartados",
-            descartados +
-            " asistencia rechazada por el servidor " +
-            "se quitó de la cola.",
-            "error"
-          );
-
-        }
-
+        if (navigator.onLine) void actualizarResumenAsistencia();
+        if (boton) boton.textContent = "Sincronizar pendientes";
       }
-
     }
 
 
@@ -2191,33 +1954,57 @@
        ===================================================== */
 
     async function detenerCamara() {
+
       if (!scanner) return;
+
       const instancia = scanner;
+
       scanner = null;
+
       try {
         await instancia.stop();
-      } catch (error) {
-        console.log("La cámara ya estaba detenida:", error);
       }
+      catch(error) {
+        console.log(
+          "La cámara ya estaba detenida:",
+          error
+        );
+      }
+
       try {
         await instancia.clear();
-      } catch (error) {
-        console.log("No fue necesario limpiar el lector:", error);
       }
+      catch(error) {
+        console.log(
+          "No fue necesario limpiar el lector:",
+          error
+        );
+      }
+
     }
 
+
     async function reanudarEscaneo() {
+
       if (procesando) return;
-      const boton = document.getElementById("cameraButton");
+
+      const boton =
+        document.getElementById("cameraButton");
+
       boton.disabled = true;
       boton.textContent = "Activando cámara...";
+
       qrBloqueado = false;
+
       try {
         await iniciarCamara();
-      } finally {
-        boton.disabled = false;
-        boton.textContent = "Escanear siguiente alumno";
       }
+      finally {
+        boton.disabled = false;
+        boton.textContent =
+          "Escanear siguiente alumno";
+      }
+
     }
 
 
@@ -2229,10 +2016,7 @@
 
       if (scanner) return;
 
-      if (
-        typeof Html5Qrcode ===
-        "undefined"
-      ) {
+      if (typeof Html5Qrcode === "undefined") {
 
         mostrarResultado(
           "❌",
@@ -2241,40 +2025,28 @@
           "error"
         );
 
-
         document.getElementById(
           "cameraStatus"
         ).textContent =
           "Lector no disponible";
 
-
         return;
 
       }
 
-
       try {
 
         scanner =
-          new Html5Qrcode(
-            "reader"
-          );
-
+          new Html5Qrcode("reader");
 
         await scanner.start(
 
           {
-            facingMode:
-              "environment"
-          },          {
-            fps: 10,
+            facingMode: "environment"
+          },
 
-            /*
-             * El recuadro se adapta al tamaño real
-             * del vídeo en vez de medir siempre
-             * 210 px, para que en pantallas chicas
-             * no quede cortado.
-             */
+          {
+            fps: 10,
 
             qrbox: function(width, height) {
 
@@ -2301,24 +2073,43 @@
 
           async function(decodedText) {
 
-            // No procesar códigos hasta terminar la carga inicial de la lista.
+            /*
+             * Esperar la carga de alumnos.
+             */
+
             if (!datosInicialesListos) {
+
               mostrarResultado(
                 "⏳",
                 "Cargando lista de alumnos",
                 "Espera un momento antes de escanear.",
                 ""
               );
+
+              return;
+
+            }
+
+            /*
+             * Evitar múltiples lecturas.
+             */
+
+            if (qrBloqueado || procesando) {
               return;
             }
 
-            // Bloqueo inmediato: evita lecturas repetidas del mismo QR.
-            if (qrBloqueado || procesando) return;
             qrBloqueado = true;
 
-            // Detener la cámara antes de validar/registrar al alumno.
+            /*
+             * Detener la cámara antes
+             * de registrar la asistencia.
+             */
+
             await detenerCamara();
-            document.getElementById("cameraStatus").textContent =
+
+            document.getElementById(
+              "cameraStatus"
+            ).textContent =
               "QR detectado · cámara detenida";
 
             await procesarQR(decodedText);
@@ -2326,8 +2117,7 @@
           },
 
           function(errorMessage) {
-
-            /*
+                             /*
              * Errores normales de búsqueda.
              */
 
@@ -2344,6 +2134,7 @@
             : "Cámara activa · cargando lista…";
 
         const botonCamara = document.getElementById("cameraButton");
+
         if (botonCamara) {
           botonCamara.disabled = false;
           botonCamara.textContent = "Escanear siguiente alumno";
@@ -2352,17 +2143,11 @@
       }
       catch(error) {
 
-        console.error(
-          "Error de cámara:",
-          error
-        );
-
+        console.error("Error de cámara:", error);
 
         document.getElementById(
           "cameraStatus"
-        ).textContent =
-          "Error";
-
+        ).textContent = "Error";
 
         mostrarResultado(
           "📷",
@@ -2377,15 +2162,13 @@
 
 
     /* =====================================================
-       LECTOR TIPO PISTOLA (ENTRADA POR TECLADO)
+       LECTOR TIPO PISTOLA
        ===================================================== */
 
     function dormir(ms) {
 
       return new Promise(function(resolve) {
-
         setTimeout(resolve, ms);
-
       });
 
     }
@@ -2402,19 +2185,12 @@
 
     async function procesarLecturaDelLector(codigo) {
 
-      /*
-       * Espera a tener la lista local de alumnos,
-       * igual que la cámara. Si tarda demasiado,
-       * se avisa en pantalla y se descarta.
-       */
-
       let espera = 0;
 
       while (!datosInicialesListos && espera < 6000) {
         await dormir(200);
         espera += 200;
       }
-
 
       if (!datosInicialesListos) {
 
@@ -2429,20 +2205,12 @@
 
       }
 
-
-      /*
-       * Si la cámara está procesando otro código,
-       * se espera a que lo libere. procesarQR además
-       * tarda 600 ms en soltar su candado.
-       */
-
       let esperaProceso = 0;
 
       while (procesando && esperaProceso < 12000) {
         await dormir(150);
         esperaProceso += 150;
       }
-
 
       if (procesando) {
 
@@ -2457,14 +2225,7 @@
 
       }
 
-
-      /*
-       * Mismo candado que usa la cámara: evita que
-       * las dos rutas procesen a la vez.
-       */
-
       qrBloqueado = true;
-
 
       if (scanner) {
 
@@ -2474,7 +2235,6 @@
           "Lector detectado · cámara detenida";
 
       }
-
 
       await procesarQR(codigo);
 
@@ -2487,15 +2247,7 @@
 
       procesandoColaLector = true;
 
-
       try {
-
-        /*
-         * Los disparos rápidos se atienden en orden:
-         * si la pistola se adelanta a la respuesta del
-         * servidor, la lectura espera en la cola en
-         * vez de perderse.
-         */
 
         while (COLA_LECTOR.length > 0) {
 
@@ -2519,9 +2271,7 @@
 
       if (!codigo) return;
 
-
       COLA_LECTOR.push(codigo);
-
 
       if (!lectorDetectado) {
 
@@ -2532,7 +2282,6 @@
 
       }
 
-
       void procesarColaDelLector();
 
     }
@@ -2541,13 +2290,6 @@
     function manejarTeclaDelLector(evento) {
 
       const destino = evento.target;
-
-
-      /*
-       * Si hay un campo de texto enfocado, la escritura
-       * normal manda: este escucha solo cuando la página
-       * está en modo escaneo.
-       */
 
       if (
         destino &&
@@ -2560,75 +2302,42 @@
         return;
       }
 
-
-      /* Atajos de teclado (Ctrl+R, etc.) no cuentan. */
       if (
         evento.ctrlKey ||
-        evento.metaKey ||
-        evento.altKey
+        evento.altKey ||
+        evento.metaKey
       ) {
         return;
       }
 
-
-      if (evento.key === "Escape") {
-        bufferLector = "";
-        return;
-      }
-
-
-      /*
-       * Enter cierra el código escrito por la pistola
-       * (el sufijo estándar: CR).
-       */
-
       if (evento.key === "Enter") {
-
-        if (!bufferLector) return;
-
-
-        evento.preventDefault();
-
 
         const codigo =
           normalizarCodigoLector(bufferLector);
 
-
         bufferLector = "";
+
         clearTimeout(temporizadorBufferLector);
+
         temporizadorBufferLector = null;
 
+        if (codigo) {
 
-        encolarLecturaDelLector(codigo);
-
-        return;
-
-      }
-
-
-      if (evento.key === "Backspace") {
-
-        if (bufferLector) {
           evento.preventDefault();
-          bufferLector = bufferLector.slice(0, -1);
+
+          encolarLecturaDelLector(codigo);
+
         }
 
         return;
 
       }
 
-
-      /* Solo caracteres imprimibles. */
-      if (evento.key.length !== 1) return;
-
+      if (evento.key.length !== 1) {
+        return;
+      }
 
       bufferLector += evento.key;
-
-
-      /*
-       * Si no llega el Enter, lo acumulado se descarta:
-       * evita que tecleo suelto se mezcle con un código.
-       */
 
       clearTimeout(temporizadorBufferLector);
 
@@ -2651,8 +2360,8 @@
       "online",
       function() {
 
-        /* El navegador reporta conectividad; la API la confirma al responder. */
         actualizarConexion();
+
         setTimeout(function() {
           void actualizarDatosEnSegundoPlano();
         }, 800);
@@ -2669,12 +2378,9 @@
       "offline",
       function() {
 
-        internetReal =
-          false;
-
+        internetReal = false;
 
         actualizarConexion();
-
 
         mostrarResultado(
           "📱",
@@ -2699,6 +2405,9 @@
     );
 
 
+    const cameraButton = document.getElementById("cameraButton");
+    if (cameraButton) cameraButton.addEventListener("click", reanudarEscaneo);
+
     /* =====================================================
        LECTOR TIPO PISTOLA
        ===================================================== */
@@ -2722,7 +2431,10 @@
 
         navigator.serviceWorker.register("./service-worker.js")
           .catch(function(error) {
-            console.warn("No se pudo registrar el service worker:", error);
+            console.warn(
+              "No se pudo registrar el service worker:",
+              error
+            );
           });
 
       }
@@ -2737,7 +2449,6 @@
     async function actualizarDatosEnSegundoPlano() {
 
       if (!navigator.onLine) {
-        /* IndexedDB ya está abierta: permite usar la lista guardada sin Internet. */
         datosInicialesListos = true;
         return;
       }
@@ -2745,15 +2456,22 @@
       try {
 
         await cargarAlumnos();
+
         datosInicialesListos = true;
+
         await sincronizarPendientes();
+
         await actualizarResumenAsistencia();
+
         await actualizarPendientes();
 
       }
       catch(error) {
 
-        console.warn("La actualización en segundo plano no terminó:", error);
+        console.warn(
+          "La actualización en segundo plano no terminó:",
+          error
+        );
 
       }
 
@@ -2770,33 +2488,27 @@
 
       try {
 
-        /* La base local es el único requisito antes de preparar la interfaz. */
         await abrirBaseDatos();
 
         internetReal = false;
+
         actualizarConexion();
 
-        /* Mostrar datos locales y pendientes sin esperar a Google Sheets. */
         await actualizarTotalAlumnos();
+
         await actualizarPendientes();
 
-        /* Arrancar cámara antes de hacer solicitudes remotas. */
         await iniciarCamara();
 
-        /* Las llamadas remotas se ejecutan después de habilitar el escáner. */
         void actualizarDatosEnSegundoPlano();
 
       }
       catch(error) {
 
-        console.error("Error iniciando aplicación:", error);
-
-        /*
-         * Sin IndexedDB la lista local no existe,
-         * pero la cámara debe seguir funcionando:
-         * sin este flag el escáner descartaría
-         * todas las lecturas en silencio.
-         */
+        console.error(
+          "Error iniciando aplicación:",
+          error
+        );
 
         datosInicialesListos = true;
 
@@ -2807,12 +2519,14 @@
           "error"
         );
 
-        /* Si la base local falla, todavía intentamos habilitar la cámara. */
         try {
           await iniciarCamara();
         }
         catch(errorCamara) {
-          console.error("No se pudo iniciar la cámara:", errorCamara);
+          console.error(
+            "No se pudo iniciar la cámara:",
+            errorCamara
+          );
         }
 
       }
@@ -2824,4 +2538,7 @@
        INICIAR
        ===================================================== */
 
-    window.addEventListener("load", iniciarAplicacion);
+    window.addEventListener(
+      "load",
+      iniciarAplicacion
+    );
