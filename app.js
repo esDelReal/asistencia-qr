@@ -71,6 +71,9 @@
 
     let lectorDetectado = false;
 
+    /* Evita dos recuperaciones de cámara al mismo tiempo. */
+    let recuperandoCamara = false;
+
     /* Las teclas de un mismo código llegan en menos de este tiempo. */
     const ESPERA_BUFFER_LECTOR = 700;
 
@@ -1837,25 +1840,32 @@
 
       scanner = null;
 
-      try {
-        await instancia.stop();
-      }
-      catch(error) {
-        console.log(
-          "La cámara ya estaba detenida:",
-          error
-        );
-      }
+      /*
+       * stop() y clear() pueden quedarse colgados cuando
+       * el sistema mata la cámara en segundo plano: por
+       * eso se limitan a 3 segundos cada uno.
+       */
+      const detencion = instancia
+        .stop()
+        .catch(function(error) {
+          console.log(
+            "La cámara ya estaba detenida:",
+            error
+          );
+        });
 
-      try {
-        await instancia.clear();
-      }
-      catch(error) {
-        console.log(
-          "No fue necesario limpiar el lector:",
-          error
-        );
-      }
+      await Promise.race([detencion, dormir(3000)]);
+
+      const limpieza = instancia
+        .clear()
+        .catch(function(error) {
+          console.log(
+            "No fue necesario limpiar el lector:",
+            error
+          );
+        });
+
+      await Promise.race([limpieza, dormir(3000)]);
 
     }
 
@@ -1915,7 +1925,7 @@
         scanner =
           new Html5Qrcode("reader");
 
-        await scanner.start(
+        const inicioCamara = scanner.start(
 
           {
             facingMode: "environment"
@@ -2001,6 +2011,27 @@
 
         );
 
+        /*
+         * Si el sistema deja la app en segundo plano
+         * durante el arranque, start() puede no responder:
+         * se espera como máximo 15 segundos.
+         */
+        const inicioListo = await Promise.race([
+          inicioCamara.then(
+            function() { return "ok"; },
+            function(error) { return error; }
+          ),
+          dormir(15000).then(function() { return "tiempo"; })
+        ]);
+
+        if (inicioListo === "tiempo") {
+          throw new Error("La cámara tardó demasiado en iniciar.");
+        }
+
+        if (inicioListo !== "ok") {
+          throw inicioListo;
+        }
+
 
         document.getElementById(
           "cameraStatus"
@@ -2021,9 +2052,13 @@
 
         console.error("Error de cámara:", error);
 
+        // Libera la instancia para poder reintentar.
+        await detenerCamara();
+
         document.getElementById(
           "cameraStatus"
-        ).textContent = "Error";
+        ).textContent =
+          "Error";
 
         mostrarResultado(
           "📷",
@@ -2264,6 +2299,56 @@
           "Las nuevas asistencias se guardarán automáticamente en este dispositivo.",
           "offline"
         );
+
+      }
+    );
+
+
+    /* =====================================================
+       REGRESAR DE SEGUNDO PLANO
+       ===================================================== */
+
+    /*
+     * Android mata la cámara cuando la app pasa a segundo
+     * plano. Al volver, el lector viejo queda inútil y la
+     * app deja de responder hasta cerrarla: aquí se
+     * reinicia el lector.
+     */
+    document.addEventListener(
+      "visibilitychange",
+      async function() {
+
+        if (document.visibilityState !== "visible") return;
+
+        // Hay un registro o una lectura en curso.
+        if (procesando || procesandoColaLector) return;
+
+        // La cámara estaba apagada a propósito.
+        if (!scanner || recuperandoCamara) return;
+
+        recuperandoCamara = true;
+
+        try {
+          console.log(
+            "Regresando de segundo plano: reiniciando la cámara."
+          );
+
+          await detenerCamara();
+
+          qrBloqueado = false;
+
+          const boton = document.getElementById("cameraButton");
+
+          if (boton) {
+            boton.disabled = false;
+            boton.textContent = "Escanear siguiente alumno";
+          }
+
+          await iniciarCamara();
+        }
+        finally {
+          recuperandoCamara = false;
+        }
 
       }
     );
