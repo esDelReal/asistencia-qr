@@ -1829,246 +1829,129 @@
 
 
     /* =====================================================
-       DETENER Y REANUDAR ESCÁNER
+       CAMARA RESPONSIVA Y CONTROL DE ESTADOS
        ===================================================== */
 
-    async function detenerCamara() {
+    let operacionCamara = Promise.resolve();
+    let camaraIniciando = false;
+    let recuperacionEnCurso = false;
+    let ultimaRecuperacion = 0;
+    let camaraDeseada = true;
 
-      if (!scanner) return;
-
-      const instancia = scanner;
-
-      scanner = null;
-
-      /*
-       * stop() y clear() pueden quedarse colgados cuando
-       * el sistema mata la cámara en segundo plano: por
-       * eso se limitan a 3 segundos cada uno.
-       */
-      const detencion = instancia
-        .stop()
-        .catch(function(error) {
-          console.log(
-            "La cámara ya estaba detenida:",
-            error
-          );
-        });
-
-      await Promise.race([detencion, dormir(3000)]);
-
-      const limpieza = instancia
-        .clear()
-        .catch(function(error) {
-          console.log(
-            "No fue necesario limpiar el lector:",
-            error
-          );
-        });
-
-      await Promise.race([limpieza, dormir(3000)]);
-
+    function estadoVisualCamara(activa) {
+      const contenedor = document.querySelector(".camera-wrapper");
+      if (contenedor) contenedor.classList.toggle("camera-inactive", !activa);
     }
 
+    // Encadena operaciones: nunca ejecutar stop/start simultaneamente.
+    function encolarOperacionCamara(operacion) {
+      const siguiente = operacionCamara.catch(() => {}).then(operacion);
+      operacionCamara = siguiente.catch(() => {});
+      return siguiente;
+    }
+
+    function detenerCamara() {
+      camaraDeseada = false;
+      return encolarOperacionCamara(async () => {
+        const instancia = scanner;
+        if (!instancia) {
+          estadoVisualCamara(false);
+          return;
+        }
+        try {
+          await instancia.stop();
+        } catch (error) {
+          console.warn("La camara no pudo detenerse normalmente:", error);
+        }
+        try {
+          await instancia.clear();
+        } catch (error) {
+          console.warn("No se pudo limpiar el lector:", error);
+        }
+        if (scanner === instancia) scanner = null;
+        estadoVisualCamara(false);
+      });
+    }
 
     async function reanudarEscaneo() {
-
-      if (procesando) return;
-
-      const boton =
-        document.getElementById("cameraButton");
-
-      boton.disabled = true;
-      boton.textContent = "Activando cámara...";
-
-      qrBloqueado = false;
-
+      if (procesando || procesandoColaLector) return;
+      const boton = document.getElementById("cameraButton");
+      if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Activando camara...";
+      }
       try {
         await iniciarCamara();
+        if (scanner) qrBloqueado = false;
+      } finally {
+        if (boton) {
+          boton.disabled = false;
+          boton.textContent = "Escanear siguiente alumno";
+        }
       }
-      finally {
-        boton.disabled = false;
-        boton.textContent =
-          "Escanear siguiente alumno";
-      }
-
     }
 
-
-    /* =====================================================
-       INICIAR CÁMARA
-       ===================================================== */
-
-    async function iniciarCamara() {
-
-      if (scanner) return;
-
-      if (typeof Html5Qrcode === "undefined") {
-
-        mostrarResultado(
-          "❌",
-          "Lector QR no disponible",
-          "No se pudo cargar html5-qrcode. Abre la aplicación con Internet al menos una vez.",
-          "error"
-        );
-
-        document.getElementById(
-          "cameraStatus"
-        ).textContent =
-          "Lector no disponible";
-
-        return;
-
-      }
-
-      try {
-
-        scanner =
-          new Html5Qrcode("reader");
-
-        const inicioCamara = scanner.start(
-
-          {
-            facingMode: "environment"
-          },
-
-          {
-            fps: 10,
-
-            qrbox: function(width, height) {
-
-              const lado =
-                Math.max(
-                  140,
-                  Math.min(
-                    210,
-                    Math.floor(
-                      Math.min(width, height) * 0.75
-                    )
-                  )
-                );
-
-              return {
-                width: lado,
-                height: lado
-              };
-
+    function iniciarCamara() {
+      camaraDeseada = true;
+      return encolarOperacionCamara(async () => {
+        if (scanner || camaraIniciando) return;
+        if (document.hidden) return;
+        if (typeof Html5Qrcode === "undefined") {
+          estadoVisualCamara(false);
+          document.getElementById("cameraStatus").textContent = "Lector no disponible";
+          mostrarResultado("❌", "Lector QR no disponible",
+            "No se cargo html5-qrcode. Comprueba el archivo de la libreria y la conexion.", "error");
+          return;
+        }
+        camaraIniciando = true;
+        const instancia = new Html5Qrcode("reader");
+        scanner = instancia;
+        try {
+          await instancia.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: (width, height) => {
+                const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
+                return { width: lado, height: lado };
+              }
             },
-
-            aspectRatio: 1.0
-          },
-
-          async function(decodedText) {
-
-            /*
-             * Esperar la carga de alumnos.
-             */
-
-            if (!datosInicialesListos) {
-
-              mostrarResultado(
-                "⏳",
-                "Cargando lista de alumnos",
-                "Espera un momento antes de escanear.",
-                ""
-              );
-
-              return;
-
-            }
-
-            /*
-             * Evitar múltiples lecturas.
-             */
-
-            if (qrBloqueado || procesando) {
-              return;
-            }
-
-            qrBloqueado = true;
-
-            /*
-             * Detener la cámara antes
-             * de registrar la asistencia.
-             */
-
-            await detenerCamara();
-
-            document.getElementById(
-              "cameraStatus"
-            ).textContent =
-              "QR detectado · cámara detenida";
-
-            await procesarQR(decodedText);
-
-          },
-
-          function(errorMessage) {
-                             /*
-             * Errores normales de búsqueda.
-             */
-
+            async (decodedText) => {
+              if (!datosInicialesListos) {
+                mostrarResultado("⏳", "Cargando lista de alumnos",
+                  "Espera un momento antes de escanear.", "");
+                return;
+              }
+              if (qrBloqueado || procesando) return;
+              qrBloqueado = true;
+              await detenerCamara();
+              document.getElementById("cameraStatus").textContent =
+                "QR detectado · camara detenida";
+              await procesarQR(decodedText);
+            },
+            () => {}
+          );
+          estadoVisualCamara(true);
+          document.getElementById("cameraStatus").textContent = datosInicialesListos
+            ? "Camara activa · esperando QR" : "Camara activa · cargando lista...";
+          const boton = document.getElementById("cameraButton");
+          if (boton) {
+            boton.disabled = false;
+            boton.textContent = "Escanear siguiente alumno";
           }
-
-        );
-
-        /*
-         * Si el sistema deja la app en segundo plano
-         * durante el arranque, start() puede no responder:
-         * se espera como máximo 15 segundos.
-         */
-        const inicioListo = await Promise.race([
-          inicioCamara.then(
-            function() { return "ok"; },
-            function(error) { return error; }
-          ),
-          dormir(15000).then(function() { return "tiempo"; })
-        ]);
-
-        if (inicioListo === "tiempo") {
-          throw new Error("La cámara tardó demasiado en iniciar.");
+        } catch (error) {
+          console.error("Error iniciando camara:", error);
+          try { await instancia.clear(); } catch (_) {}
+          if (scanner === instancia) scanner = null;
+          camaraDeseada = false;
+          estadoVisualCamara(false);
+          document.getElementById("cameraStatus").textContent = "Camara no disponible";
+          mostrarResultado("📷", "No se pudo iniciar la camara",
+            "Comprueba los permisos y pulsa Escanear siguiente alumno para reintentar.", "error");
+        } finally {
+          camaraIniciando = false;
         }
-
-        if (inicioListo !== "ok") {
-          throw inicioListo;
-        }
-
-
-        document.getElementById(
-          "cameraStatus"
-        ).textContent =
-          datosInicialesListos
-            ? "Cámara activa · esperando QR"
-            : "Cámara activa · cargando lista…";
-
-        const botonCamara = document.getElementById("cameraButton");
-
-        if (botonCamara) {
-          botonCamara.disabled = false;
-          botonCamara.textContent = "Escanear siguiente alumno";
-        }
-
-      }
-      catch(error) {
-
-        console.error("Error de cámara:", error);
-
-        // Libera la instancia para poder reintentar.
-        await detenerCamara();
-
-        document.getElementById(
-          "cameraStatus"
-        ).textContent =
-          "Error";
-
-        mostrarResultado(
-          "📷",
-          "No se pudo iniciar la cámara",
-          "Revisa el permiso de cámara del navegador.",
-          "error"
-        );
-
-      }
-
+      });
     }
 
 
@@ -2305,53 +2188,42 @@
 
 
     /* =====================================================
-       REGRESAR DE SEGUNDO PLANO
+       REGRESAR DE SEGUNDO PLANO (SAFARI Y ANDROID)
        ===================================================== */
 
-    /*
-     * Android mata la cámara cuando la app pasa a segundo
-     * plano. Al volver, el lector viejo queda inútil y la
-     * app deja de responder hasta cerrarla: aquí se
-     * reinicia el lector.
-     */
-    document.addEventListener(
-      "visibilitychange",
-      async function() {
-
-        if (document.visibilityState !== "visible") return;
-
-        // Hay un registro o una lectura en curso.
-        if (procesando || procesandoColaLector) return;
-
-        // La cámara estaba apagada a propósito.
-        if (!scanner || recuperandoCamara) return;
-
-        recuperandoCamara = true;
-
-        try {
-          console.log(
-            "Regresando de segundo plano: reiniciando la cámara."
-          );
-
+    async function recuperarAplicacion() {
+      if (document.hidden || recuperacionEnCurso) return;
+      if (Date.now() - ultimaRecuperacion < 1500) return;
+      ultimaRecuperacion = Date.now();
+      recuperacionEnCurso = true;
+      try {
+        if (db) await actualizarPendientes();
+        // No interferir con lecturas, sincronizacion ni resultados ya mostrados.
+        if (!procesando && !procesandoColaLector && !sincronizando && !qrBloqueado && camaraDeseada) {
           await detenerCamara();
-
-          qrBloqueado = false;
-
-          const boton = document.getElementById("cameraButton");
-
-          if (boton) {
-            boton.disabled = false;
-            boton.textContent = "Escanear siguiente alumno";
-          }
-
           await iniciarCamara();
         }
-        finally {
-          recuperandoCamara = false;
+        if (db && navigator.onLine && !sincronizando) {
+          void actualizarDatosEnSegundoPlano();
+        } else {
+          actualizarConexion();
         }
-
+      } catch (error) {
+        console.warn("No se pudo recuperar completamente la aplicacion:", error);
+      } finally {
+        recuperacionEnCurso = false;
       }
-    );
+    }
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden) void recuperarAplicacion();
+    });
+    window.addEventListener("pageshow", function(evento) {
+      if (evento.persisted) void recuperarAplicacion();
+    });
+    window.addEventListener("android-app-resume", function() {
+      void recuperarAplicacion();
+    });
 
 
     /* =====================================================
