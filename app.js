@@ -1911,15 +1911,12 @@
           await instancia.start(
             { facingMode: "environment" },
             {
-              // Safari/iOS: analizar el fotograma completo evita recortes
-              // inconsistentes entre el video CSS y el canvas de lectura.
+              // Mismo recuadro de lectura en Android y Safari iOS.
               fps: 10,
-              ...( /iPad|iPhone|iPod/.test(navigator.userAgent) ? {} : {
-                qrbox: (width, height) => {
-                  const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
-                  return { width: lado, height: lado };
-                }
-              })
+              qrbox: (width, height) => {
+                const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
+                return { width: lado, height: lado };
+              }
             },
             async (decodedText) => {
               if (!datosInicialesListos) {
