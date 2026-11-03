@@ -990,3 +990,26 @@ html, body { max-width: 100%; overflow-x: clip; }
     overflow: visible !important;
   }
 }
+
+/* MARCO QR VISIBLE EN SAFARI, INDEPENDIENTE DEL AREA DE DECODIFICACION.
+   El lector analiza el fotograma completo en iOS; el marco es solo una guia. */
+@supports (-webkit-touch-callout: none) {
+  .camera-wrapper:not(.camera-inactive) #reader__scan_region {
+    position: relative !important;
+    isolation: isolate;
+  }
+  .camera-wrapper:not(.camera-inactive) #reader__scan_region::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(66%, 230px);
+    aspect-ratio: 1 / 1;
+    border: 3px solid #4ade80;
+    border-radius: 12px;
+    box-shadow: 0 0 0 999px rgba(2, 6, 23, 0.12), 0 0 0 2px rgba(0,0,0,.18);
+    pointer-events: none;
+    z-index: 10;
+  }
+}
