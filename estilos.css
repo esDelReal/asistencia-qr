@@ -977,3 +977,16 @@ html, body { max-width: 100%; overflow-x: clip; }
   .camera-wrapper { width: min(100%, 300px); }
   #reader video { max-height: 48dvh; }
 }
+
+/* iOS Safari: no recortar la imagen analizada por html5-qrcode. */
+@supports (-webkit-touch-callout: none) {
+  #reader video {
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
+  #reader__scan_region {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
