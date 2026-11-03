@@ -1910,11 +1910,15 @@
           await instancia.start(
             { facingMode: "environment" },
             {
-              fps: 10,
-              qrbox: (width, height) => {
-                const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
-                return { width: lado, height: lado };
-              }
+              // Safari/iOS: analizar el fotograma completo evita recortes
+              // inconsistentes entre el video CSS y el canvas de lectura.
+              fps: /iPad|iPhone|iPod/.test(navigator.userAgent) ? 15 : 10,
+              ...( /iPad|iPhone|iPod/.test(navigator.userAgent) ? {} : {
+                qrbox: (width, height) => {
+                  const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
+                  return { width: lado, height: lado };
+                }
+              })
             },
             async (decodedText) => {
               if (!datosInicialesListos) {
