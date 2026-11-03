@@ -1881,8 +1881,9 @@
         boton.textContent = "Activando camara...";
       }
       try {
+        // Permitir la siguiente lectura antes de activar el decodificador.
+        qrBloqueado = false;
         await iniciarCamara();
-        if (scanner) qrBloqueado = false;
       } finally {
         if (boton) {
           boton.disabled = false;
@@ -1912,7 +1913,7 @@
             {
               // Safari/iOS: analizar el fotograma completo evita recortes
               // inconsistentes entre el video CSS y el canvas de lectura.
-              fps: /iPad|iPhone|iPod/.test(navigator.userAgent) ? 15 : 10,
+              fps: 10,
               ...( /iPad|iPhone|iPod/.test(navigator.userAgent) ? {} : {
                 qrbox: (width, height) => {
                   const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
@@ -2204,8 +2205,12 @@
         if (db) await actualizarPendientes();
         // No interferir con lecturas, sincronizacion ni resultados ya mostrados.
         if (!procesando && !procesandoColaLector && !sincronizando && !qrBloqueado && camaraDeseada) {
+          // detenerCamara() desactiva camaraDeseada; iniciarCamara()
+          // la restablece solo cuando corresponde reactivar el lector.
           await detenerCamara();
-          await iniciarCamara();
+          if (!document.hidden && !qrBloqueado) {
+            await iniciarCamara();
+          }
         }
         if (db && navigator.onLine && !sincronizando) {
           void actualizarDatosEnSegundoPlano();
