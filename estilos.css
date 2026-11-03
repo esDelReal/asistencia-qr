@@ -1012,4 +1012,29 @@ html, body { max-width: 100%; overflow-x: clip; }
     pointer-events: none;
     z-index: 10;
   }
+      /* MARCO QR UNIFICADO: ANDROID Y iOS */
+
+.camera-wrapper:not(.camera-inactive) #reader {
+  position: relative !important;
+}
+
+.camera-wrapper:not(.camera-inactive) #reader::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: min(65%, 230px);
+  aspect-ratio: 1 / 1;
+
+  border: 3px solid #4ade80;
+  border-radius: 14px;
+
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.2);
+
+  pointer-events: none;
+  z-index: 20;
+ }
 }
