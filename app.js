@@ -208,6 +208,17 @@
     }
 
 
+    /* Normaliza estados enviados por Apps Script (booleanos) y Sheets (texto). */
+    function normalizarActivo(valor) {
+      if (valor === true || valor === 1) return true;
+      if (valor === false || valor === 0) return false;
+      const texto = String(valor ?? "").trim().normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      if (["si", "true", "1", "activo", "activa", "yes"].includes(texto)) return true;
+      if (["no", "false", "0", "inactivo", "inactiva"].includes(texto)) return false;
+      return null;
+    }
+
     /* =====================================================
        GUARDAR ALUMNOS
        ===================================================== */
@@ -238,6 +249,14 @@
               "alumnos"
             );
 
+
+          // Rechazar respuestas incompletas antes de borrar una caché válida.
+          if (!Array.isArray(alumnos) || alumnos.length === 0 ||
+              alumnos.some(a => !a || !String(a.idQR || "").trim() ||
+                normalizarActivo(a.activo) === null)) {
+            reject(new Error("Lista de alumnos incompleta o con estados inválidos; se conserva la caché local."));
+            return;
+          }
 
           /*
            * Eliminamos la caché anterior.
@@ -270,7 +289,7 @@
                   alumno.grupo || "",
 
                 activo:
-                  alumno.activo || ""
+                  normalizarActivo(alumno.activo)
 
               });
 
@@ -905,18 +924,7 @@
           alumnos.filter(
             function(alumno) {
 
-              const estado =
-                String(
-                  alumno.activo || ""
-                )
-                .trim()
-                .toLowerCase();
-
-
-              return (
-                estado === "sí" ||
-                estado === "si"
-              );
+              return normalizarActivo(alumno.activo) === true;
 
             }
           );
@@ -1279,18 +1287,16 @@
            ACTIVO
            ========================================== */
 
-        const activo =
-          String(
-            alumno.activo || ""
-          )
-          .trim()
-          .toLowerCase();
+        const activo = normalizarActivo(alumno.activo);
 
+        if (activo === null) {
+          mostrarResultado("⚠️", "Estado local desconocido",
+            alumno.nombre + " · " + alumno.grupo +
+            "\nActualiza la lista de alumnos cuando recuperes la conexión.", "error");
+          return;
+        }
 
-        if (
-          activo !== "sí" &&
-          activo !== "si"
-        ) {
+        if (activo === false) {
 
           mostrarResultado(
             "🚫",
