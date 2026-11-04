@@ -1231,6 +1231,8 @@
           "No se pudo actualizar el resumen:",
           error
         );
+        internetReal = false;
+        actualizarConexion();
 
       }
 
@@ -2354,9 +2356,14 @@
       }
       try {
         const pendientes = await obtenerPendientes();
-        if (internetReal === true && pendientes.length === 0) return;
         revisionConexionEnCurso = true;
-        await actualizarDatosEnSegundoPlano();
+        if (internetReal === true && pendientes.length === 0) {
+          // Comprobar el backend incluso si Android sigue marcando online.
+          // No descargar la lista de alumnos en cada revisión.
+          await actualizarResumenAsistencia();
+        } else {
+          await actualizarDatosEnSegundoPlano();
+        }
       } catch (error) {
         console.warn("No fue posible comprobar la recuperación de red:", error);
       } finally {
@@ -2387,6 +2394,11 @@
         datosInicialesListos = true;
         await actualizarTotalAlumnos();
         await actualizarPendientes();
+        const alumnosLocales = await obtenerTodosLosAlumnos();
+        if (alumnosLocales.length === 0 && !navigator.onLine) {
+          mostrarResultado("⚠️", "Sin lista local de alumnos",
+            "Conéctate una vez para descargar los alumnos antes de registrar asistencias offline.", "error");
+        }
         await iniciarCamara();
         actualizarEstadoLista();
 
