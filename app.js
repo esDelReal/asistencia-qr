@@ -44,6 +44,10 @@
 
     let ultimaVerificacionInternet = 0;
     const registrosEnRevision = new Set();
+    let temporizadorAvisoOffline = null;
+    let revisionConexionEnCurso = false;
+    const INTERVALO_REVISION_CONEXION = 25000;
+    const DURACION_RESULTADO_OFFLINE = 4000;
 
 
     /* =====================================================
@@ -696,6 +700,11 @@
           "resultado"
         );
 
+      // Un resultado nuevo cancela el aviso offline programado previamente.
+      if (temporizadorAvisoOffline !== null) {
+        clearTimeout(temporizadorAvisoOffline);
+        temporizadorAvisoOffline = null;
+      }
 
       resultado.className =
         "result " + (clase || "");
@@ -739,12 +748,28 @@
 
     }
 
+    function mostrarBannerOffline() {
+      // Durante la verificación inicial no afirmamos que no hay conexión.
+      if (navigator.onLine && internetReal !== false) return;
+      mostrarResultado("📱", "Modo sin conexión",
+        "Las nuevas asistencias se guardarán automáticamente en este dispositivo.", "offline");
+    }
+
+    function programarRetornoBannerOffline() {
+      if (temporizadorAvisoOffline !== null) clearTimeout(temporizadorAvisoOffline);
+      temporizadorAvisoOffline = setTimeout(function() {
+        temporizadorAvisoOffline = null;
+        if (!navigator.onLine || internetReal === false) mostrarBannerOffline();
+      }, DURACION_RESULTADO_OFFLINE);
+    }
 
     /* =====================================================
        CONEXIÓN
        ===================================================== */
 
     function actualizarConexion() {
+      const estabaOffline = document.getElementById("connectionStatus")?.dataset?.modo === "offline";
+      const ahoraOffline = !navigator.onLine || internetReal === false;
       const status = document.getElementById("connectionStatus");
       const texto = document.getElementById("connectionText");
       if (!status || !texto) return;
@@ -760,6 +785,14 @@
       } else {
         status.classList.add("offline");
         texto.textContent = "Conexión inestable";
+      }
+      status.dataset.modo = ahoraOffline ? "offline" : "online";
+      if (ahoraOffline && !estabaOffline && !procesando && !sincronizando) {
+        mostrarBannerOffline();
+      }
+      if (!ahoraOffline && temporizadorAvisoOffline !== null) {
+        clearTimeout(temporizadorAvisoOffline);
+        temporizadorAvisoOffline = null;
       }
     }
 
@@ -1384,6 +1417,7 @@
           "\nSin conexión. Pendiente de sincronizar.",
           "offline"
         );
+        programarRetornoBannerOffline();
 
       }
       catch(error) {
@@ -2184,12 +2218,7 @@
 
         actualizarConexion();
 
-        mostrarResultado(
-          "📱",
-          "Modo sin conexión",
-          "Las nuevas asistencias se guardarán automáticamente en este dispositivo.",
-          "offline"
-        );
+        if (!procesando) mostrarBannerOffline();
 
       }
     );
@@ -2309,6 +2338,35 @@
         actualizarConexion();
       }
     }
+
+    /* =====================================================
+       RECUPERACIÓN PERIÓDICA DE CONECTIVIDAD
+       ===================================================== */
+
+    async function revisarConexionYPendientes() {
+      if (!db || document.hidden || revisionConexionEnCurso || sincronizando || procesando) return;
+      if (!navigator.onLine) {
+        if (internetReal !== false) {
+          internetReal = false;
+          actualizarConexion();
+        }
+        return;
+      }
+      try {
+        const pendientes = await obtenerPendientes();
+        if (internetReal === true && pendientes.length === 0) return;
+        revisionConexionEnCurso = true;
+        await actualizarDatosEnSegundoPlano();
+      } catch (error) {
+        console.warn("No fue posible comprobar la recuperación de red:", error);
+      } finally {
+        revisionConexionEnCurso = false;
+      }
+    }
+
+    setInterval(function() {
+      void revisarConexionYPendientes();
+    }, INTERVALO_REVISION_CONEXION);
 
     /* =====================================================
        INICIO RÁPIDO
