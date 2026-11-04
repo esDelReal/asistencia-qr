@@ -37,7 +37,7 @@
 
     let db = null;
 
-    let internetReal = false;
+    let internetReal = null; // null = verificando; true = backend disponible; false = sin respuesta
 
     /* Evita aceptar lecturas antes de disponer de la lista local de alumnos. */
     let datosInicialesListos = false;
@@ -86,7 +86,7 @@
      * se guarda automáticamente en el dispositivo.
      */
 
-    const TIMEOUT_RED = 3500;
+    const TIMEOUT_RED = 9000; // margen para redes móviles lentas y Apps Script
 
 
     /* =====================================================
@@ -745,47 +745,31 @@
        ===================================================== */
 
     function actualizarConexion() {
-
-      const status =
-        document.getElementById(
-          "connectionStatus"
-        );
-
-
-      const texto =
-        document.getElementById(
-          "connectionText"
-        );
-
-
-      if (
-        navigator.onLine &&
-        internetReal
-      ) {
-
-        status.classList.remove(
-          "offline"
-        );
-
-
-        texto.textContent =
-          "Conectado";
-
+      const status = document.getElementById("connectionStatus");
+      const texto = document.getElementById("connectionText");
+      if (!status || !texto) return;
+      if (!navigator.onLine) {
+        status.classList.add("offline");
+        texto.textContent = "Sin conexión";
+      } else if (internetReal === null) {
+        status.classList.add("offline");
+        texto.textContent = "Verificando conexión...";
+      } else if (internetReal === true) {
+        status.classList.remove("offline");
+        texto.textContent = "Conectado";
+      } else {
+        status.classList.add("offline");
+        texto.textContent = "Conexión inestable";
       }
-      else {
-
-        status.classList.add(
-          "offline"
-        );
-
-
-        texto.textContent =
-          "Sin conexión";
-
-      }
-
     }
 
+    function actualizarEstadoLista() {
+      const estado = document.getElementById("cameraStatus");
+      if (!estado || !scanner || qrBloqueado) return;
+      estado.textContent = datosInicialesListos
+        ? "Cámara activa · lista local disponible"
+        : "Cámara activa · cargando lista...";
+    }
 
     /* =====================================================
        CARGAR ALUMNOS
@@ -1767,8 +1751,11 @@
       }
       sincronizando = true;
       const boton = document.getElementById("syncButton");
-      let sincronizadas = 0;
+      let registradas = 0;
+      let duplicadas = 0;
       let requierenRevision = 0;
+      let errorDeRed = false;
+      const duplicados = [];
       try {
         const pendientes = await obtenerPendientes();
         if (boton) {
@@ -1776,9 +1763,7 @@
           boton.textContent = "Sincronizando " + pendientes.length + "...";
         }
         for (const asistencia of pendientes) {
-          if (!navigator.onLine) break;
-          // No se elimina ninguna asistencia por número de intentos.
-          // Un rechazo explícito permanece localmente para revisión.
+          if (!navigator.onLine) { errorDeRed = true; break; }
           if (registrosEnRevision.has(asistencia.id)) {
             requierenRevision++;
             continue;
@@ -1795,44 +1780,59 @@
               encodeURIComponent(JSON.stringify(datos)) +
               "&token=" + encodeURIComponent(TOKEN) + "&t=" + Date.now();
             const response = await fetch(url, {
-              method: "GET",
-              cache: "no-store",
-              signal: controller.signal
+              method: "GET", cache: "no-store", signal: controller.signal
             });
             if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
-            // Solo una confirmación de guardado o duplicado en el servidor
-            // autoriza eliminar la copia local.
-            if (data && (data.ok === true || data.duplicado === true)) {
+            // No borrar por respuestas ambiguas: solo éxito confirmado.
+            if (data && data.duplicado === true && data.ok === true) {
               await eliminarAsistencia(asistencia.id);
-              sincronizadas++;
+              duplicadas++;
+              duplicados.push(asistencia.nombre || asistencia.idQR);
+              internetReal = true;
+            } else if (data && data.ok === true) {
+              await eliminarAsistencia(asistencia.id);
+              registradas++;
+              internetReal = true;
             } else {
               registrosEnRevision.add(asistencia.id);
               requierenRevision++;
-              console.warn("Asistencia conservada para revisión:", asistencia.id, data);
+              console.warn("Asistencia pendiente de revisión:", asistencia.id, data);
             }
           } catch (error) {
-            console.warn("Asistencia conservada; error de sincronización:", error);
-            // Un error de red o respuesta ambigua nunca elimina el registro.
+            console.warn("Sincronización interrumpida; se conserva el registro:", error);
+            errorDeRed = true;
+            internetReal = false;
             break;
           } finally {
             clearTimeout(timeout);
           }
         }
-        if (requierenRevision > 0) {
+        // Mostrar un resumen solo cuando hubo actividad real; no borrar resultados
+        // de un escaneo con una sincronización vacía en segundo plano.
+        if (duplicadas > 0) {
+          mostrarResultado("⚠️", "Duplicado detectado durante la sincronización",
+            "Duplicadas: " + duplicadas + " (sin filas adicionales en Sheets)." +
+            "\nAlumnos: " + duplicados.join(", ") +
+            "\nRegistradas: " + registradas +
+            (requierenRevision ? "\nPor revisar: " + requierenRevision : ""), "error");
+        } else if (requierenRevision > 0) {
           mostrarResultado("⚠️", "Pendientes por revisar",
-            requierenRevision + " asistencia(s) no fueron confirmadas por el servidor. Permanecen guardadas en este dispositivo.", "error");
+            requierenRevision + " asistencia(s) no confirmadas; permanecen guardadas en este dispositivo.", "error");
+        } else if (registradas > 0 && !errorDeRed) {
+          mostrarResultado("✓", "Sincronización finalizada",
+            registradas + " asistencia(s) enviadas correctamente a Google Sheets.", "success");
         }
       } catch (error) {
         console.error("Error sincronizando:", error);
       } finally {
         sincronizando = false;
         await actualizarPendientes();
+        actualizarConexion();
         if (navigator.onLine) void actualizarResumenAsistencia();
         if (boton) boton.textContent = "Sincronizar pendientes";
       }
     }
-
 
     /* =====================================================
        CAMARA RESPONSIVA Y CONTROL DE ESTADOS
@@ -2161,7 +2161,7 @@
     window.addEventListener(
       "online",
       function() {
-
+        internetReal = null;
         actualizarConexion();
 
         setTimeout(function() {
@@ -2289,36 +2289,26 @@
        ===================================================== */
 
     async function actualizarDatosEnSegundoPlano() {
-
       if (!navigator.onLine) {
-        datosInicialesListos = true;
+        internetReal = false;
+        actualizarConexion();
+        actualizarEstadoLista();
         return;
       }
-
       try {
-
         await cargarAlumnos();
-
-        datosInicialesListos = true;
-
+        // La lista local ya se había habilitado al abrir IndexedDB.
+        // La sincronización se hace aunque la consulta de alumnos falle.
         await sincronizarPendientes();
-
         await actualizarResumenAsistencia();
-
         await actualizarPendientes();
-
+      } catch(error) {
+        console.warn("La actualización en segundo plano no terminó:", error);
+      } finally {
+        actualizarEstadoLista();
+        actualizarConexion();
       }
-      catch(error) {
-
-        console.warn(
-          "La actualización en segundo plano no terminó:",
-          error
-        );
-
-      }
-
     }
-
 
     /* =====================================================
        INICIO RÁPIDO
@@ -2332,15 +2322,15 @@
 
         await abrirBaseDatos();
 
-        internetReal = false;
-
+        internetReal = navigator.onLine ? null : false;
         actualizarConexion();
-
+        // IndexedDB ya está abierta: el lector puede consultar la caché
+        // inmediatamente, sin esperar una respuesta del servidor.
+        datosInicialesListos = true;
         await actualizarTotalAlumnos();
-
         await actualizarPendientes();
-
         await iniciarCamara();
+        actualizarEstadoLista();
 
         void actualizarDatosEnSegundoPlano();
 
