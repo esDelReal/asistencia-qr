@@ -1,104 +1,56 @@
-const CACHE_NAME = "asistencia-qr-v5";
-
-const ARCHIVOS = [
-  "./",
-  "./index.html",
-  "./estilos.css",
-  "./app.js",
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./lib/html5-qrcode.mim.js"
+const CACHE_NAME = "asistencia-qr-v6";
+const CORE = [
+  "./", "./index.html", "./estilos.css", "./app.js",
+  "./lib/html5-qrcode.min.js"
 ];
+const OPTIONAL = ["./manifest.json", "./icon-192.png", "./icon-512.png"];
 
-// INSTALACIÓN
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(async cache => {
-        await Promise.all(
-          ARCHIVOS.map(async archivo => {
-            try {
-              await cache.add(
-                new Request(archivo, { cache: "reload" })
-              );
-            } catch (error) {
-              console.warn(
-                "No se pudo guardar en caché:",
-                archivo,
-                error
-              );
-            }
-          })
-        );
-      })
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    // Si falta un archivo esencial, no activar una versión offline incompleta.
+    await cache.addAll(CORE.map(path => new Request(path, { cache: "reload" })));
+    await Promise.all(OPTIONAL.map(async path => {
+      try { await cache.add(new Request(path, { cache: "reload" })); }
+      catch (error) { console.warn("Archivo opcional no guardado:", path, error); }
+    }));
+    await self.skipWaiting();
+  })());
 });
 
-// ACTIVACIÓN
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-        )
-      )
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith("asistencia-qr-") && key !== CACHE_NAME).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
-// INTERCEPTAR SOLICITUDES
 self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request, { ignoreSearch: request.mode === "navigate" });
+    // Los recursos de la interfaz abren inmediatamente desde caché.
+    if (cached) return cached;
+    try {
+      const response = await fetch(request);
+      if (response.ok && response.type === "basic") {
+        event.waitUntil(cache.put(request, response.clone()));
+      }
+      return response;
+    } catch (error) {
+      if (request.mode === "navigate") {
+        const fallback = await cache.match("./index.html");
+        if (fallback) return fallback;
+      }
+      return new Response("Recurso no disponible sin conexión.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+  })());
+});
 
-  if (
-    request.method !== "GET" ||
-    url.origin !== self.location.origin
-  ) {
-    return;
-  }
-
-  event.respondWith(
-    fetch(request)
-      .then(response => {
-        if (response.ok) {
-          const copia = response.clone();
-
-          event.waitUntil(
-            caches.open(CACHE_NAME)
-              .then(cache => cache.put(request, copia))
-              .catch(error => {
-                console.warn(
-                  "Error actualizando caché:",
-                  error
-                );
-              })
-          );
-        }
-
-        return response;
-      })
-      .catch(async () => {
-        const guardada = await caches.match(request);
-
-        if (guardada) {
-          return guardada;
-        }
-
-        return new Response(
-          "Sin conexión y sin copia local disponible.",
-          {
-            status: 503,
-            headers: {
-              "Content-Type": "text/plain; charset=utf-8"
-            }
-          }
-        );
-      })
-  );
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
