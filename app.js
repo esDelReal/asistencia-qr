@@ -29,6 +29,17 @@
 
     let scanner = null;
 
+    // Modos de cámara: no se guardan en IndexedDB ni afectan asistencias.
+    let modoEscaneo = "normal";
+    let ultimoCodigoRapido = "";
+    let ultimoCodigoRapidoEn = 0;
+    let ultimoSinQR = 0;
+    let inicioSinQR = 0;
+    const ESPERA_MISMO_QR_MS = 2500;
+    const AUSENCIA_QR_MS = 1400;
+    let cambiandoModo = false;
+
+
     let procesando = false;
 
     let qrBloqueado = false;
@@ -1917,6 +1928,7 @@
 
     async function reanudarEscaneo() {
       if (procesando || procesandoColaLector) return;
+      if (modoEscaneo === "rapido" && scanner && !qrBloqueado) return;
       const boton = document.getElementById("cameraButton");
       if (boton) {
         boton.disabled = true;
@@ -1966,14 +1978,51 @@
                   "Espera un momento antes de escanear.", "");
                 return;
               }
-              if (qrBloqueado || procesando) return;
-              qrBloqueado = true;
-              await detenerCamara();
-              document.getElementById("cameraStatus").textContent =
-                "QR detectado · camara detenida";
-              await procesarQR(decodedText);
+              if (qrBloqueado || procesando || cambiandoModo) return;
+              const codigo = String(decodedText || "").trim();
+              if (!codigo) return;
+              if (modoEscaneo === "rapido") {
+                const ahora = Date.now();
+                const mismo = codigo === ultimoCodigoRapido;
+                // Un QR que permanece frente a la cámara no vuelve a procesarse.
+                // Se requiere que haya desaparecido durante un intervalo sostenido.
+                if (mismo && (ahora - ultimoCodigoRapidoEn < ESPERA_MISMO_QR_MS ||
+                    !inicioSinQR || ahora - inicioSinQR < AUSENCIA_QR_MS)) {
+                  inicioSinQR = 0;
+                  return;
+                }
+                qrBloqueado = true;
+                ultimoCodigoRapido = codigo;
+                ultimoCodigoRapidoEn = ahora;
+                inicioSinQR = 0;
+                document.getElementById("cameraStatus").textContent = "Validando · cámara continua";
+                try {
+                  await procesarQR(codigo);
+                  // procesarQR libera procesando con una demora de 600 ms.
+                  await dormir(700);
+                } finally {
+                  if (modoEscaneo === "rapido") {
+                    qrBloqueado = false;
+                    document.getElementById("cameraStatus").textContent =
+                      "Cámara activa · lista para otro QR";
+                  }
+                }
+              } else {
+                qrBloqueado = true;
+                await detenerCamara();
+                document.getElementById("cameraStatus").textContent =
+                  "QR detectado · cámara detenida";
+                await procesarQR(codigo);
+              }
             },
-            () => {}
+            () => {
+              if (modoEscaneo !== "rapido" || qrBloqueado) return;
+              const ahora = Date.now();
+              // El callback de fallo puede ocurrir intermitentemente aun con QR visible.
+              // Solo se usa como señal de ausencia sostenida, no como prueba absoluta.
+              if (!inicioSinQR) inicioSinQR = ahora;
+              ultimoSinQR = ahora;
+            }
           );
           estadoVisualCamara(true);
           document.getElementById("cameraStatus").textContent = datosInicialesListos
@@ -2193,6 +2242,69 @@
     /* =====================================================
        EVENTO ONLINE
        ===================================================== */
+
+     /* =====================================================
+        MODOS DE ESCANEO Y RECUPERACIÓN MANUAL
+        ===================================================== */
+
+    function actualizarInterfazModo() {
+      const boton = document.getElementById("cameraButton");
+      const ayuda = document.getElementById("scanModeHelp");
+      if (boton) boton.hidden = modoEscaneo === "rapido";
+      if (ayuda) ayuda.textContent = modoEscaneo === "rapido"
+        ? "Rápido: cámara continua. Retira cada QR antes de presentar otro."
+        : "Normal: detiene la cámara después de cada lectura.";
+    }
+
+    async function cambiarModoEscaneo(nuevoModo) {
+      if (!["normal", "rapido"].includes(nuevoModo) || cambiandoModo) return;
+      if (nuevoModo === modoEscaneo) return;
+      if (procesando || sincronizando || procesandoColaLector) {
+        document.querySelector(`input[name="scanMode"][value="${modoEscaneo}"]`).checked = true;
+        mostrarResultado("⏳", "Espera un momento", "Termina la lectura actual antes de cambiar de modo.", "");
+        return;
+      }
+      cambiandoModo = true;
+      try {
+        modoEscaneo = nuevoModo;
+        ultimoCodigoRapido = "";
+        inicioSinQR = 0;
+        actualizarInterfazModo();
+        qrBloqueado = false;
+        // Cambiar a rápido después de una lectura normal debe iniciar la cámara.
+        if (!scanner) await iniciarCamara();
+        if (scanner) document.getElementById("cameraStatus").textContent =
+          nuevoModo === "rapido" ? "Cámara continua · lista" : "Cámara activa · modo normal";
+      } finally {
+        cambiandoModo = false;
+      }
+    }
+
+    async function reiniciarCamaraManual() {
+      if (cambiandoModo || procesando || procesandoColaLector) return;
+      const boton = document.getElementById("recoverCameraButton");
+      if (boton) { boton.disabled = true; boton.textContent = "Reiniciando..."; }
+      try {
+        await detenerCamara();
+        qrBloqueado = false;
+        inicioSinQR = 0;
+        ultimoCodigoRapido = "";
+        await iniciarCamara();
+      } catch (error) {
+        console.error("No fue posible reiniciar la cámara:", error);
+        mostrarResultado("⚠️", "Error de cámara", "Cierra y abre la aplicación si el lector no responde.", "error");
+      } finally {
+        if (boton) { boton.disabled = false; boton.textContent = "Reiniciar cámara"; }
+      }
+    }
+
+    document.querySelectorAll('input[name="scanMode"]').forEach(control => {
+      control.addEventListener("change", evento => {
+        if (evento.target.checked) void cambiarModoEscaneo(evento.target.value);
+      });
+    });
+    document.getElementById("recoverCameraButton")?.addEventListener("click", reiniciarCamaraManual);
+    actualizarInterfazModo();
 
     window.addEventListener(
       "online",
