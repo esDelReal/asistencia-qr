@@ -1,14 +1,9 @@
-const CACHE_NAME = "asistencia-qr-v6";
-const CORE = [
-  "./", "./index.html", "./estilos.css", "./app.js",
-  "./lib/html5-qrcode.mim.js"
-];
+const CACHE_NAME = "asistencia-qr-v7";
+const CORE = ["./", "./index.html", "./estilos.css", "./app.js", "./lib/html5-qrcode.mim.js"];
 const OPTIONAL = ["./manifest.json", "./icon-192.png", "./icon-512.png"];
-
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // Si falta un archivo esencial, no activar una versión offline incompleta.
     await cache.addAll(CORE.map(path => new Request(path, { cache: "reload" })));
     await Promise.all(OPTIONAL.map(async path => {
       try { await cache.add(new Request(path, { cache: "reload" })); }
@@ -17,7 +12,6 @@ self.addEventListener("install", event => {
     await self.skipWaiting();
   })());
 });
-
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
@@ -25,7 +19,6 @@ self.addEventListener("activate", event => {
     await self.clients.claim();
   })());
 });
-
 self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
@@ -33,13 +26,10 @@ self.addEventListener("fetch", event => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(request, { ignoreSearch: request.mode === "navigate" });
-    // Los recursos de la interfaz abren inmediatamente desde caché.
     if (cached) return cached;
     try {
       const response = await fetch(request);
-      if (response.ok && response.type === "basic") {
-        event.waitUntil(cache.put(request, response.clone()));
-      }
+      if (response.ok && response.type === "basic") event.waitUntil(cache.put(request, response.clone()));
       return response;
     } catch (error) {
       if (request.mode === "navigate") {
@@ -50,7 +40,6 @@ self.addEventListener("fetch", event => {
     }
   })());
 });
-
 self.addEventListener("message", event => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
