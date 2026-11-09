@@ -1,307 +1,51 @@
 <!DOCTYPE html>
 <html lang="es">
-
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
-
-  <meta
-    name="description"
-    content="Control de asistencia mediante códigos QR"
-  >
-
+  <meta name="description" content="Control de asistencia mediante códigos QR">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
-
   <title>Ludwig Van Beethoven</title>
-
-  <!-- LECTOR QR LOCAL: FUNCIONA SIN INTERNET -->
   <script src="./lib/html5-qrcode.mim.js"></script>
-
-  <!-- ESTILOS -->
   <link rel="stylesheet" href="./estilos.css">
 </head>
-
-
 <body>
-
   <main class="app">
-
-
-    <!-- ========================================
-         ENCABEZADO
-         ======================================== -->
-
-    <header class="header">
-
-      <div class="header-row">
-
-        <div>
-
-          <h1 class="title">
-            Secundaria N° 101 "Ludwig Van Beethoven"
-          </h1>
-
-          <p class="subtitle">
-            Control de Asistencia
-          </p>
-
-        </div>
-
-
-        <div
-          id="connectionStatus"
-          class="connection"
-        >
-
-          <span class="connection-dot"></span>
-
-          <span id="connectionText">
-            Conectado
-          </span>
-
-        </div>
-
-      </div>
-
-    </header>
-
-
-    <!-- ========================================
-         TARJETA
-         ======================================== -->
-
+    <header class="header"><div class="header-row">
+      <div><h1 class="title">Secundaria N° 101 "Ludwig Van Beethoven"</h1><p class="subtitle">Control de Asistencia</p></div>
+      <div id="connectionStatus" class="connection"><span class="connection-dot"></span><span id="connectionText">Conectado</span></div>
+    </div></header>
     <section class="card">
-
-
-      <!-- ======================================
-           ESTADÍSTICAS
-           ====================================== -->
-
       <div class="stats">
-
-        <div class="stat">
-
-          <div class="stat-label">
-            Alumnos activos
-          </div>
-
-          <div
-            id="totalAlumnos"
-            class="stat-value"
-          >
-            —
-          </div>
-
-        </div>
-
-
-        <div class="stat">
-
-          <div class="stat-label">
-            Pendientes
-          </div>
-
-          <div
-            id="pendientes"
-            class="stat-value"
-          >
-            0
-          </div>
-
-        </div>
-
+        <div class="stat"><div class="stat-label">Alumnos activos</div><div id="totalAlumnos" class="stat-value">—</div></div>
+        <div class="stat"><div class="stat-label">Pendientes</div><div id="pendientes" class="stat-value">0</div></div>
       </div>
-
-
-      <!-- ======================================
-           RESUMEN
-           ====================================== -->
-
       <div class="resumen-asistencia">
-
-        <div class="tarjeta-resumen">
-
-          <div class="titulo-resumen">
-            Total activos
-          </div>
-
-          <div
-            id="totalActivos"
-            class="numero-resumen"
-          >
-            0
-          </div>
-
-        </div>
-
-
-        <div class="tarjeta-resumen">
-
-          <div class="titulo-resumen">
-            Han ingresado
-          </div>
-
-          <div
-            id="hanIngresado"
-            class="numero-resumen"
-          >
-            0
-          </div>
-
-        </div>
-
-
-        <div class="tarjeta-resumen">
-
-          <div class="titulo-resumen">
-            Faltan
-          </div>
-
-          <div
-            id="faltanIngresar"
-            class="numero-resumen"
-          >
-            0
-          </div>
-
-        </div>
-
+        <div class="tarjeta-resumen"><div class="titulo-resumen">Total activos</div><div id="totalActivos" class="numero-resumen">0</div></div>
+        <div class="tarjeta-resumen"><div class="titulo-resumen">Han ingresado</div><div id="hanIngresado" class="numero-resumen">0</div></div>
+        <div class="tarjeta-resumen"><div class="titulo-resumen">Faltan</div><div id="faltanIngresar" class="numero-resumen">0</div></div>
       </div>
-
-
-      <!-- ======================================
-           BARRA
-           ====================================== -->
-
-      <div class="barra-asistencia">
-
-        <div class="barra-superior">
-
-          <span>
-            Asistencia de hoy
-          </span>
-
-          <strong id="porcentajeAsistencia">
-            0%
-          </strong>
-
-        </div>
-
-
-        <div class="barra-fondo">
-
-          <div
-            id="barraProgreso"
-            class="barra-progreso"
-          ></div>
-
-        </div>
-
+      <div class="barra-asistencia"><div class="barra-superior"><span>Asistencia de hoy</span><strong id="porcentajeAsistencia">0%</strong></div><div class="barra-fondo"><div id="barraProgreso" class="barra-progreso"></div></div></div>
+      <div class="camera-header"><span class="camera-title">Escáner QR</span><span id="cameraStatus" class="camera-status">Iniciando...</span></div>
+      <fieldset class="scan-mode" aria-label="Modo de escaneo">
+        <legend>Modo de lectura</legend>
+        <label><input type="radio" name="scanMode" value="normal" checked><span>Normal</span></label>
+        <label><input type="radio" name="scanMode" value="rapido"><span>Rápido</span></label>
+      </fieldset>
+      <p id="scanModeHelp" class="scan-mode-help">Normal: detiene la cámara después de cada lectura.</p>
+      <div class="camera-wrapper"><div id="reader"></div></div>
+      <button id="cameraButton" class="sync-button" type="button" onclick="reanudarEscaneo()">Escanear siguiente alumno</button>
+      <button id="recoverCameraButton" class="recover-button" type="button">Reiniciar cámara</button>
+      <div id="resultado" class="result" role="status" aria-live="polite">
+        <div><div class="result-icon">📷</div><div class="result-title">Esperando código QR</div><div class="result-detail">Coloca el código dentro del recuadro</div></div>
       </div>
-
-
-      <!-- ======================================
-           ESCÁNER
-           ====================================== -->
-
-      <div class="camera-header">
-
-        <span class="camera-title">
-          Escáner QR
-        </span>
-
-        <span
-          id="cameraStatus"
-          class="camera-status"
-        >
-          Iniciando...
-        </span>
-
-      </div>
-
-
-      <div class="camera-wrapper">
-
-        <div id="reader"></div>
-
-      </div>
-
-      <button
-        id="cameraButton"
-        class="sync-button"
-        type="button"
-        onclick="reanudarEscaneo()"
-      >
-        Escanear siguiente alumno
-      </button>
-
-
-      <!-- ======================================
-           RESULTADO
-           ====================================== -->
-
-      <div
-        id="resultado"
-        class="result"
-        role="status"
-        aria-live="polite"
-      >
-
-        <div>
-
-          <div class="result-icon">
-            📷
-          </div>
-
-          <div class="result-title">
-            Esperando código QR
-          </div>
-
-          <div class="result-detail">
-            Coloca el código dentro del recuadro
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- ======================================
-           SINCRONIZACIÓN
-           ====================================== -->
-
-      <button
-        id="syncButton"
-        class="sync-button"
-        type="button"
-        disabled
-      >
-        Sincronizar pendientes
-      </button>
-
-
+      <button id="syncButton" class="sync-button" type="button" disabled>Sincronizar pendientes</button>
     </section>
-
-
-    <footer class="footer">
-      Sistema de asistencia QR
-    </footer>
-
-
+    <footer class="footer">Sistema de asistencia QR</footer>
   </main>
-
-
   <script src="./app.js"></script>
-
 </body>
-
 </html>
