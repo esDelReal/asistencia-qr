@@ -104,6 +104,31 @@
     const TIMEOUT_RED = 9000; // margen para redes móviles lentas y Apps Script
 
 
+    /* Cada cuánto se vuelve a descargar la lista de alumnos. */
+    const INTERVALO_CARGA_ALUMNOS = 120000;
+
+    let ultimaCargaAlumnos = 0;
+
+    let ultimoResumen = 0;
+
+
+    /*
+     * QR genéricos para alumnos sin credencial.
+     *
+     * Se pueden escanear muchas veces: cada lectura
+     * cuenta como un alumno sin credencial del día.
+     */
+    const QR_GENERICOS = {
+
+      "SINCREDENCIAL-HOMBRE":
+        "Sin credencial · Hombre",
+
+      "SINCREDENCIAL-MUJER":
+        "Sin credencial · Mujer"
+
+    };
+
+
     /* =====================================================
        BASE DE DATOS
        ===================================================== */
@@ -555,15 +580,22 @@
             );
 
 
-          store.add(
-            asistencia
-          );
+          const solicitud =
+            store.add(
+              asistencia
+            );
 
 
           transaction.oncomplete =
             function() {
 
-              resolve();
+              /*
+               * Se devuelve la clave generada para poder
+               * actualizar el estado del registro después.
+               */
+              resolve(
+                solicitud.result
+              );
 
             };
 
@@ -1103,6 +1135,25 @@
       }
 
 
+      /*
+       * Varias lecturas seguidas comparten una sola
+       * consulta: el contador se refresca con un margen
+       * de segundos en lugar de pedirlo en cada registro.
+       */
+
+      if (
+        Date.now() - ultimoResumen < 4000
+      ) {
+
+        return;
+
+      }
+
+
+      ultimoResumen =
+        Date.now();
+
+
       try {
 
         const controller =
@@ -1275,6 +1326,574 @@
 
         }
       );
+
+    }
+
+
+    /* =====================================================
+       ACTUALIZAR ESTADO DE UN REGISTRO
+       ===================================================== */
+
+    function actualizarEstadoAsistencia(
+      id,
+      estado
+    ) {
+
+      return new Promise(
+        function(resolve, reject) {
+
+          if (!db || id == null) {
+
+            resolve();
+            return;
+
+          }
+
+
+          const transaction =
+            db.transaction(
+              "asistencias",
+              "readwrite"
+            );
+
+
+          const store =
+            transaction.objectStore(
+              "asistencias"
+            );
+
+
+          const request =
+            store.get(id);
+
+
+          request.onsuccess =
+            function() {
+
+              const registro =
+                request.result;
+
+
+              if (!registro) return;
+
+
+              registro.estado =
+                estado;
+
+
+              store.put(registro);
+
+            };
+
+
+          transaction.oncomplete =
+            function() {
+
+              resolve();
+
+            };
+
+
+          transaction.onerror =
+            function() {
+
+              reject(
+                transaction.error
+              );
+
+            };
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       NORMALIZAR REGISTROS AL INICIAR
+       ===================================================== */
+
+    /*
+     * Un registro "registrada" quedó mostrado al operador
+     * pero sin respuesta del servidor (la app se cerró).
+     * Se convierte en pendiente para no perderlo.
+     *
+     * Las confirmaciones "sincronizada" de días anteriores
+     * solo servían para detectar duplicados: se borran.
+     */
+    async function normalizarRegistrosAlIniciar() {
+
+      try {
+
+        const asistencias =
+          await obtenerTodasLasAsistencias();
+
+        const hoy =
+          obtenerFecha();
+
+
+        for (const item of asistencias) {
+
+          if (item.estado === "registrada") {
+
+            await actualizarEstadoAsistencia(
+              item.id,
+              "pendiente"
+            );
+
+          }
+          else if (
+            item.estado === "sincronizada" &&
+            item.fecha !== hoy
+          ) {
+
+            await eliminarAsistencia(
+              item.id
+            );
+
+          }
+
+        }
+
+      }
+      catch(error) {
+
+        console.warn(
+          "No se pudieron normalizar los registros:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CONFIRMAR CON EL SERVIDOR (SEGUNDO PLANO)
+       ===================================================== */
+
+    /*
+     * La asistencia ya se mostró al operador.
+     * Aquí se confirma con Google Sheets sin hacerlo esperar.
+     */
+    async function confirmarConServidor(
+      registro
+    ) {
+
+      const controller =
+        new AbortController();
+
+
+      const timeout =
+        setTimeout(
+          function() {
+
+            controller.abort();
+
+          },
+          TIMEOUT_RED
+        );
+
+
+      try {
+
+        const url =
+          API_URL +
+          "?idQR=" +
+          encodeURIComponent(
+            registro.idQR
+          ) +
+          "&token=" + TOKEN +
+          "&t=" + Date.now();
+
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "GET",
+              cache: "no-store",
+              signal: controller.signal
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "HTTP " +
+            response.status
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        internetReal = true;
+        actualizarConexion();
+
+
+        /* ======================================
+           CONFIRMADO (NUEVO O YA ESTABA)
+           ====================================== */
+
+        if (
+          data.ok === true ||
+          data.duplicado === true
+        ) {
+
+          await actualizarEstadoAsistencia(
+            registro.id,
+            "sincronizada"
+          );
+
+
+          void actualizarResumenAsistencia();
+
+          return;
+
+        }
+
+
+        /* ======================================
+           ALUMNO INACTIVO
+           ====================================== */
+
+        if (data.inactivo === true) {
+
+          await eliminarAsistencia(
+            registro.id
+          );
+
+
+          mostrarResultado(
+            "🚫",
+            "Alumno inactivo",
+            (data.nombre || registro.nombre) +
+            " · " +
+            (data.grupo || registro.grupo || "") +
+            "\n" +
+            (data.mensaje ||
+              "No tiene autorización para registrar asistencia."),
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        /* ======================================
+           CÓDIGO NO RECONOCIDO POR EL SERVIDOR
+           ====================================== */
+
+        if (registro.generico) {
+
+          /*
+           * El servidor todavía no conoce los QR
+           * genéricos: el registro se conserva como
+           * pendiente para no perderlo.
+           */
+
+          await actualizarEstadoAsistencia(
+            registro.id,
+            "pendiente"
+          );
+
+          await actualizarPendientes();
+
+          return;
+
+        }
+
+
+        await eliminarAsistencia(
+          registro.id
+        );
+
+        await actualizarPendientes();
+
+
+        mostrarResultado(
+          "❌",
+          "Código no registrado",
+          data.mensaje ||
+          "El código QR no está registrado.",
+          "error"
+        );
+
+      }
+      catch(error) {
+
+        console.warn(
+          "Sin confirmación del servidor:",
+          error
+        );
+
+
+        internetReal = false;
+        actualizarConexion();
+
+
+        /* Se conserva para sincronizarlo después. */
+        await actualizarEstadoAsistencia(
+          registro.id,
+          "pendiente"
+        );
+
+        await actualizarPendientes();
+
+      }
+      finally {
+
+        clearTimeout(
+          timeout
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       REGISTRO INMEDIATO
+       ===================================================== */
+
+    /*
+     * Registra con la copia local del alumno y responde al
+     * instante.
+     *
+     * Antes se esperaba a la Apps Script en cada lectura;
+     * ahora la pantalla responde de inmediato y el servidor
+     * se confirma en segundo plano.
+     *
+     * El tercer parámetro indica un QR genérico (sin
+     * credencial): esos no se buscan como alumno y se pueden
+     * escanear varias veces.
+     */
+    async function registrarAlInstante(
+      alumno,
+      idQR,
+      nombreGenerico
+    ) {
+
+      const esGenerico =
+        Boolean(nombreGenerico);
+
+
+      /* ==========================================
+         ACTIVO
+         ========================================== */
+
+      if (!esGenerico) {
+
+        const activo =
+          normalizarActivo(
+            alumno.activo
+          );
+
+
+        if (activo === null) {
+
+          mostrarResultado(
+            "⚠️",
+            "Estado local desconocido",
+            alumno.nombre +
+            " · " +
+            alumno.grupo +
+            "\nActualiza la lista de alumnos cuando recuperes la conexión.",
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        if (activo === false) {
+
+          mostrarResultado(
+            "🚫",
+            "Alumno inactivo",
+            alumno.nombre +
+            " · " +
+            alumno.grupo +
+            "\nNo tiene autorización para registrar asistencia.",
+            "error"
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      /* ==========================================
+         FECHA / HORA
+         ========================================== */
+
+      const fecha =
+        obtenerFecha();
+
+      const hora =
+        obtenerHora();
+
+      const estatus =
+        calcularEstatusEntrada(hora);
+
+      const nombre =
+        esGenerico
+          ? nombreGenerico
+          : alumno.nombre;
+
+      const grupo =
+        esGenerico
+          ? ""
+          : alumno.grupo;
+
+
+      /* ==========================================
+         DUPLICADO (SOLO ALUMNOS CON CREDENCIAL)
+         ========================================== */
+
+      if (!esGenerico) {
+
+        const duplicado =
+          await verificarDuplicadoLocal(
+            idQR,
+            fecha
+          );
+
+
+        if (duplicado) {
+
+          mostrarResultado(
+            "⚠️",
+            "Asistencia duplicada",
+            nombre +
+            " · " +
+            grupo +
+            "\nYa fue registrado hoy.",
+            "error"
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      /* ==========================================
+         GUARDAR
+         ========================================== */
+
+      const registro = {
+
+        idQR:
+          String(idQR).trim(),
+
+        nombre:
+          nombre,
+
+        grupo:
+          grupo,
+
+        fecha:
+          fecha,
+
+        hora:
+          hora,
+
+        estatus:
+          estatus,
+
+        /* "registrada": mostrada, pendiente de confirmar. */
+        estado:
+          "registrada",
+
+        generico:
+          esGenerico
+
+      };
+
+
+      const enLinea =
+        navigator.onLine;
+
+
+      try {
+
+        registro.id =
+          await guardarAsistenciaLocal(
+            registro
+          );
+
+      }
+      catch(error) {
+
+        console.error(
+          "No se pudo guardar en el dispositivo:",
+          error
+        );
+
+
+        mostrarResultado(
+          "❌",
+          "Error local",
+          "No fue posible guardar la asistencia en el dispositivo.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      mostrarResultado(
+        esGenerico ? "🪪" : "✓",
+        esGenerico
+          ? nombre
+          : "Asistencia registrada",
+        (esGenerico
+          ? "Alumno sin credencial"
+          : nombre + " · " + grupo) +
+        "\nHora: " + hora +
+        "\nEstado: " + estatus +
+        (enLinea
+          ? ""
+          : "\nSin conexión. Pendiente de sincronizar."),
+        enLinea ? "success" : "offline"
+      );
+
+
+      if (enLinea) {
+
+        void confirmarConServidor(
+          registro
+        );
+
+      }
+      else {
+
+        internetReal = false;
+        actualizarConexion();
+
+
+        await actualizarEstadoAsistencia(
+          registro.id,
+          "pendiente"
+        );
+
+        await actualizarPendientes();
+
+        programarRetornoBannerOffline();
+
+      }
 
     }
 
@@ -1488,6 +2107,57 @@
         if (!idQR) {
 
           return;
+
+        }
+
+
+        /* ==========================================
+           QR GENÉRICO (SIN CREDENCIAL)
+           ========================================== */
+
+        const generico =
+          QR_GENERICOS[idQR];
+
+
+        if (generico) {
+
+          await registrarAlInstante(
+            {
+              activo: true,
+              nombre: generico,
+              grupo: ""
+            },
+            idQR,
+            generico
+          );
+
+          return;
+
+        }
+
+
+        /* ==========================================
+           RESPUESTA INMEDIATA CON LA COPIA LOCAL
+           ========================================== */
+
+        if (navigator.onLine) {
+
+          const alumnoLocal =
+            await obtenerAlumnoLocal(
+              idQR
+            );
+
+
+          if (alumnoLocal) {
+
+            await registrarAlInstante(
+              alumnoLocal,
+              idQR
+            );
+
+            return;
+
+          }
 
         }
 
@@ -2439,7 +3109,19 @@
         return;
       }
       try {
-        await cargarAlumnos();
+        /*
+         * La lista completa se descarga como máximo cada
+         * dos minutos: la revisión periódica de conexión
+         * volvía a pedir los ~180 alumnos cada 25 segundos
+         * cuando la red estaba inestable.
+         */
+        if (
+          !ultimaCargaAlumnos ||
+          Date.now() - ultimaCargaAlumnos > INTERVALO_CARGA_ALUMNOS
+        ) {
+          await cargarAlumnos();
+          ultimaCargaAlumnos = Date.now();
+        }
         // La lista local ya se había habilitado al abrir IndexedDB.
         // La sincronización se hace aunque la consulta de alumnos falle.
         await sincronizarPendientes();
@@ -2498,6 +3180,8 @@
       try {
 
         await abrirBaseDatos();
+
+        await normalizarRegistrosAlIniciar();
 
         internetReal = navigator.onLine ? null : false;
         actualizarConexion();
