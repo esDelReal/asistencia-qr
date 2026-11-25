@@ -1570,10 +1570,7 @@
           ? nombreGenerico
           : alumno.nombre;
 
-      const grupo =
-        esGenerico
-          ? ""
-          : alumno.grupo;
+      const grupo = alumno.grupo;
 
 
       /* ==========================================
@@ -1681,7 +1678,7 @@
           ? nombre
           : "Asistencia registrada",
         (esGenerico
-          ? "Alumno sin credencial"
+          ? "Alumno sin credencial · " + grupo
           : nombre + " · " + grupo) +
         "\nHora: " + hora +
         "\nEstado: " + estatus +
@@ -1878,6 +1875,33 @@
        PROCESAR QR
        ===================================================== */
 
+    // Selector obligatorio, también disponible sin conexión.
+    function seleccionarGrupoGenerico(nombre) {
+      return new Promise(resolve => {
+        const panel = document.createElement('dialog');
+        panel.style.cssText = 'width:min(92vw,420px);border:0;border-radius:16px;padding:20px;background:white;color:#0f172a;box-shadow:0 8px 40px #0005';
+        const titulo = document.createElement('h2');
+        titulo.textContent = nombre;
+        titulo.style.color = nombre.endsWith('Hombre') ? '#1d4ed8' : '#be185d';
+        panel.append(titulo);
+        const ayuda = document.createElement('p'); ayuda.textContent = 'Selecciona el grupo'; panel.append(ayuda);
+        let terminado = false;
+        function finalizar(grupo) { if (terminado) return; terminado = true; panel.close(); panel.remove(); resolve(grupo); }
+        for (const grado of [1,2,3]) {
+          const fila = document.createElement('div'); fila.style.cssText = 'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0';
+          for (const letra of ['A','B','C','D']) {
+            const grupo = grado + '°' + letra;
+            const b = document.createElement('button'); b.type='button'; b.textContent=grupo;
+            b.style.cssText='padding:14px 0;border:1px solid #94a3b8;border-radius:8px;background:#f1f5f9;color:#0f172a;font-size:16px;font-weight:700';
+            b.onclick=()=>finalizar(grupo); fila.append(b);
+          } panel.append(fila);
+        }
+        const cancelar=document.createElement('button'); cancelar.type='button'; cancelar.textContent='Cancelar registro'; cancelar.style.cssText='width:100%;padding:12px;margin-top:12px'; cancelar.onclick=()=>finalizar(null); panel.append(cancelar);
+        panel.addEventListener('cancel', e=>{e.preventDefault(); finalizar(null);});
+        document.body.append(panel); panel.showModal();
+      });
+    }
+
     async function procesarQR(
       idQR
     ) {
@@ -1921,12 +1945,20 @@
 
 
         if (generico) {
-
+          qrBloqueado = true;
+          await detenerCamara();
+          document.getElementById("cameraStatus").textContent = "Selecciona el grupo · cámara detenida";
+          const grupo = await seleccionarGrupoGenerico(generico);
+          document.getElementById("cameraButton").hidden = false;
+          if (!grupo) {
+            mostrarResultado("ℹ️", "Registro cancelado", "Escanea nuevamente cuando estés listo.", "");
+            return;
+          }
           await registrarAlInstante(
             {
               activo: true,
               nombre: generico,
-              grupo: ""
+              grupo: grupo
             },
             idQR,
             generico
@@ -2278,7 +2310,8 @@
               idQR: asistencia.idQR,
               fecha: asistencia.fecha,
               hora: asistencia.hora,
-              evento: asistencia.evento
+              evento: asistencia.evento,
+              grupo: asistencia.grupo
             };
             const url = API_URL + "?action=sincronizar&datos=" +
               encodeURIComponent(JSON.stringify(datos)) +
@@ -2440,7 +2473,7 @@
               if (qrBloqueado || procesando || cambiandoModo) return;
               const codigo = String(decodedText || "").trim();
               if (!codigo) return;
-              if (modoEscaneo === "rapido") {
+              if (modoEscaneo === "rapido" && !Object.prototype.hasOwnProperty.call(QR_GENERICOS, codigo)) {
                 const ahora = Date.now();
                 const mismo = codigo === ultimoCodigoRapido;
                 // Un QR que permanece frente a la cámara no vuelve a procesarse.
@@ -2710,7 +2743,7 @@
     function actualizarInterfazModo() {
       const boton = document.getElementById("cameraButton");
       const ayuda = document.getElementById("scanModeHelp");
-      if (boton) boton.hidden = modoEscaneo === "rapido";
+      if (boton) boton.hidden = modoEscaneo === "rapido" && !!scanner && !qrBloqueado;
       if (ayuda) ayuda.textContent = modoEscaneo === "rapido"
         ? "Rápido: cámara continua. Retira cada QR antes de presentar otro."
         : "Normal: detiene la cámara después de cada lectura.";
