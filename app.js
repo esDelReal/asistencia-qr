@@ -2440,13 +2440,13 @@
               if (qrBloqueado || procesando || cambiandoModo) return;
               const codigo = String(decodedText || "").trim();
               if (!codigo) return;
-              if (modoEscaneo === "rapido" && !Object.prototype.hasOwnProperty.call(QR_GENERICOS, codigo)) {
+              if (modoEscaneo === "rapido") {
                 const ahora = Date.now();
                 const mismo = codigo === ultimoCodigoRapido;
                 // Un QR que permanece frente a la cámara no vuelve a procesarse.
                 // Se requiere que haya desaparecido durante un intervalo sostenido.
                 if (mismo && (ahora - ultimoCodigoRapidoEn < ESPERA_MISMO_QR_MS ||
-                    !inicioSinQR || ahora - inicioSinQR < AUSENCIA_QR_MS)) {
+                    !inicioSinQR || ahora - ultimoSinQR > 500 || ahora - inicioSinQR < AUSENCIA_QR_MS)) {
                   inicioSinQR = 0;
                   return;
                 }
@@ -2480,7 +2480,7 @@
               const ahora = Date.now();
               // El callback de fallo puede ocurrir intermitentemente aun con QR visible.
               // Solo se usa como señal de ausencia sostenida, no como prueba absoluta.
-              if (!inicioSinQR) inicioSinQR = ahora;
+              if (!inicioSinQR || ahora - ultimoSinQR > 500) inicioSinQR = ahora;
               ultimoSinQR = ahora;
             }
           );
