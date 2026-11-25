@@ -1216,6 +1216,7 @@
           true;
 
 
+        resumenServidor = data;
         const total =
           Number(
             data.totalActivos
@@ -1284,6 +1285,7 @@
           "%";
 
 
+        await refrescarContadoresLocales();
         actualizarConexion();
 
       }
@@ -1476,188 +1478,6 @@
      * La asistencia ya se mostró al operador.
      * Aquí se confirma con Google Sheets sin hacerlo esperar.
      */
-    async function confirmarConServidor(
-      registro
-    ) {
-
-      const controller =
-        new AbortController();
-
-
-      const timeout =
-        setTimeout(
-          function() {
-
-            controller.abort();
-
-          },
-          TIMEOUT_RED
-        );
-
-
-      try {
-
-        const url =
-          API_URL +
-          "?idQR=" +
-          encodeURIComponent(
-            registro.idQR
-          ) +
-          "&token=" + TOKEN +
-          "&t=" + Date.now();
-
-
-        const response =
-          await fetch(
-            url,
-            {
-              method: "GET",
-              cache: "no-store",
-              signal: controller.signal
-            }
-          );
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            "HTTP " +
-            response.status
-          );
-
-        }
-
-
-        const data =
-          await response.json();
-
-
-        internetReal = true;
-        actualizarConexion();
-
-
-        /* ======================================
-           CONFIRMADO (NUEVO O YA ESTABA)
-           ====================================== */
-
-        if (
-          data.ok === true ||
-          data.duplicado === true
-        ) {
-
-          await actualizarEstadoAsistencia(
-            registro.id,
-            "sincronizada"
-          );
-
-
-          void actualizarResumenAsistencia();
-
-          return;
-
-        }
-
-
-        /* ======================================
-           ALUMNO INACTIVO
-           ====================================== */
-
-        if (data.inactivo === true) {
-
-          await eliminarAsistencia(
-            registro.id
-          );
-
-
-          mostrarResultado(
-            "🚫",
-            "Alumno inactivo",
-            (data.nombre || registro.nombre) +
-            " · " +
-            (data.grupo || registro.grupo || "") +
-            "\n" +
-            (data.mensaje ||
-              "No tiene autorización para registrar asistencia."),
-            "error"
-          );
-
-          return;
-
-        }
-
-
-        /* ======================================
-           CÓDIGO NO RECONOCIDO POR EL SERVIDOR
-           ====================================== */
-
-        if (registro.generico) {
-
-          /*
-           * El servidor todavía no conoce los QR
-           * genéricos: el registro se conserva como
-           * pendiente para no perderlo.
-           */
-
-          await actualizarEstadoAsistencia(
-            registro.id,
-            "pendiente"
-          );
-
-          await actualizarPendientes();
-
-          return;
-
-        }
-
-
-        await eliminarAsistencia(
-          registro.id
-        );
-
-        await actualizarPendientes();
-
-
-        mostrarResultado(
-          "❌",
-          "Código no registrado",
-          data.mensaje ||
-          "El código QR no está registrado.",
-          "error"
-        );
-
-      }
-      catch(error) {
-
-        console.warn(
-          "Sin confirmación del servidor:",
-          error
-        );
-
-
-        internetReal = false;
-        actualizarConexion();
-
-
-        /* Se conserva para sincronizarlo después. */
-        await actualizarEstadoAsistencia(
-          registro.id,
-          "pendiente"
-        );
-
-        await actualizarPendientes();
-
-      }
-      finally {
-
-        clearTimeout(
-          timeout
-        );
-
-      }
-
-    }
-
-
     /* =====================================================
        REGISTRO INMEDIATO
        ===================================================== */
@@ -1814,8 +1634,9 @@
 
         /* "registrada": mostrada, pendiente de confirmar. */
         estado:
-          "registrada",
+          "pendiente",
 
+        evento: crypto.randomUUID(),
         generico:
           esGenerico
 
@@ -1871,29 +1692,10 @@
       );
 
 
-      if (enLinea) {
-
-        void confirmarConServidor(
-          registro
-        );
-
-      }
-      else {
-
-        internetReal = false;
-        actualizarConexion();
-
-
-        await actualizarEstadoAsistencia(
-          registro.id,
-          "pendiente"
-        );
-
-        await actualizarPendientes();
-
-        programarRetornoBannerOffline();
-
-      }
+      await actualizarPendientes();
+      await refrescarContadoresLocales();
+      if (enLinea && internetReal !== false) void sincronizarPendientes();
+      else programarRetornoBannerOffline();
 
     }
 
@@ -2115,8 +1917,7 @@
            QR GENÉRICO (SIN CREDENCIAL)
            ========================================== */
 
-        const generico =
-          QR_GENERICOS[idQR];
+        const generico = Object.prototype.hasOwnProperty.call(QR_GENERICOS, idQR) ? QR_GENERICOS[idQR] : null;
 
 
         if (generico) {
@@ -2140,27 +1941,8 @@
            RESPUESTA INMEDIATA CON LA COPIA LOCAL
            ========================================== */
 
-        if (navigator.onLine) {
-
-          const alumnoLocal =
-            await obtenerAlumnoLocal(
-              idQR
-            );
-
-
-          if (alumnoLocal) {
-
-            await registrarAlInstante(
-              alumnoLocal,
-              idQR
-            );
-
-            return;
-
-          }
-
-        }
-
+        const alumnoLocal = await obtenerAlumnoLocal(idQR);
+        if (alumnoLocal) { await registrarAlInstante(alumnoLocal, idQR); return; }
 
         /* ==========================================
            OFFLINE DIRECTO
@@ -2481,17 +2263,22 @@
         }
         for (const asistencia of pendientes) {
           if (!navigator.onLine) { errorDeRed = true; break; }
-          if (registrosEnRevision.has(asistencia.id)) {
+          if (false && registrosEnRevision.has(asistencia.id)) {
             requierenRevision++;
             continue;
           }
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), TIMEOUT_RED);
           try {
+            if (Object.prototype.hasOwnProperty.call(QR_GENERICOS, asistencia.idQR) && !asistencia.evento) {
+              asistencia.evento = crypto.randomUUID();
+              await guardarEventoExistente(asistencia);
+            }
             const datos = {
               idQR: asistencia.idQR,
               fecha: asistencia.fecha,
-              hora: asistencia.hora
+              hora: asistencia.hora,
+              evento: asistencia.evento
             };
             const url = API_URL + "?action=sincronizar&datos=" +
               encodeURIComponent(JSON.stringify(datos)) +
@@ -2503,12 +2290,12 @@
             const data = await response.json();
             // No borrar por respuestas ambiguas: solo éxito confirmado.
             if (data && data.duplicado === true && data.ok === true) {
-              await eliminarAsistencia(asistencia.id);
+              await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
               duplicadas++;
               duplicados.push(asistencia.nombre || asistencia.idQR);
               internetReal = true;
             } else if (data && data.ok === true) {
-              await eliminarAsistencia(asistencia.id);
+              await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
               registradas++;
               internetReal = true;
             } else {
@@ -2545,6 +2332,7 @@
       } finally {
         sincronizando = false;
         await actualizarPendientes();
+        await refrescarContadoresLocales();
         actualizarConexion();
         if (navigator.onLine) void actualizarResumenAsistencia();
         if (boton) boton.textContent = "Sincronizar pendientes";
@@ -2608,6 +2396,7 @@
         // Permitir la siguiente lectura antes de activar el decodificador.
         qrBloqueado = false;
         await iniciarCamara();
+        actualizarInterfazModo();
       } finally {
         if (boton) {
           boton.disabled = false;
@@ -2651,7 +2440,7 @@
               if (qrBloqueado || procesando || cambiandoModo) return;
               const codigo = String(decodedText || "").trim();
               if (!codigo) return;
-              if (modoEscaneo === "rapido") {
+              if (modoEscaneo === "rapido" && !Object.prototype.hasOwnProperty.call(QR_GENERICOS, codigo)) {
                 const ahora = Date.now();
                 const mismo = codigo === ultimoCodigoRapido;
                 // Un QR que permanece frente a la cámara no vuelve a procesarse.
@@ -2679,6 +2468,7 @@
                 }
               } else {
                 qrBloqueado = true;
+                document.getElementById("cameraButton").hidden = false;
                 await detenerCamara();
                 document.getElementById("cameraStatus").textContent =
                   "QR detectado · cámara detenida";
@@ -3190,6 +2980,7 @@
         datosInicialesListos = true;
         await actualizarTotalAlumnos();
         await actualizarPendientes();
+        await refrescarContadoresLocales();
         const alumnosLocales = await obtenerTodosLosAlumnos();
         if (alumnosLocales.length === 0 && !navigator.onLine) {
           mostrarResultado("⚠️", "Sin lista local de alumnos",
@@ -3240,3 +3031,35 @@
       "load",
       iniciarAplicacion
     );
+let resumenServidor = null;
+function guardarEventoExistente(registro) {
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction('asistencias','readwrite');
+    tx.objectStore('asistencias').put(registro);
+    tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+  });
+}
+async function refrescarContadoresLocales() {
+  const hoy = obtenerFecha();
+  const r = resumenServidor?.fecha === hoy ? resumenServidor : null;
+  const ids = new Set(r?.idsRegistrados || []);
+  const eventos = new Set(r?.eventos || []);
+  let h = Number(r?.hombresSinCredencial || 0), m = Number(r?.mujeresSinCredencial || 0);
+  const locales = await obtenerTodasLasAsistencias();
+  const activos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true);
+  const activosIds = new Set(activos.map(a => a.idQR));
+  for (const a of locales) {
+    if (a.fecha !== hoy) continue;
+    if (a.idQR === 'SINCREDENCIAL-HOMBRE' || a.idQR === 'SINCREDENCIAL-MUJER') {
+      if (a.evento && eventos.has(a.evento)) continue;
+      if (a.evento) eventos.add(a.evento);
+      if (a.idQR.endsWith('HOMBRE')) h++; else m++;
+    } else if (activosIds.has(a.idQR)) ids.add(a.idQR);
+  }
+  const n = [...ids].filter(id => activosIds.has(id)).length;
+  const total = activos.length;
+  const pct = total ? Math.round(n / total * 100) : 0;
+  const valores = {totalAlumnos:total,totalActivos:total,hanIngresado:n,faltanIngresar:Math.max(0,total-n),porcentajeAsistencia:pct+'%',sinCredencialH:h,sinCredencialM:m,totalAccesos:n+h+m};
+  for (const [id,v] of Object.entries(valores)) { const el=document.getElementById(id); if(el) el.textContent=v; }
+  document.getElementById('barraProgreso').style.width=pct+'%';
+}
