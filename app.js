@@ -835,7 +835,7 @@
         texto.textContent = "Verificando conexión...";
       } else if (internetReal === true) {
         status.classList.remove("offline");
-        texto.textContent = "Conectado · V17";
+        texto.textContent = "Conectado · V18";
       } else {
         status.classList.add("offline");
         texto.textContent = "Servidor sin respuesta · V17";
@@ -2216,15 +2216,7 @@
       }
       finally {
 
-        setTimeout(
-          function() {
-
-            procesando =
-              false;
-
-          },
-          600
-        );
+        procesando = false;
 
       }
 
@@ -2461,16 +2453,23 @@
           return;
         }
         camaraIniciando = true;
-        const instancia = new Html5Qrcode("reader");
+        const esIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const opciones = { verbose: false };
+        if (typeof Html5QrcodeSupportedFormats !== "undefined") {
+          opciones.formatsToSupport = [Html5QrcodeSupportedFormats.QR_CODE];
+        }
+        const instancia = new Html5Qrcode("reader", opciones);
         scanner = instancia;
         try {
           await instancia.start(
             { facingMode: "environment" },
             {
-              // Mismo recuadro de lectura en Android y Safari iOS.
-              fps: 10,
+              // Perfil moderado para Safari y mayor frecuencia en Android.
+              fps: esIOS ? 12 : 18,
+              disableFlip: true,
               qrbox: (width, height) => {
-                const lado = Math.max(100, Math.min(210, Math.floor(Math.min(width, height) * 0.70)));
+                const lado = Math.min(Math.floor(Math.min(width, height)), Math.max(50, Math.min(280, Math.floor(Math.min(width, height) * 0.75))));
                 return { width: lado, height: lado };
               }
             },
@@ -2500,13 +2499,14 @@
                 document.getElementById("cameraStatus").textContent = "Validando · cámara continua";
                 try {
                   await procesarQR(codigo);
-                  // procesarQR libera procesando con una demora de 600 ms.
-                  await dormir(700);
+                  // Pausa corta; el bloqueo del mismo QR sigue vigente.
+                  await dormir(120);
                 } finally {
                   if (modoEscaneo === "rapido") {
                     qrBloqueado = false;
                     document.getElementById("cameraStatus").textContent =
                       "Cámara activa · lista para otro QR";
+                    actualizarInterfazModo();
                   }
                 }
               } else {
@@ -2542,8 +2542,10 @@
           camaraDeseada = false;
           estadoVisualCamara(false);
           document.getElementById("cameraStatus").textContent = "Camara no disponible";
-          mostrarResultado("📷", "No se pudo iniciar la camara",
-            "Comprueba los permisos y pulsa Escanear siguiente alumno para reintentar.", "error");
+          actualizarInterfazModo();
+          const detalle = String(error?.name || error || "Error desconocido");
+          mostrarResultado("📷", "No se pudo iniciar la cámara",
+            "Comprueba los permisos y pulsa Escanear siguiente alumno.\nDetalle: " + detalle.slice(0, 180), "error");
         } finally {
           camaraIniciando = false;
         }
