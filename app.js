@@ -30,7 +30,9 @@
     let scanner = null;
 
     // Modos de cámara: no se guardan en IndexedDB ni afectan asistencias.
+    const CLAVE_MODO = "asistenciaQR.modoEscaneo";
     let modoEscaneo = "normal";
+    try { if (localStorage.getItem(CLAVE_MODO) === "rapido") modoEscaneo = "rapido"; } catch (_) {}
     let ultimoCodigoRapido = "";
     let ultimoCodigoRapidoEn = 0;
     let ultimoSinQR = 0;
@@ -49,6 +51,13 @@
     let db = null;
 
     let internetReal = null; // null = verificando; true = backend disponible; false = sin respuesta
+
+    let fallosRed = 0;
+    function registrarEstadoRed(ok) {
+      if (ok) { fallosRed = 0; internetReal = navigator.onLine ? true : false; }
+      else if (!navigator.onLine) { fallosRed = 2; internetReal = false; }
+      else if (++fallosRed >= 2) internetReal = false;
+    }
 
     /* Evita aceptar lecturas antes de disponer de la lista local de alumnos. */
     let datosInicialesListos = false;
@@ -101,7 +110,7 @@
      * se guarda automáticamente en el dispositivo.
      */
 
-    const TIMEOUT_RED = 9000; // margen para redes móviles lentas y Apps Script
+    const TIMEOUT_RED = 18000; // margen para redes móviles lentas y Apps Script
 
 
     /* Cada cuánto se vuelve a descargar la lista de alumnos. */
@@ -828,7 +837,7 @@
         texto.textContent = "Conectado";
       } else {
         status.classList.add("offline");
-        texto.textContent = "Conexión inestable";
+        texto.textContent = "Servidor sin respuesta";
       }
       status.dataset.modo = ahoraOffline ? "offline" : "online";
       if (ahoraOffline && !estabaOffline && !procesando && !sincronizando) {
@@ -933,8 +942,7 @@
           );
 
 
-          internetReal =
-            true;
+          registrarEstadoRed(true);
 
 
           actualizarConexion();
@@ -956,8 +964,7 @@
          * Se conserva para poder trabajar offline.
          */
 
-        internetReal =
-          false;
+        registrarEstadoRed(false);
 
 
         await actualizarTotalAlumnos();
@@ -1213,8 +1220,7 @@
 
         }
 
-        internetReal =
-          true;
+        registrarEstadoRed(true);
 
 
         resumenServidor = data;
@@ -1296,7 +1302,7 @@
           "No se pudo actualizar el resumen:",
           error
         );
-        internetReal = false;
+        registrarEstadoRed(false);
         actualizarConexion();
 
       }
@@ -1980,8 +1986,7 @@
 
         if (!navigator.onLine) {
 
-          internetReal =
-            false;
+          registrarEstadoRed(false);
 
 
           actualizarConexion();
@@ -2065,7 +2070,7 @@
             await response.json();
 
 
-          internetReal = true;
+          registrarEstadoRed(true);
           actualizarConexion();
 
 
@@ -2161,8 +2166,7 @@
           );
 
 
-          internetReal =
-            false;
+          registrarEstadoRed(false);
 
 
           actualizarConexion();
@@ -2325,11 +2329,11 @@
               await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
               duplicadas++;
               duplicados.push(asistencia.nombre || asistencia.idQR);
-              internetReal = true;
+              registrarEstadoRed(true);
             } else if (data && data.ok === true) {
               await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
               registradas++;
-              internetReal = true;
+              registrarEstadoRed(true);
             } else {
               registrosEnRevision.add(asistencia.id);
               requierenRevision++;
@@ -2338,7 +2342,7 @@
           } catch (error) {
             console.warn("Sincronización interrumpida; se conserva el registro:", error);
             errorDeRed = true;
-            internetReal = false;
+            registrarEstadoRed(false);
             break;
           } finally {
             clearTimeout(timeout);
@@ -2742,6 +2746,8 @@
     function actualizarInterfazModo() {
       const boton = document.getElementById("cameraButton");
       const ayuda = document.getElementById("scanModeHelp");
+      const interruptor = document.getElementById("scanModeToggle");
+      if (interruptor) interruptor.checked = modoEscaneo === "rapido";
       if (boton) boton.hidden = modoEscaneo === "rapido" && !!scanner && !qrBloqueado;
       if (ayuda) ayuda.textContent = modoEscaneo === "rapido"
         ? "Rápido: cámara continua. Retira cada QR antes de presentar otro."
@@ -2749,16 +2755,17 @@
     }
 
     async function cambiarModoEscaneo(nuevoModo) {
-      if (!["normal", "rapido"].includes(nuevoModo) || cambiandoModo) return;
+      if (!["normal", "rapido"].includes(nuevoModo) || cambiandoModo) { actualizarInterfazModo(); return; }
       if (nuevoModo === modoEscaneo) return;
       if (procesando || sincronizando || procesandoColaLector) {
-        document.querySelector(`input[name="scanMode"][value="${modoEscaneo}"]`).checked = true;
+        actualizarInterfazModo();
         mostrarResultado("⏳", "Espera un momento", "Termina la lectura actual antes de cambiar de modo.", "");
         return;
       }
       cambiandoModo = true;
       try {
         modoEscaneo = nuevoModo;
+        try { localStorage.setItem(CLAVE_MODO, nuevoModo); } catch (_) {}
         ultimoCodigoRapido = "";
         inicioSinQR = 0;
         actualizarInterfazModo();
@@ -2790,10 +2797,8 @@
       }
     }
 
-    document.querySelectorAll('input[name="scanMode"]').forEach(control => {
-      control.addEventListener("change", evento => {
-        if (evento.target.checked) void cambiarModoEscaneo(evento.target.value);
-      });
+    document.getElementById("scanModeToggle")?.addEventListener("change", evento => {
+      void cambiarModoEscaneo(evento.target.checked ? "rapido" : "normal");
     });
     document.getElementById("recoverCameraButton")?.addEventListener("click", reiniciarCamaraManual);
     actualizarInterfazModo();
@@ -2801,6 +2806,7 @@
     window.addEventListener(
       "online",
       function() {
+        fallosRed = 0;
         internetReal = null;
         actualizarConexion();
 
@@ -2820,7 +2826,7 @@
       "offline",
       function() {
 
-        internetReal = false;
+        registrarEstadoRed(false);
 
         actualizarConexion();
 
@@ -2923,9 +2929,16 @@
        ACTUALIZACIÓN EN SEGUNDO PLANO
        ===================================================== */
 
+    let actualizacionFondoEnCurso = false;
     async function actualizarDatosEnSegundoPlano() {
+      if (actualizacionFondoEnCurso) return;
+      actualizacionFondoEnCurso = true;
+      try { await ejecutarActualizacionFondo(); }
+      finally { actualizacionFondoEnCurso = false; }
+    }
+    async function ejecutarActualizacionFondo() {
       if (!navigator.onLine) {
-        internetReal = false;
+        registrarEstadoRed(false);
         actualizarConexion();
         actualizarEstadoLista();
         return;
@@ -2965,7 +2978,7 @@
       if (!db || document.hidden || revisionConexionEnCurso || sincronizando || procesando) return;
       if (!navigator.onLine) {
         if (internetReal !== false) {
-          internetReal = false;
+          registrarEstadoRed(false);
           actualizarConexion();
         }
         return;
