@@ -1,27 +1,32 @@
+let seSesion=null, seDispositivo='', seBloqueado=false;
+let seSoloLector=false;
+function seActivo(){return !seBloqueado && !!seSesion && Date.now()<seSesion.exp;}
+async function sePeticion(p,signal){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(p),cache:'no-store',signal});}
+async function seFetch(action,opts={}){
+  if(!seActivo()) throw new Error('Sesión no activa');
+  const r=await sePeticion({action,datos:opts.datos,token:seSesion.token,dispositivo:seDispositivo},opts.signal);
+  const d=await r.clone().json(); if(d.auth===false){seCerrar();throw new Error('Acceso revocado');} return r;
+}
+function seCerrar(){seBloqueado=true;seSesion=null;document.querySelector('main.app').hidden=true;document.getElementById('seAcceso').hidden=false;document.getElementById('seMensaje').textContent='Sesión cerrada. Los pendientes se conservan.';void detenerCamara();}
+function seInicio(){
+  registrarServiceWorker();
+  try {seDispositivo=localStorage.getItem('seDispositivo')||Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem('seDispositivo',seDispositivo);}catch(e){document.getElementById('seMensaje').textContent='Almacenamiento seguro no disponible';return;}
+  document.getElementById('seForm').addEventListener('submit',async e=>{
+    e.preventDefault(); const f=e.currentTarget, b=e.submitter, m=document.getElementById('seMensaje');if(!b)return;const action=b.value; const pin=f.elements.pin.value;f.elements.pin.value='';
+    for(const x of f.querySelectorAll('button'))x.disabled=true;
+    try {const r=await sePeticion({action,usuario:f.elements.usuario.value.trim(),nombre:f.elements.nombre.value.trim(),pin,dispositivo:seDispositivo},AbortSignal.timeout?AbortSignal.timeout(15000):undefined);const d=await r.json();m.textContent=d.mensaje||'';if(action==='login'&&d.ok&&d.token&&Number(d.exp)>Date.now()){seSesion=d;seBloqueado=false;document.getElementById('seAcceso').hidden=true;document.querySelector('main.app').hidden=false;await iniciarAplicacion();}}
+    catch(err){m.textContent='No fue posible conectar con el servidor.';}finally{for(const x of f.querySelectorAll('button'))x.disabled=false;}
+  });
+  document.getElementById('seLector').onchange=async e=>{seSoloLector=e.target.checked; if(seSoloLector){await detenerCamara();document.getElementById('cameraStatus').textContent='Lector HID activo · cámara apagada';}else if(seActivo()) await iniciarCamara();};
+  document.getElementById('seSalir').onclick=()=>{seCerrar();location.reload();};
+  setInterval(()=>{if(seSesion&&!seActivo())seCerrar();},1000);
+}
 /* =====================================================
        CONFIGURACIÓN
        ===================================================== */
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyCnVZ4mkq92Cx788c-FJFcnwxw4OW8IWAGWwIMv-sMB1iwz1E2eIwfqzBeTOG4Ootr/exec";
    
-    /*
-     * Token de acceso a la Apps Script.
-     *
-     * Se envía en cada petición y Apps Script
-     * lo valida antes de responder.
-     *
-     * Debe coincidir con el valor guardado en
-     * Script Properties > TOKEN.
-     *
-     * Al estar en el cliente, cualquiera puede
-     * leerlo: sube la barrera, no sustituye
-     * una autenticación real.
-     */
-
-    const TOKEN =
-      "qr-asistencia-7f3c9b21e84d4a6c9f05b2d7e1a3c8f4";
-
-
     /* =====================================================
        VARIABLES
        ===================================================== */
@@ -835,10 +840,10 @@
         texto.textContent = "Verificando conexión...";
       } else if (internetReal === true) {
         status.classList.remove("offline");
-        texto.textContent = "Conectado · V18";
+        texto.textContent = "Conectado · V.SE";
       } else {
         status.classList.add("offline");
-        texto.textContent = "Servidor sin respuesta · V17";
+        texto.textContent = "Servidor sin respuesta · V.SE";
       }
       status.dataset.modo = ahoraOffline ? "offline" : "online";
       if (ahoraOffline && !estabaOffline && !procesando && !sincronizando) {
@@ -897,12 +902,8 @@
 
 
         const response =
-          await fetch(
-            API_URL +
-            "?action=alumnos&token=" +
-            TOKEN +
-            "&t=" +
-            Date.now(),
+          await seFetch(
+            "alumnos",
             {
               method: "GET",
               cache: "no-store",
@@ -1195,12 +1196,8 @@
 
 
         const response =
-          await fetch(
-            API_URL +
-            "?action=resumen&token=" +
-            TOKEN +
-            "&t=" +
-            Date.now(),
+          await seFetch(
+            "resumen",
             {
               method: "GET",
               cache: "no-store",
@@ -1229,10 +1226,10 @@
           await response.json();
 
 
-        if (!data.ok || data.version !== 17 || data.fecha !== obtenerFecha() || !Array.isArray(data.idsRegistrados) || !Array.isArray(data.eventos)) {
+        if (!data.ok || data.version !== "V.SE" || data.fecha !== obtenerFecha() || !Array.isArray(data.idsRegistrados) || !Array.isArray(data.eventos)) {
           const texto = document.getElementById("connectionText");
-          if (texto) texto.textContent = "Revisar servidor V17 / fecha";
-          throw new Error("Resumen incompatible: verificar implementación V17 y zona horaria");
+          if (texto) texto.textContent = "Revisar servidor V.SE / fecha";
+          throw new Error("Resumen incompatible: verificar implementación V.SE y zona horaria");
         }
         if (revision !== revisionConfirmaciones || sincronizando) return false;
         registrarEstadoRed(true);
@@ -1524,6 +1521,7 @@
       idQR,
       nombreGenerico, sinCredencial = false, generoQR = ""
     ) {
+      if (!seActivo()) return;
 
       const esGenerico =
         Boolean(nombreGenerico);
@@ -1732,6 +1730,7 @@
     async function registrarOffline(
       idQR
     ) {
+      if (!seActivo()) return;
 
       try {
 
@@ -1933,6 +1932,7 @@
     async function procesarQR(
       idQR
     ) {
+      if (!seActivo()) return;
 
       /*
        * Evita que el mismo QR sea procesado
@@ -2021,181 +2021,12 @@
         }
 
 
-        /* ==========================================
-           INTENTAR SERVIDOR
-           ========================================== */
-
-        mostrarResultado(
-          "⏳",
-          "Procesando...",
-          "Validando asistencia",
-          ""
-        );
-
-
-        const controller =
-          new AbortController();
-
-
-        const timeout =
-          setTimeout(
-            function() {
-
-              controller.abort();
-
-            },
-            TIMEOUT_RED
-          );
-
-
-        try {
-
-          const url =
-            API_URL +
-            "?idQR=" +
-            encodeURIComponent(
-              idQR
-            ) +
-            "&token=" +
-            TOKEN +
-            "&t=" +
-            Date.now();
-
-
-          const response =
-            await fetch(
-              url,
-              {
-                method: "GET",
-                cache: "no-store",
-                signal: controller.signal
-              }
-            );
-
-          clearTimeout(timeout);
-
-
-          if (!response.ok) {
-
-            throw new Error(
-              "HTTP " +
-              response.status
-            );
-
-          }
-
-
-          const data =
-            await response.json();
-
-
-          registrarEstadoRed(true);
-          actualizarConexion();
-
-
-          /* ========================================
-             ASISTENCIA DUPLICADA (PRIORIDAD)
-             ======================================== */
-
-          if (data.duplicado === true) {
-
-            mostrarResultado(
-              "⚠️",
-              "Asistencia previamente registrada",
-              (data.nombre || "Alumno") +
-              " · " + (data.grupo || "") +
-              "\nRegistro original: " + (data.hora || "No disponible") +
-              "\nEstado: " + (data.estatus || calcularEstatusEntrada(data.hora)) +
-              "\nNo se generó una nueva asistencia.",
-              "error"
-            );
-
-            actualizarResumenAsistencia();
-
-          }
-
-          /* ========================================
-             ASISTENCIA NUEVA
-             ======================================== */
-
-          else if (data.ok === true) {
-
-            mostrarResultado(
-              "✓",
-              "Asistencia registrada",
-              data.nombre + " · " + data.grupo +
-              "\nHora: " + data.hora +
-              "\nEstado: " +
-              (data.estatus || calcularEstatusEntrada(data.hora)),
-              "success"
-            );
-
-            actualizarResumenAsistencia();
-
-          }
-
-
-          /* ========================================
-             ALUMNO INACTIVO
-             ======================================== */
-
-          else if (data.inactivo) {
-
-            mostrarResultado(
-              "🚫",
-              "Alumno inactivo",
-              data.nombre +
-              " · " +
-              data.grupo +
-              "\n" +
-              data.mensaje,
-              "error"
-            );
-
-          }
-
-
-          /* ========================================
-             CÓDIGO DESCONOCIDO
-             ======================================== */
-
-          else {
-
-            mostrarResultado(
-              "❌",
-              "Código no registrado",
-              data.mensaje ||
-              "El código QR no está registrado.",
-              "error"
-            );
-
-          }
-
-        }
-        catch(error) {
-
-          clearTimeout(
-            timeout
-          );
-
-
-          console.warn(
-            "Servidor no disponible:",
-            error
-          );
-
-
-          registrarEstadoRed(false);
-
-
-          actualizarConexion();
-
-
-          await registrarOffline(
-            idQR
-          );
-
-        }
+        // Un QR desconocido exige actualizar el catálogo, no escribir directamente.
+        await cargarAlumnos();
+        if (!seActivo()) return;
+        const actualizado = await obtenerAlumnoLocal(idQR);
+        if (actualizado) await registrarAlInstante(actualizado,idQR);
+        else mostrarResultado("❌","Código no registrado","Verifica el catálogo de alumnos.","error");
 
       }
       catch(error) {
@@ -2289,6 +2120,7 @@
        ===================================================== */
 
     async function sincronizarPendientes() {
+      if (!seActivo()) return;
       if (sincronizando || !navigator.onLine || !db) {
         await actualizarPendientes();
         return;
@@ -2324,11 +2156,9 @@
               grupo: asistencia.grupo,
               tipo: asistencia.tipo, genero: asistencia.genero
             };
-            const url = API_URL + "?action=sincronizar&datos=" +
-              encodeURIComponent(JSON.stringify(datos)) +
-              "&token=" + encodeURIComponent(TOKEN) + "&t=" + Date.now();
-            const response = await fetch(url, {
-              method: "GET", cache: "no-store", signal: controller.signal
+            const url = "sincronizar";
+            const response = await seFetch(url, {
+              method: "GET", cache: "no-store", signal: controller.signal, datos
             });
             if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
@@ -2350,7 +2180,7 @@
             } else {
               registrosEnRevision.add(asistencia.id);
               requierenRevision++;
-              console.warn("Asistencia pendiente de revisión:", asistencia.id, data);
+              console.warn("Asistencia pendiente de revisión:", asistencia.id);
             }
           } catch (error) {
             console.warn("Sincronización interrumpida; se conserva el registro:", error);
@@ -2441,6 +2271,7 @@
     }
 
     function iniciarCamara() {
+      if (!seActivo() || seSoloLector) return;
       camaraDeseada = true;
       return encolarOperacionCamara(async () => {
         if (scanner || camaraIniciando) return;
@@ -2680,6 +2511,7 @@
 
 
     function manejarTeclaDelLector(evento) {
+      if (!seActivo()) return;
 
       const destino = evento.target;
 
@@ -2850,6 +2682,7 @@
        ===================================================== */
 
     async function recuperarAplicacion() {
+      if (!seActivo()) return;
       if (document.hidden || recuperacionEnCurso) return;
       if (Date.now() - ultimaRecuperacion < 1500) return;
       ultimaRecuperacion = Date.now();
@@ -2940,6 +2773,7 @@
 
     let actualizacionFondoEnCurso = false;
     async function actualizarDatosEnSegundoPlano() {
+      if (!seActivo()) return;
       if (actualizacionFondoEnCurso) return;
       actualizacionFondoEnCurso = true;
       try { await ejecutarActualizacionFondo(); }
@@ -2984,6 +2818,7 @@
        ===================================================== */
 
     async function revisarConexionYPendientes() {
+      if (!seActivo()) return;
       if (!db || document.hidden || revisionConexionEnCurso || sincronizando || procesando) return;
       if (!navigator.onLine) {
         if (internetReal !== false) {
@@ -3053,7 +2888,7 @@
           error
         );
 
-        datosInicialesListos = true;
+        datosInicialesListos = false;
 
         mostrarResultado(
           "⚠️",
@@ -3083,7 +2918,7 @@
 
     window.addEventListener(
       "load",
-      iniciarAplicacion
+      seInicio
     );
 let resumenServidor = null;
 function guardarEventoExistente(registro) {
