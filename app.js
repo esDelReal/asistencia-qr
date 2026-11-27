@@ -740,6 +740,7 @@
        MOSTRAR RESULTADO
        ===================================================== */
 
+    let eventoVisible = null;
     function mostrarResultado(
       icono,
       titulo,
@@ -747,6 +748,7 @@
       clase
     ) {
 
+      eventoVisible = null;
       const resultado =
         document.getElementById(
           "resultado"
@@ -1133,7 +1135,18 @@
        RESUMEN
        ===================================================== */
 
-    async function actualizarResumenAsistencia() {
+    let consultaResumen = null;
+    let revisionConfirmaciones = 0;
+    async function actualizarResumenAsistencia(forzar = false) {
+      if (consultaResumen) {
+        await consultaResumen;
+        if (!forzar) return;
+      }
+      if (consultaResumen) return consultaResumen;
+      consultaResumen = consultarResumen(forzar);
+      try { await consultaResumen; } finally { consultaResumen = null; }
+    }
+    async function consultarResumen(forzar) {
 
       if (!navigator.onLine) {
 
@@ -1149,7 +1162,7 @@
        */
 
       if (
-        Date.now() - ultimoResumen < 4000
+        !forzar && Date.now() - ultimoResumen < 4000
       ) {
 
         return;
@@ -1163,6 +1176,8 @@
 
       try {
 
+        const revision = revisionConfirmaciones;
+        const confirmadas = (await obtenerTodasLasAsistencias()).filter(a => a.estado === "sincronizada" && a.fecha === obtenerFecha());
         const controller =
           new AbortController();
 
@@ -1222,6 +1237,18 @@
         registrarEstadoRed(true);
 
 
+        if (data.fecha !== obtenerFecha() || !Array.isArray(data.idsRegistrados) || !Array.isArray(data.eventos)) return;
+        if (revision !== revisionConfirmaciones || sincronizando) return;
+        const idsServidor = new Set(data.idsRegistrados);
+        const eventosServidor = new Set(data.eventos);
+        // Solo retirar confirmaciones previas ausentes del resumen válido del día.
+        // Nunca borrar pendientes ni confirmaciones creadas durante la consulta.
+        for (const a of confirmadas) {
+          const generico = Object.prototype.hasOwnProperty.call(QR_GENERICOS, a.idQR);
+          if (generico ? (a.evento && !eventosServidor.has(a.evento)) : !idsServidor.has(a.idQR)) {
+            await eliminarAsistencia(a.id);
+          }
+        }
         resumenServidor = data;
         const total =
           Number(
@@ -1318,6 +1345,12 @@
       fecha
     ) {
 
+      if (navigator.onLine && !sincronizando) {
+        const previas = await obtenerTodasLasAsistencias();
+        if (previas.some(a => a.estado === "sincronizada" && a.fecha === fecha && String(a.idQR).trim() === String(idQR).trim())) {
+          await actualizarResumenAsistencia(true);
+        }
+      }
       const asistencias =
         await obtenerTodasLasAsistencias();
 
@@ -1600,7 +1633,7 @@
             nombre +
             " · " +
             grupo +
-            "\nYa fue registrado hoy.",
+            "\nID: " + idQR + " · Registro existente en este dispositivo.",
             "error"
           );
 
@@ -1684,19 +1717,20 @@
         esGenerico ? "🪪" : "✓",
         esGenerico
           ? nombre
-          : "Asistencia registrada",
+          : "Asistencia guardada",
         (esGenerico
           ? "Alumno sin credencial · " + grupo
           : nombre + " · " + grupo + (sinCredencial ? " · Sin credencial · " + (generoQR === "H" ? "Hombre" : "Mujer") : "")) +
         "\nHora: " + hora +
         "\nEstado: " + estatus +
         (enLinea
-          ? ""
+          ? "\nPendiente de confirmación en Sheets."
           : "\nSin conexión. Pendiente de sincronizar."),
-        enLinea ? "success" : "offline"
+        "offline"
       );
 
 
+      eventoVisible = registro.evento;
       await actualizarPendientes();
       await refrescarContadoresLocales();
       if (enLinea && internetReal !== false) void sincronizarPendientes();
@@ -1804,7 +1838,7 @@
             alumno.nombre +
             " · " +
             alumno.grupo +
-            "\nYa fue registrado hoy.",
+            "\nID: " + idQR + " · Registro existente en este dispositivo.",
             "error"
           );
 
@@ -2287,7 +2321,7 @@
       let duplicadas = 0;
       let requierenRevision = 0;
       let errorDeRed = false;
-      const duplicados = [];
+      
       try {
         const pendientes = await obtenerPendientes();
         if (boton) {
@@ -2296,14 +2330,11 @@
         }
         for (const asistencia of pendientes) {
           if (!navigator.onLine) { errorDeRed = true; break; }
-          if (false && registrosEnRevision.has(asistencia.id)) {
-            requierenRevision++;
-            continue;
-          }
+          
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), TIMEOUT_RED);
           try {
-            if (Object.prototype.hasOwnProperty.call(QR_GENERICOS, asistencia.idQR) && !asistencia.evento) {
+            if (!asistencia.evento) {
               asistencia.evento = crypto.randomUUID();
               await guardarEventoExistente(asistencia);
             }
@@ -2323,16 +2354,21 @@
             });
             if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
-            // No borrar por respuestas ambiguas: solo éxito confirmado.
-            if (data && data.duplicado === true && data.ok === true) {
+            const coincide = data && data.ok === true &&
+              String(data.idQR || "").trim() === String(asistencia.idQR).trim() &&
+              data.fecha === asistencia.fecha && data.eventoSolicitud === asistencia.evento &&
+              (data.duplicado === true || data.evento === asistencia.evento);
+            if (coincide) {
+              revisionConfirmaciones++;
               await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
-              duplicadas++;
-              duplicados.push(asistencia.nombre || asistencia.idQR);
+              const duplicadoReal = data.duplicado === true && data.evento !== asistencia.evento;
+              if (duplicadoReal) duplicadas++; else registradas++;
               registrarEstadoRed(true);
-            } else if (data && data.ok === true) {
-              await actualizarEstadoAsistencia(asistencia.id, "sincronizada");
-              registradas++;
-              registrarEstadoRed(true);
+              if (eventoVisible === asistencia.evento) {
+                mostrarResultado(duplicadoReal ? "⚠️" : "✓", duplicadoReal ? "Asistencia previamente registrada" : "Asistencia confirmada",
+                  asistencia.nombre + " · " + asistencia.grupo + " · " + asistencia.idQR +
+                  "\nHora: " + (data.hora || asistencia.hora) + "\nEstado: " + (data.estatus || asistencia.estatus), duplicadoReal ? "error" : "success");
+              }
             } else {
               registrosEnRevision.add(asistencia.id);
               requierenRevision++;
@@ -2347,21 +2383,7 @@
             clearTimeout(timeout);
           }
         }
-        // Mostrar un resumen solo cuando hubo actividad real; no borrar resultados
-        // de un escaneo con una sincronización vacía en segundo plano.
-        if (duplicadas > 0) {
-          mostrarResultado("⚠️", "Duplicado detectado durante la sincronización",
-            "Duplicadas: " + duplicadas + " (sin filas adicionales en Sheets)." +
-            "\nAlumnos: " + duplicados.join(", ") +
-            "\nRegistradas: " + registradas +
-            (requierenRevision ? "\nPor revisar: " + requierenRevision : ""), "error");
-        } else if (requierenRevision > 0) {
-          mostrarResultado("⚠️", "Pendientes por revisar",
-            requierenRevision + " asistencia(s) no confirmadas; permanecen guardadas en este dispositivo.", "error");
-        } else if (registradas > 0 && !errorDeRed) {
-          mostrarResultado("✓", "Sincronización finalizada",
-            registradas + " asistencia(s) enviadas correctamente a Google Sheets.", "success");
-        }
+        if (requierenRevision) console.warn("Pendientes por revisar:", requierenRevision);
       } catch (error) {
         console.error("Error sincronizando:", error);
       } finally {
@@ -2369,7 +2391,7 @@
         await actualizarPendientes();
         await refrescarContadoresLocales();
         actualizarConexion();
-        if (navigator.onLine) void actualizarResumenAsistencia();
+        if (navigator.onLine) void actualizarResumenAsistencia(true);
         if (boton) boton.textContent = "Sincronizar pendientes";
       }
     }
