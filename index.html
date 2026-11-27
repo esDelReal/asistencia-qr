@@ -31,11 +31,7 @@
       <div class="resumen-asistencia"><div class="tarjeta-resumen"><div class="titulo-resumen">Sin credencial H</div><div id="sinCredencialH" class="numero-resumen">0</div></div><div class="tarjeta-resumen"><div class="titulo-resumen">Sin credencial M</div><div id="sinCredencialM" class="numero-resumen">0</div></div><div class="tarjeta-resumen"><div class="titulo-resumen">Total accesos</div><div id="totalAccesos" class="numero-resumen">0</div></div></div>
       <div class="barra-asistencia"><div class="barra-superior"><span>Asistencia identificada</span><strong id="porcentajeAsistencia">0%</strong></div><div class="barra-fondo"><div id="barraProgreso" class="barra-progreso"></div></div></div>
       <div class="camera-header"><span class="camera-title">Escáner QR</span><span id="cameraStatus" class="camera-status">Iniciando...</span></div>
-      <fieldset class="scan-mode" aria-label="Modo de escaneo">
-        <legend>Modo de lectura</legend>
-        <label><input type="radio" name="scanMode" value="normal" checked><span>Normal</span></label>
-        <label><input type="radio" name="scanMode" value="rapido"><span>Rápido</span></label>
-      </fieldset>
+      <div class="modo-compacto"><label for="scanModeToggle">Modo rápido</label><input id="scanModeToggle" type="checkbox" role="switch" aria-describedby="scanModeHelp"></div>
       <p id="scanModeHelp" class="scan-mode-help">Normal: detiene la cámara después de cada lectura.</p>
       <div class="camera-wrapper"><div id="reader"></div></div>
       <button id="cameraButton" class="sync-button" type="button" onclick="reanudarEscaneo()">Escanear siguiente alumno</button>
