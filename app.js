@@ -328,6 +328,7 @@
                 grupo:
                   alumno.grupo || "",
 
+                genero: alumno.genero || "",
                 activo:
                   normalizarActivo(alumno.activo)
 
@@ -1497,7 +1498,7 @@
     async function registrarAlInstante(
       alumno,
       idQR,
-      nombreGenerico
+      nombreGenerico, sinCredencial = false
     ) {
 
       const esGenerico =
@@ -1634,6 +1635,8 @@
           "pendiente",
 
         evento: crypto.randomUUID(),
+        tipo: sinCredencial ? "Sin credencial" : "Con credencial",
+        genero: sinCredencial ? alumno.genero : "",
         generico:
           esGenerico
 
@@ -1954,15 +1957,10 @@
             mostrarResultado("ℹ️", "Registro cancelado", "Escanea nuevamente cuando estés listo.", "");
             return;
           }
-          await registrarAlInstante(
-            {
-              activo: true,
-              nombre: generico,
-              grupo: grupo
-            },
-            idQR,
-            generico
-          );
+          const sexo = idQR.endsWith('HOMBRE') ? 'H' : 'M';
+          const alumno = await seleccionarAlumnoSinCredencial(grupo, sexo);
+          if (!alumno) { mostrarResultado('ℹ️','Registro cancelado','No se registró asistencia.',''); return; }
+          await registrarAlInstante(alumno, alumno.idQR, null, true);
 
           return;
 
@@ -2311,7 +2309,8 @@
               fecha: asistencia.fecha,
               hora: asistencia.hora,
               evento: asistencia.evento,
-              grupo: asistencia.grupo
+              grupo: asistencia.grupo,
+              tipo: asistencia.tipo, genero: asistencia.genero
             };
             const url = API_URL + "?action=sincronizar&datos=" +
               encodeURIComponent(JSON.stringify(datos)) +
@@ -3078,6 +3077,7 @@ async function refrescarContadoresLocales() {
   const ids = new Set(r?.idsRegistrados || []);
   const eventos = new Set(r?.eventos || []);
   let h = Number(r?.hombresSinCredencial || 0), m = Number(r?.mujeresSinCredencial || 0);
+  let anonimos = Number(r?.anonimos || 0);
   const locales = await obtenerTodasLasAsistencias();
   const activos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true);
   const activosIds = new Set(activos.map(a => a.idQR));
@@ -3086,13 +3086,29 @@ async function refrescarContadoresLocales() {
     if (a.idQR === 'SINCREDENCIAL-HOMBRE' || a.idQR === 'SINCREDENCIAL-MUJER') {
       if (a.evento && eventos.has(a.evento)) continue;
       if (a.evento) eventos.add(a.evento);
-      if (a.idQR.endsWith('HOMBRE')) h++; else m++;
-    } else if (activosIds.has(a.idQR)) ids.add(a.idQR);
+      if (a.idQR.endsWith('HOMBRE')) h++; else m++; anonimos++;
+    } else if (activosIds.has(a.idQR)) { if (!ids.has(a.idQR) && a.tipo === "Sin credencial") { if(a.genero === "H") h++; if(a.genero === "M") m++; } ids.add(a.idQR); }
   }
   const n = [...ids].filter(id => activosIds.has(id)).length;
   const total = activos.length;
   const pct = total ? Math.round(n / total * 100) : 0;
-  const valores = {totalAlumnos:total,totalActivos:total,hanIngresado:n,faltanIngresar:Math.max(0,total-n),porcentajeAsistencia:pct+'%',sinCredencialH:h,sinCredencialM:m,totalAccesos:n+h+m};
+  const valores = {totalAlumnos:total,totalActivos:total,hanIngresado:n,faltanIngresar:Math.max(0,total-n),porcentajeAsistencia:pct+'%',sinCredencialH:h,sinCredencialM:m,totalAccesos:n+anonimos};
   for (const [id,v] of Object.entries(valores)) { const el=document.getElementById(id); if(el) el.textContent=v; }
   document.getElementById('barraProgreso').style.width=pct+'%';
+}
+async function seleccionarAlumnoSinCredencial(grupo, sexo) {
+  const alumnos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true && a.grupo === grupo && a.genero === sexo);
+  const normal = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return new Promise(resolve => {
+    const panel = document.createElement('dialog'); panel.className='selector-alumno';
+    const titulo = document.createElement('h2'); titulo.textContent = grupo+' · '+(sexo==='H'?'Hombres':'Mujeres'); panel.append(titulo);
+    const input = document.createElement('input'); input.placeholder='Buscar nombre o apellido'; input.type='search'; panel.append(input);
+    const lista = document.createElement('div'); lista.className='lista-alumnos'; panel.append(lista);
+    const confirmar = document.createElement('button'); confirmar.textContent='Registrar asistencia'; confirmar.disabled=true;
+    let elegido=null; let terminado=false;
+    const cerrar = v => { if(terminado)return; terminado=true; panel.close();panel.remove();resolve(v); };
+    function mostrar(){ elegido=null; confirmar.disabled=true; lista.replaceChildren(); const q=normal(input.value).trim().split(/\s+/); const encontrados=alumnos.filter(a=>q.every(x=>normal(a.nombre).includes(x))); if(!encontrados.length){lista.textContent='Sin coincidencias. Verifica el grupo y actualiza el catálogo con Genero H/M.';return;} for(const a of encontrados){const b=document.createElement('button'); b.type='button'; b.textContent=a.nombre+' · '+a.idQR; b.onclick=()=>{elegido=a;confirmar.disabled=false;for(const otro of lista.children)otro.classList.toggle('seleccionado',otro===b);};lista.append(b);} }
+    input.oninput=mostrar; confirmar.onclick=()=>{if(elegido)cerrar(elegido);};panel.append(confirmar);
+    const cancelar=document.createElement('button'); cancelar.textContent='Cancelar';cancelar.onclick=()=>cerrar(null);panel.append(cancelar);panel.addEventListener('cancel',e=>{e.preventDefault();cerrar(null);});document.body.append(panel);panel.showModal();mostrar();
+  });
 }
