@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./estilos.css">
 </head>
 <body>
-  <main class="app">
+  <section id="seAcceso" class="se-acceso"><h1>Asistencia QR · V.SE</h1><p>Acceso exclusivo para operadores autorizados</p><form id="seForm"><label>Nombre completo (solo alta)<input name="nombre" maxlength="100" autocomplete="name"></label><label>Usuario<input name="usuario" required maxlength="40" autocomplete="username"></label><label>PIN de seis dígitos<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="current-password"></label><button type="submit" value="login">Iniciar sesión</button><button type="submit" value="alta">Solicitar acceso</button></form><p id="seMensaje" role="status"></p></section><main class="app" hidden>
     <header class="header"><div class="header-row">
       <div><h1 class="title">Secundaria N° 101 "Ludwig Van Beethoven"</h1><p class="subtitle">Control de Asistencia</p></div>
       <div id="connectionStatus" class="connection"><span class="connection-dot"></span><span id="connectionText">Conectado</span></div>
@@ -30,7 +30,7 @@
       </div>
       <div class="resumen-asistencia"><div class="tarjeta-resumen"><div class="titulo-resumen">Sin credencial H</div><div id="sinCredencialH" class="numero-resumen">0</div></div><div class="tarjeta-resumen"><div class="titulo-resumen">Sin credencial M</div><div id="sinCredencialM" class="numero-resumen">0</div></div><div class="tarjeta-resumen"><div class="titulo-resumen">Total accesos</div><div id="totalAccesos" class="numero-resumen">0</div></div></div>
       <div class="barra-asistencia"><div class="barra-superior"><span>Asistencia identificada</span><strong id="porcentajeAsistencia">0%</strong></div><div class="barra-fondo"><div id="barraProgreso" class="barra-progreso"></div></div></div>
-      <div class="camera-header"><span class="camera-title">Escáner QR</span><span id="cameraStatus" class="camera-status">Iniciando...</span></div>
+      <label><input type="checkbox" id="seLector"> Solo lector USB/Bluetooth (HID)</label><div class="camera-header"><span class="camera-title">Escáner QR</span><span id="cameraStatus" class="camera-status">Iniciando...</span></div>
       <div class="modo-compacto"><label for="scanModeToggle">Modo rápido</label><input id="scanModeToggle" type="checkbox" role="switch" aria-describedby="scanModeHelp"></div>
       <p id="scanModeHelp" class="scan-mode-help">Normal: detiene la cámara después de cada lectura.</p>
       <div class="camera-wrapper"><div id="reader"></div></div>
@@ -41,7 +41,7 @@
       </div>
       <button id="syncButton" class="sync-button" type="button" disabled>Sincronizar pendientes</button>
     </section>
-    <footer class="footer">Sistema de asistencia QR</footer>
+    <footer class="footer">Sistema de asistencia QR · V.SE <button id="seSalir" type="button">Cerrar sesión</button></footer>
   </main>
   <script src="./app.js"></script>
 </body>
