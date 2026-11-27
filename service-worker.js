@@ -1,4 +1,4 @@
-const CACHE_NAME = "asistencia-qr-vse-rc1";
+const CACHE_NAME = "asistencia-qr-vse-rc2-master";
 const CORE = ["./", "./index.html", "./estilos.css", "./app.js", "./lib/html5-qrcode.mim.js"];
 const OPTIONAL = ["./manifest.json", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", event => {
