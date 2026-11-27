@@ -1,6 +1,7 @@
 let seSesion=null, seDispositivo='', seBloqueado=false;
 let seSoloLector=false;
-function seActivo(){return !seBloqueado && !!seSesion && Date.now()<seSesion.exp;}
+function seFinSemana(){const dia=new Date().getDay();return dia===0||dia===6;}
+function seActivo(){return !seBloqueado && !!seSesion && Date.now()<seSesion.exp && (seSesion.rol==='MASTER'||!seFinSemana());}
 async function sePeticion(p,signal){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(p),cache:'no-store',signal});}
 async function seFetch(action,opts={}){
   if(!seActivo()) throw new Error('Sesión no activa');
@@ -14,7 +15,7 @@ function seInicio(){
   document.getElementById('seForm').addEventListener('submit',async e=>{
     e.preventDefault(); const f=e.currentTarget, b=e.submitter, m=document.getElementById('seMensaje');if(!b)return;const action=b.value; const pin=f.elements.pin.value;f.elements.pin.value='';
     for(const x of f.querySelectorAll('button'))x.disabled=true;
-    try {const r=await sePeticion({action,usuario:f.elements.usuario.value.trim(),nombre:f.elements.nombre.value.trim(),pin,dispositivo:seDispositivo},AbortSignal.timeout?AbortSignal.timeout(15000):undefined);const d=await r.json();m.textContent=d.mensaje||'';if(action==='login'&&d.ok&&d.token&&Number(d.exp)>Date.now()){seSesion=d;seBloqueado=false;document.getElementById('seAcceso').hidden=true;document.querySelector('main.app').hidden=false;await iniciarAplicacion();}}
+    try {const r=await sePeticion({action,usuario:f.elements.usuario.value.trim(),nombre:f.elements.nombre.value.trim(),pin,dispositivo:seDispositivo},AbortSignal.timeout?AbortSignal.timeout(15000):undefined);const d=await r.json();m.textContent=d.mensaje||'';if(action==='login'&&d.ok&&d.token&&Number(d.exp)>Date.now()){seSesion=d;seBloqueado=false;document.getElementById('seRol').textContent=d.rol==='MASTER'?(seFinSemana()?'MASTER · Pruebas no oficiales':'MASTER'):'OPERADOR';document.getElementById('seAcceso').hidden=true;document.querySelector('main.app').hidden=false;await iniciarAplicacion();}}
     catch(err){m.textContent='No fue posible conectar con el servidor.';}finally{for(const x of f.querySelectorAll('button'))x.disabled=false;}
   });
   document.getElementById('seLector').onchange=async e=>{seSoloLector=e.target.checked; if(seSoloLector){await detenerCamara();document.getElementById('cameraStatus').textContent='Lector HID activo · cámara apagada';}else if(seActivo()) await iniciarCamara();};
