@@ -1,10 +1,9 @@
 /* =====================================================
        CONFIGURACIÓN
        ===================================================== */
-
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyCnVZ4mkq92Cx788c-FJFcnwxw4OW8IWAGWwIMv-sMB1iwz1E2eIwfqzBeTOG4Ootr/exec";
-       
+   
     /*
      * Token de acceso a la Apps Script.
      *
