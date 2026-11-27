@@ -995,3 +995,4 @@ button:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .camera-wrapper, .barra-progreso { transition: none; }
 }
+.selector-alumno{width:min(92vw,440px);max-height:85vh;border:0;border-radius:16px;padding:16px;background:white;color:#0f172a}.selector-alumno input,.selector-alumno button{width:100%;padding:12px;margin:4px 0;border:1px solid #94a3b8;border-radius:8px;font-size:16px}.lista-alumnos{max-height:35vh;overflow:auto}.lista-alumnos button{text-align:left;background:#f1f5f9;color:#0f172a}.lista-alumnos button.seleccionado{background:#dbeafe;border-color:#2563eb}.selector-alumno button:disabled{opacity:.5}
