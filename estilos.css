@@ -1003,3 +1003,4 @@ button:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 #scanModeToggle:checked { background:#15803d; }
 #scanModeToggle:checked::after { transform:translateX(18px); }
 #scanModeToggle:focus-visible { outline:3px solid #38bdf8; outline-offset:3px; }
+[hidden]{display:none!important}.se-acceso{max-width:440px;margin:32px auto;padding:24px;background:white;color:#0f172a;border-radius:20px}.se-acceso form{display:grid;gap:12px}.se-acceso label{display:grid;gap:6px}.se-acceso input,.se-acceso button{font:inherit;padding:12px;border:1px solid #cbd5e1;border-radius:8px}.se-acceso button{background:#0f172a;color:white}.se-acceso button:disabled{opacity:.5}
