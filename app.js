@@ -1503,7 +1503,7 @@
     async function registrarAlInstante(
       alumno,
       idQR,
-      nombreGenerico, sinCredencial = false
+      nombreGenerico, sinCredencial = false, generoQR = ""
     ) {
 
       const esGenerico =
@@ -1641,7 +1641,7 @@
 
         evento: crypto.randomUUID(),
         tipo: sinCredencial ? "Sin credencial" : "Con credencial",
-        genero: sinCredencial ? alumno.genero : "",
+        genero: sinCredencial ? generoQR : "",
         generico:
           esGenerico
 
@@ -1687,7 +1687,7 @@
           : "Asistencia registrada",
         (esGenerico
           ? "Alumno sin credencial · " + grupo
-          : nombre + " · " + grupo) +
+          : nombre + " · " + grupo + (sinCredencial ? " · Sin credencial · " + (generoQR === "H" ? "Hombre" : "Mujer") : "")) +
         "\nHora: " + hora +
         "\nEstado: " + estatus +
         (enLinea
@@ -1965,7 +1965,7 @@
           const sexo = idQR.endsWith('HOMBRE') ? 'H' : 'M';
           const alumno = await seleccionarAlumnoSinCredencial(grupo, sexo);
           if (!alumno) { mostrarResultado('ℹ️','Registro cancelado','No se registró asistencia.',''); return; }
-          await registrarAlInstante(alumno, alumno.idQR, null, true);
+          await registrarAlInstante(alumno, alumno.idQR, null, true, sexo);
 
           return;
 
@@ -3109,7 +3109,7 @@ async function refrescarContadoresLocales() {
   document.getElementById('barraProgreso').style.width=pct+'%';
 }
 async function seleccionarAlumnoSinCredencial(grupo, sexo) {
-  const alumnos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true && a.grupo === grupo && a.genero === sexo);
+  const alumnos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true && a.grupo === grupo);
   const normal = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   return new Promise(resolve => {
     const panel = document.createElement('dialog'); panel.className='selector-alumno';
@@ -3119,7 +3119,7 @@ async function seleccionarAlumnoSinCredencial(grupo, sexo) {
     const confirmar = document.createElement('button'); confirmar.textContent='Registrar asistencia'; confirmar.disabled=true;
     let elegido=null; let terminado=false;
     const cerrar = v => { if(terminado)return; terminado=true; panel.close();panel.remove();resolve(v); };
-    function mostrar(){ elegido=null; confirmar.disabled=true; lista.replaceChildren(); const q=normal(input.value).trim().split(/\s+/); const encontrados=alumnos.filter(a=>q.every(x=>normal(a.nombre).includes(x))); if(!encontrados.length){lista.textContent='Sin coincidencias. Verifica el grupo y actualiza el catálogo con Genero H/M.';return;} for(const a of encontrados){const b=document.createElement('button'); b.type='button'; b.textContent=a.nombre+' · '+a.idQR; b.onclick=()=>{elegido=a;confirmar.disabled=false;for(const otro of lista.children)otro.classList.toggle('seleccionado',otro===b);};lista.append(b);} }
+    function mostrar(){ elegido=null; confirmar.disabled=true; lista.replaceChildren(); const q=normal(input.value).trim().split(/\s+/); const encontrados=alumnos.filter(a=>q.every(x=>normal(a.nombre).includes(x))); if(!encontrados.length){lista.textContent='Sin coincidencias. Verifica el nombre, el grupo y que el catálogo esté actualizado.';return;} for(const a of encontrados){const b=document.createElement('button'); b.type='button'; b.textContent=a.nombre+' · '+a.idQR; b.onclick=()=>{elegido=a;confirmar.disabled=false;for(const otro of lista.children)otro.classList.toggle('seleccionado',otro===b);};lista.append(b);} }
     input.oninput=mostrar; confirmar.onclick=()=>{if(elegido)cerrar(elegido);};panel.append(confirmar);
     const cancelar=document.createElement('button'); cancelar.textContent='Cancelar';cancelar.onclick=()=>cerrar(null);panel.append(cancelar);panel.addEventListener('cancel',e=>{e.preventDefault();cerrar(null);});document.body.append(panel);panel.showModal();mostrar();
   });
