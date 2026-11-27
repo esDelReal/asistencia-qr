@@ -835,10 +835,10 @@
         texto.textContent = "Verificando conexión...";
       } else if (internetReal === true) {
         status.classList.remove("offline");
-        texto.textContent = "Conectado";
+        texto.textContent = "Conectado · V17";
       } else {
         status.classList.add("offline");
-        texto.textContent = "Servidor sin respuesta";
+        texto.textContent = "Servidor sin respuesta · V17";
       }
       status.dataset.modo = ahoraOffline ? "offline" : "online";
       if (ahoraOffline && !estabaOffline && !procesando && !sincronizando) {
@@ -1139,12 +1139,13 @@
     let revisionConfirmaciones = 0;
     async function actualizarResumenAsistencia(forzar = false) {
       if (consultaResumen) {
-        await consultaResumen;
-        if (!forzar) return;
+        const anterior = await consultaResumen;
+        if (!forzar) return anterior;
+        if (consultaResumen) return consultaResumen;
       }
-      if (consultaResumen) return consultaResumen;
-      consultaResumen = consultarResumen(forzar);
-      try { await consultaResumen; } finally { consultaResumen = null; }
+      const tarea = consultarResumen(forzar);
+      consultaResumen = tarea;
+      try { return await tarea; } finally { if (consultaResumen === tarea) consultaResumen = null; }
     }
     async function consultarResumen(forzar) {
 
@@ -1228,17 +1229,13 @@
           await response.json();
 
 
-        if (!data.ok) {
-
-          return;
-
+        if (!data.ok || data.version !== 17 || data.fecha !== obtenerFecha() || !Array.isArray(data.idsRegistrados) || !Array.isArray(data.eventos)) {
+          const texto = document.getElementById("connectionText");
+          if (texto) texto.textContent = "Revisar servidor V17 / fecha";
+          throw new Error("Resumen incompatible: verificar implementación V17 y zona horaria");
         }
-
+        if (revision !== revisionConfirmaciones || sincronizando) return false;
         registrarEstadoRed(true);
-
-
-        if (data.fecha !== obtenerFecha() || !Array.isArray(data.idsRegistrados) || !Array.isArray(data.eventos)) return;
-        if (revision !== revisionConfirmaciones || sincronizando) return;
         const idsServidor = new Set(data.idsRegistrados);
         const eventosServidor = new Set(data.eventos);
         // Solo retirar confirmaciones previas ausentes del resumen válido del día.
@@ -1320,6 +1317,7 @@
 
         await refrescarContadoresLocales();
         actualizarConexion();
+        return true;
 
       }
       catch(error) {
@@ -1345,28 +1343,16 @@
       fecha
     ) {
 
-      if (navigator.onLine && !sincronizando) {
-        const previas = await obtenerTodasLasAsistencias();
-        if (previas.some(a => a.estado === "sincronizada" && a.fecha === fecha && String(a.idQR).trim() === String(idQR).trim())) {
-          await actualizarResumenAsistencia(true);
-        }
+      const coincide = a => String(a.idQR).trim() === String(idQR).trim() && a.fecha === fecha;
+      let locales = (await obtenerTodasLasAsistencias()).filter(coincide);
+      if (locales.some(a => a.estado !== "sincronizada")) return true;
+      if (navigator.onLine && (locales.length || (resumenServidor?.fecha === fecha && resumenServidor.idsRegistrados.includes(idQR)))) {
+        const actualizado = await actualizarResumenAsistencia(true);
+        locales = (await obtenerTodasLasAsistencias()).filter(coincide);
+        if (locales.some(a => a.estado !== "sincronizada")) return true;
+        if (actualizado && resumenServidor?.fecha === fecha) return resumenServidor.idsRegistrados.includes(idQR);
       }
-      const asistencias =
-        await obtenerTodasLasAsistencias();
-
-
-      return asistencias.some(
-        function(item) {
-
-          return (
-            String(item.idQR).trim() ===
-              String(idQR).trim() &&
-            item.fecha ===
-              fecha
-          );
-
-        }
-      );
+      return locales.length > 0 || (resumenServidor?.fecha === fecha && resumenServidor.idsRegistrados.includes(idQR));
 
     }
 
@@ -1633,7 +1619,7 @@
             nombre +
             " · " +
             grupo +
-            "\nID: " + idQR + " · Registro existente en este dispositivo.",
+            "\nID: " + idQR + " · Registro previo detectado (servidor o copia local).",
             "error"
           );
 
@@ -1838,7 +1824,7 @@
             alumno.nombre +
             " · " +
             alumno.grupo +
-            "\nID: " + idQR + " · Registro existente en este dispositivo.",
+            "\nID: " + idQR + " · Registro previo detectado (servidor o copia local).",
             "error"
           );
 
@@ -2391,7 +2377,7 @@
         await actualizarPendientes();
         await refrescarContadoresLocales();
         actualizarConexion();
-        if (navigator.onLine) void actualizarResumenAsistencia(true);
+        if (navigator.onLine) await actualizarResumenAsistencia(true);
         if (boton) boton.textContent = "Sincronizar pendientes";
       }
     }
@@ -3116,7 +3102,7 @@ async function refrescarContadoresLocales() {
   const activos = (await obtenerTodosLosAlumnos()).filter(a => normalizarActivo(a.activo) === true);
   const activosIds = new Set(activos.map(a => a.idQR));
   for (const a of locales) {
-    if (a.fecha !== hoy) continue;
+    if (a.fecha !== hoy || (r && a.estado === "sincronizada")) continue;
     if (a.idQR === 'SINCREDENCIAL-HOMBRE' || a.idQR === 'SINCREDENCIAL-MUJER') {
       if (a.evento && eventos.has(a.evento)) continue;
       if (a.evento) eventos.add(a.evento);
